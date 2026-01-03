@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@/shared/api';
-import { LedgerType } from '@/shared/enum';
+import { LedgerType, TradeStatus } from '@/shared/enum';
 import { revalidatePath } from 'next/cache';
 import { Investor, LedgerEntry } from '../types';
 
@@ -61,16 +61,20 @@ export async function getTotalStats(): Promise<{ total_capital: number; total_de
   return stats;
 }
 
-export async function getInvestorLedger(id: number): Promise<LedgerEntry[]> {
+export async function getInvestorLedger(
+  id: number
+): Promise<(LedgerEntry & { status?: TradeStatus })[]> {
   const ledger = db
     .prepare(
       `
-    SELECT * FROM ledger 
-    WHERE investor_id = ? 
-    ORDER BY id DESC
+    SELECT l.*, t.status 
+    FROM ledger l
+    LEFT JOIN trades t ON l.trade_id = t.id
+    WHERE l.investor_id = ? 
+    ORDER BY l.id DESC
   `
     )
-    .all(id) as LedgerEntry[];
+    .all(id) as (LedgerEntry & { status?: TradeStatus })[];
   return ledger;
 }
 

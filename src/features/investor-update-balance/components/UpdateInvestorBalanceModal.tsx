@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, memo, useCallback } from 'react';
 import {
   Box,
   Button,
@@ -21,114 +21,117 @@ import { Investor } from '@/entities/investor/types';
 
 interface UpdateInvestorBalanceModalProps {
   open: boolean;
-  onClose: () => void;
   investor: Investor;
+  onClose: () => void;
 }
 
-export function UpdateInvestorBalanceModal({
-  open,
-  onClose,
-  investor,
-}: UpdateInvestorBalanceModalProps) {
-  const [amount, setAmount] = useState('');
-  const [type, setType] = useState<
-    LedgerType.CAPITAL_CHANGE | LedgerType.DEPOSIT_CHANGE | LedgerType.BOTH_CHANGE
-  >(LedgerType.CAPITAL_CHANGE);
+export const UpdateInvestorBalanceModal = memo(
+  ({ open, onClose, investor }: UpdateInvestorBalanceModalProps) => {
+    const [amount, setAmount] = useState('');
+    const [type, setType] = useState<
+      LedgerType.CAPITAL_CHANGE | LedgerType.DEPOSIT_CHANGE | LedgerType.BOTH_CHANGE
+    >(LedgerType.CAPITAL_CHANGE);
 
-  const isFormValid = amount !== '' && amount !== '0';
+    const isFormValid = amount !== '' && amount !== '0';
 
-  const handleIntegerKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === '.' || e.key === ',') {
-      e.preventDefault();
-    }
-  };
+    const handleIntegerKeyDown = useCallback((e: React.KeyboardEvent) => {
+      if (e.key === '.' || e.key === ',') {
+        e.preventDefault();
+      }
+    }, []);
 
-  const handleFormAction = async (formData: FormData) => {
-    await updateBalanceAction(investor.id, formData, false);
-    setAmount('');
-    onClose();
-  };
+    const handleFormAction = useCallback(
+      async (formData: FormData) => {
+        await updateBalanceAction(investor.id, formData, false);
+        setAmount('');
+        onClose();
+      },
+      [investor.id, onClose]
+    );
 
-  return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
-      <DialogTitle sx={{ fontWeight: 'bold' }}>Add Action</DialogTitle>
-      <Box component="form" action={handleFormAction}>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, pt: 1 }}>
-            <Box sx={{ mb: 1 }}>
-              <Typography variant="body1" sx={{ color: 'text.primary', mb: 0.5 }}>
-                Current Capital:{' '}
-                <strong>${Math.round(investor.current_capital).toLocaleString()}</strong>
-              </Typography>
-              <Typography variant="body1" sx={{ color: 'text.primary' }}>
-                Current Deposit:{' '}
-                <strong>${Math.round(investor.current_deposit).toLocaleString()}</strong>
-              </Typography>
-            </Box>
+    return (
+      <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
+        <DialogTitle sx={{ fontWeight: 'bold' }}>Add Action</DialogTitle>
+        <Box component="form" action={handleFormAction}>
+          <DialogContent>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, pt: 1 }}>
+              <Box sx={{ mb: 1 }}>
+                <Typography variant="body1" sx={{ color: 'text.primary', mb: 0.5 }}>
+                  Current Capital:{' '}
+                  <strong>${Math.round(investor.current_capital).toLocaleString()}</strong>
+                </Typography>
+                <Typography variant="body1" sx={{ color: 'text.primary' }}>
+                  Current Deposit:{' '}
+                  <strong>${Math.round(investor.current_deposit).toLocaleString()}</strong>
+                </Typography>
+              </Box>
 
-            <FormControl fullWidth size="small">
-              <InputLabel id="change-type-label">Action Type</InputLabel>
-              <Select
-                name="type"
-                labelId="change-type-label"
-                label="Action Type"
-                value={type}
-                onChange={(e) =>
-                  setType(
-                    e.target.value as
-                      | LedgerType.CAPITAL_CHANGE
-                      | LedgerType.DEPOSIT_CHANGE
-                      | LedgerType.BOTH_CHANGE
-                  )
-                }
+              <FormControl fullWidth size="small">
+                <InputLabel id="change-type-label">Action Type</InputLabel>
+                <Select
+                  name="type"
+                  labelId="change-type-label"
+                  label="Action Type"
+                  value={type}
+                  onChange={(e) =>
+                    setType(
+                      e.target.value as
+                        | LedgerType.CAPITAL_CHANGE
+                        | LedgerType.DEPOSIT_CHANGE
+                        | LedgerType.BOTH_CHANGE
+                    )
+                  }
+                  required
+                >
+                  <MenuItem value={LedgerType.BOTH_CHANGE}>Both (Deposit & Capital)</MenuItem>
+                  <MenuItem value={LedgerType.CAPITAL_CHANGE}>Capital Change</MenuItem>
+                  <MenuItem value={LedgerType.DEPOSIT_CHANGE}>Deposit Change</MenuItem>
+                </Select>
+              </FormControl>
+
+              <TextField
+                name="amount"
+                label="Amount ($)"
+                type="number"
+                variant="outlined"
+                fullWidth
                 required
-              >
-                <MenuItem value={LedgerType.BOTH_CHANGE}>Both (Deposit & Capital)</MenuItem>
-                <MenuItem value={LedgerType.CAPITAL_CHANGE}>Capital Change</MenuItem>
-                <MenuItem value={LedgerType.DEPOSIT_CHANGE}>Deposit Change</MenuItem>
-              </Select>
-            </FormControl>
-
-            <TextField
-              name="amount"
-              label="Amount ($)"
-              type="number"
-              variant="outlined"
+                size="small"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                onKeyDown={handleIntegerKeyDown}
+                helperText="Use positive for Add/Deposit, negative for Sub/Withdraw"
+                slotProps={{ htmlInput: { step: '1' } }}
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 3, flexDirection: { xs: 'column', sm: 'row' }, gap: 1 }}>
+            <Button
+              onClick={onClose}
+              color="inherit"
               fullWidth
-              required
-              size="small"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              onKeyDown={handleIntegerKeyDown}
-              helperText="Use positive for Add/Deposit, negative for Sub/Withdraw"
-              slotProps={{ htmlInput: { step: '1' } }}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 3, flexDirection: { xs: 'column', sm: 'row' }, gap: 1 }}>
-          <Button
-            onClick={onClose}
-            color="inherit"
-            fullWidth
-            sx={{ display: { xs: 'block', sm: 'none' } }}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            disabled={!isFormValid}
-            fullWidth={true}
-            sx={{ px: 4, order: { xs: -1, sm: 0 } }}
-          >
-            Save
-          </Button>
-          <Button onClick={onClose} color="inherit" sx={{ display: { xs: 'none', sm: 'block' } }}>
-            Cancel
-          </Button>
-        </DialogActions>
-      </Box>
-    </Dialog>
-  );
-}
+              sx={{ display: { xs: 'block', sm: 'none' } }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              disabled={!isFormValid}
+              fullWidth={true}
+              sx={{ px: 4, order: { xs: -1, sm: 0 } }}
+            >
+              Save
+            </Button>
+            <Button onClick={onClose} color="inherit" sx={{ display: { xs: 'none', sm: 'block' } }}>
+              Cancel
+            </Button>
+          </DialogActions>
+        </Box>
+      </Dialog>
+    );
+  }
+);
+
+UpdateInvestorBalanceModal.displayName = 'UpdateInvestorBalanceModal';

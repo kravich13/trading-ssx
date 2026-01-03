@@ -1,6 +1,8 @@
 'use server';
 
 import { db } from '@/shared/api';
+import { TradeStatus } from '@/shared/enum';
+import { revalidatePath } from 'next/cache';
 import { Trade } from '../types';
 
 export async function getAllTrades(): Promise<Trade[]> {
@@ -20,4 +22,31 @@ export async function getAllTrades(): Promise<Trade[]> {
     )
     .all() as Trade[];
   return trades;
+}
+
+export async function updateTrade(id: number, closedDate: string, status: TradeStatus) {
+  db.prepare('UPDATE trades SET closed_date = ?, status = ? WHERE id = ?').run(
+    closedDate,
+    status,
+    id
+  );
+
+  // Also update ledger entries associated with this trade if needed
+  db.prepare('UPDATE ledger SET closed_date = ? WHERE trade_id = ?').run(closedDate, id);
+
+  revalidatePath('/');
+  revalidatePath('/trades');
+}
+
+export async function deleteTrade(id: number) {
+  const transaction = db.transaction(() => {
+    // Delete ledger entries first due to FK or logic
+    db.prepare('DELETE FROM ledger WHERE trade_id = ?').run(id);
+    // Delete the trade
+    db.prepare('DELETE FROM trades WHERE id = ?').run(id);
+  });
+
+  transaction();
+  revalidatePath('/');
+  revalidatePath('/trades');
 }

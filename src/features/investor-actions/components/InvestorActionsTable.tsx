@@ -25,14 +25,14 @@ import {
   Button,
   TextField,
 } from '@mui/material';
-import { useState } from 'react';
+import { useState, memo, useCallback, useMemo } from 'react';
 
 interface InvestorActionsTableProps {
   ledger: LedgerEntry[];
   investorId: number;
 }
 
-export function InvestorActionsTable({ ledger, investorId }: InvestorActionsTableProps) {
+export const InvestorActionsTable = memo(({ ledger, investorId }: InvestorActionsTableProps) => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<LedgerEntry | null>(null);
   const [selectedRowNumber, setSelectedRowNumber] = useState<number | null>(null);
@@ -40,42 +40,49 @@ export function InvestorActionsTable({ ledger, investorId }: InvestorActionsTabl
   const [editAmount, setEditAmount] = useState<string>('');
   const [editDate, setEditDate] = useState<string>('');
 
-  const actionsOnly = ledger.filter(
-    (row) =>
-      row.type === LedgerType.CAPITAL_CHANGE ||
-      row.type === LedgerType.DEPOSIT_CHANGE ||
-      row.type === LedgerType.BOTH_CHANGE
+  const actionsOnly = useMemo(
+    () =>
+      ledger.filter(
+        (row) =>
+          row.type === LedgerType.CAPITAL_CHANGE ||
+          row.type === LedgerType.DEPOSIT_CHANGE ||
+          row.type === LedgerType.BOTH_CHANGE
+      ),
+    [ledger]
   );
 
-  const formatCurrency = (value: number) =>
-    value.toLocaleString(undefined, {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    });
+  const formatCurrency = useCallback(
+    (value: number) =>
+      value.toLocaleString(undefined, {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }),
+    []
+  );
 
-  const handleDeleteClick = (entry: LedgerEntry, rowNumber: number) => {
+  const handleDeleteClick = useCallback((entry: LedgerEntry, rowNumber: number) => {
     setSelectedEntry(entry);
     setSelectedRowNumber(rowNumber);
     setDeleteModalOpen(true);
-  };
+  }, []);
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = useCallback(async () => {
     if (selectedEntry) {
       await deleteLedgerEntry(selectedEntry.id, investorId);
       setDeleteModalOpen(false);
       setSelectedEntry(null);
     }
-  };
+  }, [selectedEntry, investorId]);
 
-  const handleEditClick = (entry: LedgerEntry, rowNumber: number) => {
+  const handleEditClick = useCallback((entry: LedgerEntry, rowNumber: number) => {
     setSelectedEntry(entry);
     setSelectedRowNumber(rowNumber);
     setEditAmount(entry.change_amount.toString());
     setEditDate(entry.created_at ? entry.created_at.split(' ')[0] : '');
     setEditModalOpen(true);
-  };
+  }, []);
 
-  const handleConfirmEdit = async () => {
+  const handleConfirmEdit = useCallback(async () => {
     if (selectedEntry && editAmount !== '') {
       await updateLedgerEntry(
         selectedEntry.id,
@@ -86,7 +93,7 @@ export function InvestorActionsTable({ ledger, investorId }: InvestorActionsTabl
       setEditModalOpen(false);
       setSelectedEntry(null);
     }
-  };
+  }, [selectedEntry, editAmount, editDate, investorId]);
 
   return (
     <>
@@ -251,4 +258,6 @@ export function InvestorActionsTable({ ledger, investorId }: InvestorActionsTabl
       </Dialog>
     </>
   );
-}
+});
+
+InvestorActionsTable.displayName = 'InvestorActionsTable';

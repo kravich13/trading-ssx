@@ -25,14 +25,14 @@ import {
   Button,
   TextField,
 } from '@mui/material';
-import { useState } from 'react';
+import { useState, memo, useCallback } from 'react';
 import Link from 'next/link';
 
 interface GlobalActionsTableProps {
   actions: (LedgerEntry & { investor_name: string })[];
 }
 
-export function GlobalActionsTable({ actions }: GlobalActionsTableProps) {
+export const GlobalActionsTable = memo(({ actions }: GlobalActionsTableProps) => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<
     (LedgerEntry & { investor_name: string }) | null
@@ -42,37 +42,46 @@ export function GlobalActionsTable({ actions }: GlobalActionsTableProps) {
   const [editAmount, setEditAmount] = useState<string>('');
   const [editDate, setEditDate] = useState<string>('');
 
-  const formatCurrency = (value: number) =>
-    value.toLocaleString(undefined, {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    });
+  const formatCurrency = useCallback(
+    (value: number) =>
+      value.toLocaleString(undefined, {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }),
+    []
+  );
 
-  const handleDeleteClick = (entry: LedgerEntry & { investor_name: string }, rowNumber: number) => {
-    setSelectedEntry(entry);
-    setSelectedRowNumber(rowNumber);
-    setDeleteModalOpen(true);
-  };
+  const handleDeleteClick = useCallback(
+    (entry: LedgerEntry & { investor_name: string }, rowNumber: number) => {
+      setSelectedEntry(entry);
+      setSelectedRowNumber(rowNumber);
+      setDeleteModalOpen(true);
+    },
+    []
+  );
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = useCallback(async () => {
     if (selectedEntry) {
       await deleteLedgerEntry(selectedEntry.id, selectedEntry.investor_id);
       setDeleteModalOpen(false);
       setSelectedEntry(null);
     }
-  };
+  }, [selectedEntry]);
 
-  const handleEditClick = (entry: LedgerEntry & { investor_name: string }, rowNumber: number) => {
-    setSelectedEntry(entry);
-    setSelectedRowNumber(rowNumber);
-    setEditAmount(entry.change_amount.toString());
-    setEditDate(entry.created_at ? entry.created_at.split(' ')[0] : '');
-    setEditModalOpen(true);
-  };
+  const handleEditClick = useCallback(
+    (entry: LedgerEntry & { investor_name: string }, rowNumber: number) => {
+      setSelectedEntry(entry);
+      setSelectedRowNumber(rowNumber);
+      setEditAmount(entry.change_amount.toString());
+      setEditDate(entry.created_at ? entry.created_at.split(' ')[0] : '');
+      setEditModalOpen(true);
+    },
+    []
+  );
 
-  const handleConfirmEdit = async () => {
+  const handleConfirmEdit = useCallback(async () => {
     if (selectedEntry && editAmount !== '') {
       await updateLedgerEntry(
         selectedEntry.id,
@@ -83,7 +92,7 @@ export function GlobalActionsTable({ actions }: GlobalActionsTableProps) {
       setEditModalOpen(false);
       setSelectedEntry(null);
     }
-  };
+  }, [selectedEntry, editAmount, editDate]);
 
   return (
     <>
@@ -264,4 +273,6 @@ export function GlobalActionsTable({ actions }: GlobalActionsTableProps) {
       </Dialog>
     </>
   );
-}
+});
+
+GlobalActionsTable.displayName = 'GlobalActionsTable';

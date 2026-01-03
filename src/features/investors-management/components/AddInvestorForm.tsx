@@ -4,7 +4,7 @@ import { useState, memo, useCallback } from 'react';
 import { Box, Button, TextField } from '@mui/material';
 import { addInvestorAction } from '../api';
 
-export const AddInvestorForm = memo(function AddInvestorForm() {
+export const AddInvestorForm = memo(() => {
   const [name, setName] = useState('');
   const [capital, setCapital] = useState('');
   const [deposit, setDeposit] = useState('');
@@ -103,3 +103,5 @@ export const AddInvestorForm = memo(function AddInvestorForm() {
     </Box>
   );
 });
+
+AddInvestorForm.displayName = 'AddInvestorForm';

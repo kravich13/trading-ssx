@@ -4,21 +4,15 @@ import { EquityChart } from '@/widgets/equity-chart';
 import { GaltonBoard } from '@/widgets/galton-board';
 import { TradeStatsDashboard } from '@/widgets/trade-stats';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import {
-  Box,
-  Button,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
-} from '@mui/material';
+import { Box, Button, Typography } from '@mui/material';
 import Link from 'next/link';
+import { InvestorTradingLogTable } from './InvestorTradingLogTable';
 
-export async function InvestorDetails({ id }: { id: number }) {
+interface InvestorDetailsProps {
+  id: number;
+}
+
+export async function InvestorDetails({ id }: InvestorDetailsProps) {
   const [investor, ledger] = await Promise.all([getInvestorById(id), getInvestorLedger(id)]);
 
   if (!investor) {
@@ -40,7 +34,7 @@ export async function InvestorDetails({ id }: { id: number }) {
     .filter((row) => row.type === LedgerType.TRADE)
     .map((row) => ({
       id: row.trade_id || row.id,
-      ticker: row.ticker,
+      ticker: row.ticker || '',
       pl_percent: row.pl_percent,
       change_amount: row.change_amount,
       absolute_value: row.capital_after,
@@ -48,16 +42,8 @@ export async function InvestorDetails({ id }: { id: number }) {
       default_risk_percent: row.default_risk_percent,
     }));
 
-  const formatCurrency = (value: number) =>
-    value.toLocaleString(undefined, {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    });
-
   const firstTrade = ledger.find((r) => r.type === LedgerType.TRADE);
   const initialInvestorDeposit = firstTrade ? firstTrade.deposit_before : 0;
-
-  const tradesOnlyLedger = ledger.filter((row) => row.type === LedgerType.TRADE);
 
   return (
     <Box sx={{ py: 4 }}>
@@ -99,73 +85,7 @@ export async function InvestorDetails({ id }: { id: number }) {
 
       <GaltonBoard trades={tradesOnly} />
 
-      <TableContainer component={Paper} elevation={2} sx={{ mb: 4 }}>
-        <Table size="small" sx={{ minWidth: 800 }}>
-          <TableHead>
-            <TableRow sx={{ backgroundColor: 'action.hover' }}>
-              <TableCell sx={{ fontWeight: 'bold', width: '50px' }}>№</TableCell>
-              <TableCell align="right" sx={{ fontWeight: 'bold', width: '120px' }}>
-                Closed Date
-              </TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Ticker</TableCell>
-              <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                PL%
-              </TableCell>
-              <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                PL$
-              </TableCell>
-              <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                Capital After
-              </TableCell>
-              <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                Deposit After
-              </TableCell>
-              <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                Risk%
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {tradesOnlyLedger.map((row, index) => {
-              const plColor =
-                row.change_amount > 0
-                  ? 'success.main'
-                  : row.change_amount < 0
-                    ? 'error.main'
-                    : 'inherit';
-
-              return (
-                <TableRow key={row.id} hover>
-                  <TableCell>{tradesOnlyLedger.length - index}</TableCell>
-                  <TableCell align="right" sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
-                    {row.closed_date || '-'}
-                  </TableCell>
-                  <TableCell>{row.ticker || '-'}</TableCell>
-                  <TableCell align="right" sx={{ color: plColor }}>
-                    {row.pl_percent !== null ? `${row.pl_percent.toFixed(2)}%` : '-'}
-                  </TableCell>
-                  <TableCell align="right" sx={{ color: plColor }}>
-                    $
-                    {row.change_amount.toLocaleString(undefined, {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    })}
-                  </TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                    ${formatCurrency(row.capital_after)}
-                  </TableCell>
-                  <TableCell align="right">${formatCurrency(row.deposit_after)}</TableCell>
-                  <TableCell align="right">
-                    {row.default_risk_percent !== null
-                      ? `${row.default_risk_percent.toFixed(2)}%`
-                      : '-'}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <InvestorTradingLogTable ledger={ledger} />
     </Box>
   );
 }
