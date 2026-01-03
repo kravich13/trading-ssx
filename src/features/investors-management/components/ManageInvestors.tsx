@@ -1,6 +1,7 @@
 import { getInvestors } from '@/entities/investor';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
+import HistoryIcon from '@mui/icons-material/History';
 import {
   Box,
   Button,
@@ -137,6 +138,11 @@ export async function ManageInvestors() {
                       </TableCell>
                       <TableCell align="center">
                         <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+                          <Link href={`/investors/${investor.id}/trades`} passHref>
+                            <IconButton color="info" size="small" title="View Trade Log">
+                              <HistoryIcon fontSize="small" />
+                            </IconButton>
+                          </Link>
                           <Link href={`/investors/${investor.id}/update`} passHref>
                             <IconButton color="primary" size="small" title="Update Balance">
                               <EditIcon fontSize="small" />

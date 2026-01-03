@@ -1,4 +1,4 @@
-import { InvestorActions } from '@/features/investor-actions';
+import { InvestorDetails } from '@/features/investor-details';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,5 +8,5 @@ interface PageProps {
 
 export default async function Page({ params }: PageProps) {
   const { id } = await params;
-  return <InvestorActions id={parseInt(id)} />;
+  return <InvestorDetails id={parseInt(id)} />;
 }

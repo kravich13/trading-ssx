@@ -1,11 +1,13 @@
 import { getInvestors, getTotalStats } from '@/entities/investor';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import HistoryIcon from '@mui/icons-material/History';
 import {
   Box,
   Card,
   CardContent,
   Grid,
+  IconButton,
   Paper,
   Table,
   TableBody,
@@ -119,6 +121,9 @@ export async function DashboardOverview() {
               <TableCell align="right" sx={{ fontWeight: 'bold' }}>
                 Deposit Share
               </TableCell>
+              <TableCell align="center" sx={{ fontWeight: 'bold' }}>
+                Log
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -151,6 +156,13 @@ export async function DashboardOverview() {
                   <TableCell align="right">{formatCurrency(investor.current_deposit)}</TableCell>
                   <TableCell align="right">{capitalShare.toFixed(2)}%</TableCell>
                   <TableCell align="right">{depositShare.toFixed(2)}%</TableCell>
+                  <TableCell align="center">
+                    <Link href={`/investors/${investor.id}/trades`} passHref>
+                      <IconButton color="info" size="small" title="View Trade Log">
+                        <HistoryIcon fontSize="small" />
+                      </IconButton>
+                    </Link>
+                  </TableCell>
                 </TableRow>
               );
             })}
@@ -168,6 +180,7 @@ export async function DashboardOverview() {
               <TableCell align="right" sx={{ fontWeight: 'bold' }}>
                 100.00%
               </TableCell>
+              <TableCell />
             </TableRow>
           </TableBody>
         </Table>
