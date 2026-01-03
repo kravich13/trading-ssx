@@ -101,16 +101,33 @@ export async function InvestorActions({ id }: { id: number }) {
             ) : (
               actionsOnly.map((row, index) => {
                 const color = row.change_amount > 0 ? 'success.main' : 'error.main';
+                const isInitial = row.capital_before === 0 && row.deposit_before === 0;
+
+                let chipLabel = row.type.replace('_CHANGE', '');
+                let chipColor: 'primary' | 'secondary' | 'warning' | 'info' | 'default' =
+                  'secondary';
+
+                if (isInitial) {
+                  chipLabel = 'INITIAL';
+                  chipColor = 'primary';
+                } else if (row.type === LedgerType.DEPOSIT_CHANGE) {
+                  chipLabel = `DEPOSIT ${row.change_amount > 0 ? 'IN' : 'OUT'}`;
+                  chipColor = 'warning';
+                } else if (row.type === LedgerType.CAPITAL_CHANGE) {
+                  chipLabel = `CAPITAL ${row.change_amount > 0 ? 'ADD' : 'SUB'}`;
+                  chipColor = 'secondary';
+                }
+
                 return (
                   <TableRow key={row.id} hover>
                     <TableCell>{actionsOnly.length - index}</TableCell>
                     <TableCell>
                       <Chip
-                        label={row.type.replace('_CHANGE', '')}
+                        label={chipLabel}
                         size="small"
-                        color="secondary"
+                        color={chipColor}
                         variant="outlined"
-                        sx={{ fontSize: '0.7rem' }}
+                        sx={{ fontSize: '0.7rem', fontWeight: 'bold' }}
                       />
                     </TableCell>
                     <TableCell align="right" sx={{ color, fontWeight: 'medium' }}>
