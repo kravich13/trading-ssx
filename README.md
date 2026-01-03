@@ -66,20 +66,29 @@ When taking a trade with **1% risk** on capital ($100), you use the **$3,500** a
 
 ## Development Progress (TODO)
 
-- [ ] **1. Database & Infrastructure**
+- [x] **1. Database & Infrastructure**
   - [x] Install dependencies (`better-sqlite3`, `sass`)
   - [x] Design SQLite schema (Investors, Ledger for trades and balance changes)
   - [x] Implement database connection utility
-- [ ] **2. Management Screen**
-  - [ ] Add/Delete investors
-  - [ ] Update individual investor Capital/Deposit (row-by-row logic)
-  - [ ] Display change history in investor's personal table
-- [ ] **3. Main Dashboard**
-  - [ ] Header with Total Capital and Total Deposit (sum of all investors)
-  - [ ] Table of all investors with their current Capital and Deposit
+- [x] **2. Management Screen**
+  - [x] Add/Delete investors
+  - [x] Update individual investor Capital/Deposit (row-by-row logic)
+  - [x] Display change history in investor's personal table
+- [x] **3. Main Dashboard**
+  - [x] Header with Total Capital and Total Deposit (sum of all investors)
+  - [x] Table of all investors with their current Capital and Deposit
 - [ ] **4. Trading Logs**
   - [ ] Investor Detail View: List of all trades + capital changes (as shown in Excel)
   - [ ] Total Trades View: Global log of all trading activity across the project
+  - [ ] Statistics Dashboard (above Total Trades):
+    - Trade counts (Total, Positive, Negative)
+    - Profit/Loss metrics (Total Profit, Total Loss, P/L Correlation, Reward Ratio)
+    - Averages (USD and % of depo for both P and L)
+    - Streaks & Extremes (Max Profit/Loss, Max Win/Loss series)
+    - Accuracy (Win Rate %)
+  - [ ] Visual Analytics (on Total Trades screen):
+    - **Equity Curve Chart**: Capital growth based strictly on trade results (ignoring manual capital changes)
+    - **Galton Board (Histogram)**: Dynamic distribution of trade returns (PL%)
 - [ ] **5. Core Logic Implementation**
   - [ ] Calculation of position sizes based on total capital
   - [ ] Row-by-row balance updates (changes only affect future rows)
@@ -110,15 +119,16 @@ yarn install
 yarn dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:7777](http://localhost:7777) in your browser.
 
 ## Project Structure
 
-- `app/` - Next.js App Router (only routing and entry points)
+- `app/` - Next.js App Router (Routing and Page entry points)
 - `src/` - FSD Architecture:
-  - `pages/` - Full pages components
-  - `widgets/` - Large UI components
-  - `features/` - User interactions (actions)
-  - `entities/` - Business logic and data
+  - `features/` - User interactions and page-level feature components (e.g., `investors-management`)
+    - `ui/`, `api/`, `lib/`, `types/`, `styles/`
+  - `entities/` - Business logic and data (e.g., `investor`, `trade`)
+    - `ui/`, `api/`, `lib/`, `types/`
   - `shared/` - Reusable helpers and UI
+    - `api/`, `lib/`, `ui/`
 - `*.db` - SQLite database files

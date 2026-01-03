@@ -6,14 +6,22 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  background-color: #f5f7f9;
-  color: #333;
+  font-family:
+    var(--font-roboto),
+    Roboto,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Helvetica,
+    Arial,
+    sans-serif;
+  background-color: #0a1929;
+  color: #fff;
 }
 
 .navbar {
-  background: #fff;
-  border-bottom: 1px solid #e1e4e8;
+  background: #132f4c;
+  border-bottom: 1px solid #1e4976;
   padding: 15px 0;
   margin-bottom: 30px;
 
@@ -27,7 +35,7 @@ body {
     font-weight: bold;
     font-size: 1.2rem;
     text-decoration: none;
-    color: #000;
+    color: #fff;
   }
 
   .links {
@@ -36,20 +44,20 @@ body {
 
     a {
       text-decoration: none;
-      color: #555;
+      color: #b2bac2;
       font-weight: 500;
 
       &:hover {
-        color: #000;
+        color: #fff;
       }
     }
   }
 }
 
 .card {
-  background: #fff;
+  background: #132f4c;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
   padding: 20px;
   margin-bottom: 20px;
 }
@@ -62,13 +70,13 @@ table {
   td {
     text-align: left;
     padding: 12px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid #1e4976;
   }
 
   th {
     font-weight: 600;
-    color: #666;
-    background: #fafafa;
+    color: #b2bac2;
+    background: #173a5e;
   }
 }
 
@@ -85,12 +93,12 @@ table {
   }
 
   &.btn-primary {
-    background: #0070f3;
+    background: #2196f3;
     color: #fff;
   }
 
   &.btn-danger {
-    background: #ff4d4f;
+    background: #f44336;
     color: #fff;
   }
 }
@@ -107,8 +115,15 @@ table {
   input {
     width: 100%;
     padding: 8px;
-    border: 1px solid #ddd;
+    border: 1px solid #1e4976;
+    background: #0a1929;
+    color: #fff;
     border-radius: 4px;
     box-sizing: border-box;
+
+    &:focus {
+      outline: none;
+      border-color: #2196f3;
+    }
   }
 }
