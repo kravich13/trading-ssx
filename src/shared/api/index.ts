@@ -7,30 +7,48 @@ export const db = new Database(DB_PATH);
 
 // Initialize database
 db.exec(`
+  -- Investors table
   CREATE TABLE IF NOT EXISTS investors (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
+  -- Global trades table (Master info)
+  CREATE TABLE IF NOT EXISTS trades (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ticker TEXT NOT NULL,
+    pl_percent REAL NOT NULL,
+    default_risk_percent REAL,
+    closed_date DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  -- Ledger table (Detailed row-by-row history for each investor)
   CREATE TABLE IF NOT EXISTS ledger (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     investor_id INTEGER NOT NULL,
+    trade_id INTEGER, -- NULL if it's a manual balance change
     type TEXT NOT NULL CHECK(type IN ('TRADE', 'CAPITAL_CHANGE', 'DEPOSIT_CHANGE')),
-    ticker TEXT,
-    pl_percent REAL,
-    pl_usd REAL DEFAULT 0,
+    
+    -- Values for the specific row (from Excel)
+    change_amount REAL DEFAULT 0,    -- PL$ for trades, or the change amount for manual updates
     capital_before REAL NOT NULL,
-    deposit_before REAL NOT NULL,
     capital_after REAL NOT NULL,
+    deposit_before REAL NOT NULL,
     deposit_after REAL NOT NULL,
-    closed_date DATETIME,
-    default_risk_percent REAL,
+    
+    -- Denormalized data for easier reporting (copied from trade or manual entry)
+    ticker TEXT,                     -- Ticker for trades
+    pl_percent REAL,                 -- PL% for trades
+    default_risk_percent REAL,       -- Risk% for trades
+    
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (investor_id) REFERENCES investors(id)
+    FOREIGN KEY (investor_id) REFERENCES investors(id),
+    FOREIGN KEY (trade_id) REFERENCES trades(id)
   );
 
-  -- Create a view for total stats
+  -- View for current balance of each investor
   CREATE VIEW IF NOT EXISTS investor_current_stats AS
   SELECT 
     i.id,
