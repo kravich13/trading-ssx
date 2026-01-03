@@ -138,6 +138,16 @@ export async function updateInvestorBalance(
     ) VALUES (?, ?, ?, ?, ?, ?, ?)
   `);
 
+  insertLedger.run(
+    id,
+    type,
+    changeAmount,
+    lastLedger.capital_after,
+    newCapital,
+    lastLedger.deposit_after,
+    newDeposit
+  );
+
   revalidatePath('/');
   revalidatePath('/investors');
   revalidatePath(`/investors/${id}`);
