@@ -83,6 +83,10 @@ When taking a trade with **1% risk** on capital ($100), you use the **$3,500** a
 - [ ] **5. Core Logic Implementation**
   - [ ] Calculation of position sizes based on total capital
   - [ ] Row-by-row balance updates (changes only affect future rows)
+- [ ] **6. Trade Entry**
+  - [ ] Screen to add a new trade with all Excel parameters (Ticker, PL%, PL$, Closed Date, Default Risk%)
+  - [ ] Show total capital of all copy-traders when adding a trade
+  - [ ] Automated calculation of trade impact on each investor's balance
 
 ## Technologies
 
@@ -112,7 +116,6 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 - `app/` - Next.js App Router (only routing and entry points)
 - `src/` - FSD Architecture:
-  - `processes/` (optional)
   - `pages/` - Full pages components
   - `widgets/` - Large UI components
   - `features/` - User interactions (actions)
