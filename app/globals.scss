@@ -68,6 +68,19 @@ body {
   }
 }
 
+// Sticky table headers under the navbar
+.MuiTableContainer-root {
+  overflow: visible !important; // Allow sticky to work relative to the window
+}
+
+.MuiTableCell-head {
+  position: sticky !important;
+  top: 61px !important; // Stick exactly under the navbar
+  z-index: 100 !important;
+  background-color: #132f4c !important; // Match table header background
+  border-bottom: 2px solid #1e4976 !important;
+}
+
 .card {
   background: #132f4c;
   border-radius: 8px;
