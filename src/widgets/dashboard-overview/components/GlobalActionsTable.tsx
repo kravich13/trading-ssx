@@ -138,6 +138,9 @@ export function GlobalActionsTable({ actions }: GlobalActionsTableProps) {
                 } else if (row.type === LedgerType.CAPITAL_CHANGE) {
                   chipLabel = `CAPITAL ${row.change_amount > 0 ? 'ADD' : 'SUB'}`;
                   chipColor = 'secondary';
+                } else if (row.type === LedgerType.BOTH_CHANGE) {
+                  chipLabel = `BOTH ${row.change_amount > 0 ? 'ADD' : 'SUB'}`;
+                  chipColor = 'info';
                 }
 
                 const rowNumber = actions.length - index;

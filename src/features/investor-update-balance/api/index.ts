@@ -4,19 +4,28 @@ import { updateInvestorBalance } from '@/entities/investor';
 import { redirect } from 'next/navigation';
 import { LedgerType } from '@/shared/enum';
 
-export async function updateBalanceAction(id: number, formData: FormData) {
-  const type = formData.get('type') as LedgerType.CAPITAL_CHANGE | LedgerType.DEPOSIT_CHANGE;
-  const newCapital = parseFloat(formData.get('capital') as string);
-  const newDeposit = parseFloat(formData.get('deposit') as string);
+export async function updateBalanceAction(
+  id: number,
+  formData: FormData,
+  shouldRedirect: boolean = true
+) {
+  const type = formData.get('type') as
+    | LedgerType.CAPITAL_CHANGE
+    | LedgerType.DEPOSIT_CHANGE
+    | LedgerType.BOTH_CHANGE;
+  const amount = parseFloat(formData.get('amount') as string);
 
-  if (!type || isNaN(newCapital) || isNaN(newDeposit)) {
+  if (!type || isNaN(amount) || amount === 0) {
     throw new Error('Invalid input');
   }
 
-  if (!Number.isInteger(newCapital) || !Number.isInteger(newDeposit)) {
-    throw new Error('Only integer values are allowed for capital and deposit');
+  if (!Number.isInteger(amount)) {
+    throw new Error('Only integer values are allowed');
   }
 
-  await updateInvestorBalance(id, newCapital, newDeposit, type);
-  redirect('/investors');
+  await updateInvestorBalance(id, amount, type);
+
+  if (shouldRedirect) {
+    redirect('/investors');
+  }
 }

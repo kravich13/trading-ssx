@@ -1,13 +1,33 @@
+'use client';
+
 import { getInvestorById, getInvestorLedger } from '@/entities/investor';
-import AddIcon from '@mui/icons-material/Add';
+import { Investor, LedgerEntry } from '@/entities/investor/types';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import HistoryIcon from '@mui/icons-material/History';
+import AddIcon from '@mui/icons-material/Add';
 import { Box, Button, Typography } from '@mui/material';
 import Link from 'next/link';
 import { InvestorActionsTable } from './InvestorActionsTable';
+import { UpdateInvestorBalanceModal } from '@/features/investor-update-balance';
+import { useEffect, useState } from 'react';
 
-export async function InvestorActions({ id }: { id: number }) {
-  const [investor, ledger] = await Promise.all([getInvestorById(id), getInvestorLedger(id)]);
+export function InvestorActions({ id }: { id: number }) {
+  const [investor, setInvestor] = useState<Investor | null>(null);
+  const [ledger, setLedger] = useState<LedgerEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    async function fetchData() {
+      const [inv, led] = await Promise.all([getInvestorById(id), getInvestorLedger(id)]);
+      setInvestor(inv || null);
+      setLedger(led);
+      setLoading(false);
+    }
+    fetchData();
+  }, [id]);
+
+  if (loading) return null;
 
   if (!investor) {
     return (
@@ -38,11 +58,14 @@ export async function InvestorActions({ id }: { id: number }) {
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 2 }}>
-          <Link href={`/investors/${id}/update`} passHref>
-            <Button variant="contained" color="primary" startIcon={<AddIcon />}>
-              Add Action
-            </Button>
-          </Link>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            onClick={() => setIsModalOpen(true)}
+          >
+            Add Action
+          </Button>
           <Link href={`/investors/${id}/trades`} passHref>
             <Button variant="contained" color="info" startIcon={<HistoryIcon />}>
               View Trade Log
@@ -56,6 +79,12 @@ export async function InvestorActions({ id }: { id: number }) {
       </Typography>
 
       <InvestorActionsTable ledger={ledger} investorId={id} />
+
+      <UpdateInvestorBalanceModal
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        investor={investor}
+      />
     </Box>
   );
 }

@@ -41,7 +41,10 @@ export function InvestorActionsTable({ ledger, investorId }: InvestorActionsTabl
   const [editDate, setEditDate] = useState<string>('');
 
   const actionsOnly = ledger.filter(
-    (row) => row.type === LedgerType.CAPITAL_CHANGE || row.type === LedgerType.DEPOSIT_CHANGE
+    (row) =>
+      row.type === LedgerType.CAPITAL_CHANGE ||
+      row.type === LedgerType.DEPOSIT_CHANGE ||
+      row.type === LedgerType.BOTH_CHANGE
   );
 
   const formatCurrency = (value: number) =>
@@ -137,6 +140,9 @@ export function InvestorActionsTable({ ledger, investorId }: InvestorActionsTabl
                 } else if (row.type === LedgerType.CAPITAL_CHANGE) {
                   chipLabel = `CAPITAL ${row.change_amount > 0 ? 'ADD' : 'SUB'}`;
                   chipColor = 'secondary';
+                } else if (row.type === LedgerType.BOTH_CHANGE) {
+                  chipLabel = `BOTH ${row.change_amount > 0 ? 'ADD' : 'SUB'}`;
+                  chipColor = 'info';
                 }
 
                 const rowNumber = actionsOnly.length - index;

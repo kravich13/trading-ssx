@@ -81,7 +81,7 @@ export async function getGlobalActionsLog(): Promise<(LedgerEntry & { investor_n
     SELECT l.*, i.name as investor_name
     FROM ledger l
     JOIN investors i ON l.investor_id = i.id
-    WHERE l.type IN ('${LedgerType.CAPITAL_CHANGE}', '${LedgerType.DEPOSIT_CHANGE}')
+    WHERE l.type IN ('${LedgerType.CAPITAL_CHANGE}', '${LedgerType.DEPOSIT_CHANGE}', '${LedgerType.BOTH_CHANGE}')
     ORDER BY l.id DESC
   `
     )
@@ -123,9 +123,8 @@ export async function toggleInvestorStatus(id: number, isActive: boolean) {
 
 export async function updateInvestorBalance(
   id: number,
-  newCapital: number,
-  newDeposit: number,
-  type: LedgerType.CAPITAL_CHANGE | LedgerType.DEPOSIT_CHANGE
+  amount: number,
+  type: LedgerType.CAPITAL_CHANGE | LedgerType.DEPOSIT_CHANGE | LedgerType.BOTH_CHANGE
 ) {
   const lastLedger = db
     .prepare(
@@ -133,10 +132,17 @@ export async function updateInvestorBalance(
     )
     .get(id) as { capital_after: number; deposit_after: number };
 
-  const changeAmount =
-    type === 'CAPITAL_CHANGE'
-      ? newCapital - lastLedger.capital_after
-      : newDeposit - lastLedger.deposit_after;
+  let newCapital = lastLedger.capital_after;
+  let newDeposit = lastLedger.deposit_after;
+
+  if (type === LedgerType.CAPITAL_CHANGE) {
+    newCapital += amount;
+  } else if (type === LedgerType.DEPOSIT_CHANGE) {
+    newDeposit += amount;
+  } else if (type === LedgerType.BOTH_CHANGE) {
+    newCapital += amount;
+    newDeposit += amount;
+  }
 
   const insertLedger = db.prepare(`
     INSERT INTO ledger (
@@ -147,7 +153,7 @@ export async function updateInvestorBalance(
   insertLedger.run(
     id,
     type,
-    changeAmount,
+    amount,
     lastLedger.capital_after,
     newCapital,
     lastLedger.deposit_after,
@@ -200,6 +206,10 @@ export async function updateLedgerEntry(
     db.prepare(
       'UPDATE ledger SET change_amount = ?, deposit_after = deposit_after + ?, created_at = ? WHERE id = ?'
     ).run(amount, diff, createdAt, id);
+  } else if (entry.type === LedgerType.BOTH_CHANGE) {
+    db.prepare(
+      'UPDATE ledger SET change_amount = ?, capital_after = capital_after + ?, deposit_after = deposit_after + ?, created_at = ? WHERE id = ?'
+    ).run(amount, diff, diff, createdAt, id);
   }
 
   revalidatePath('/');

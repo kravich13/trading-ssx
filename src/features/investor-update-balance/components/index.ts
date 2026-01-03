@@ -1,1 +1,1 @@
-export * from './UpdateInvestorBalance';
+export * from './UpdateInvestorBalanceModal';
