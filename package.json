@@ -6,19 +6,30 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "tsc": "tsc",
+    "prettier": "prettier --config ./.prettierrc --check \"app/**/*.{ts,tsx,scss}\" ",
+    "prettier:fix": "yarn prettier --write",
+    "prepare": "husky"
   },
   "dependencies": {
+    "better-sqlite3": "^12.5.0",
     "next": "16.1.1",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "sass": "^1.97.1"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.7.4",
     "typescript": "^5"
-  }
+  },
+  "packageManager": "yarn@4.12.0"
 }

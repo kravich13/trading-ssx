@@ -1,0 +1,3 @@
+yarn prettier:fix
+yarn lint
+yarn tsc

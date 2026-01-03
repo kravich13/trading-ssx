@@ -1,36 +1,114 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Trading Statistics (SSX)
 
-## Getting Started
+Local project for trading statistics management.
 
-First, run the development server:
+## Table of Contents
+- [Trading Statistics (SSX)](#trading-statistics-ssx)
+  - [Table of Contents](#table-of-contents)
+  - [Project Overview](#project-overview)
+    - [Core Logic](#core-logic)
+  - [Trading Logic \& Examples](#trading-logic--examples)
+    - [Example: 3 Participants (You + 2 Investors)](#example-3-participants-you--2-investors)
+      - [1. Capital Distribution (The "100%" Base)](#1-capital-distribution-the-100-base)
+      - [2. Deposit Distribution (Actual Funds)](#2-deposit-distribution-actual-funds)
+      - [3. Execution](#3-execution)
+    - [Dynamic Changes](#dynamic-changes)
+  - [Development Progress (TODO)](#development-progress-todo)
+  - [Technologies](#technologies)
+  - [Installation](#installation)
+  - [Development](#development)
+  - [Project Structure](#project-structure)
+
+## Project Overview
+
+This tool is designed for a trader managing combined capital from multiple investors and their own funds. It distinguishes between two key concepts:
+- **Capital**: The notional amount used for calculating position sizes and risk management.
+- **Deposit**: The actual funds available on exchange accounts.
+
+### Core Logic
+- **Position Sizing**: Based on the total **Capital** of all participants.
+- **Leverage**: Used to execute trades as if the total Capital were fully deposited on the exchange.
+- **Risk Management**: Standard risk per trade is 0.5-2% of the total Capital.
+- **Flexibility**: Investors can adjust their Capital and Deposit independently. Changes in these values dynamically affect future position sizes.
+
+## Trading Logic & Examples
+
+This project implements a mathematical model for managing shared risk.
+
+### Example: 3 Participants (You + 2 Investors)
+
+#### 1. Capital Distribution (The "100%" Base)
+The total notional capital is **$10,000**.
+
+| Participant | Notional Capital | % of Total |
+|-------------|------------------|------------|
+| You (Me)    | $5,000           | 50%        |
+| Investor A  | $2,000           | 20%        |
+| Investor B  | $3,000           | 30%        |
+| **Total**   | **$10,000**      | **100%**   |
+
+#### 2. Deposit Distribution (Actual Funds)
+The total amount of money actually sent to the exchange is **$3,500**.
+
+| Participant | Actual Deposit |
+|-------------|----------------|
+| You (Me)    | $2,000         |
+| Investor A  | $500           |
+| Investor B  | $1,000         |
+| **Total**   | **$3,500**     |
+
+#### 3. Execution
+When taking a trade with **1% risk** on capital ($100), you use the **$3,500** actual deposit with leverage to open a position size scaled to the **$10,000** total capital.
+
+### Dynamic Changes
+- **Adding Capital (No Deposit)**: If an investor increases their capital (e.g., $2k -> $4k), the total capital grows ($12k). Future position sizes increase, and leverage on the existing $3.5k deposit increases.
+- **Adding Deposit (No Capital)**: If an investor adds funds to the exchange but keeps their capital the same, the position sizes remain identical, but the account safety (margin) improves as leverage decreases.
+
+## Development Progress (TODO)
+
+- [ ] **1. Database & Infrastructure**
+  - [x] Install dependencies (`better-sqlite3`, `sass`)
+  - [x] Design SQLite schema (Investors, Ledger for trades and balance changes)
+  - [x] Implement database connection utility
+- [ ] **2. Management Screen**
+  - [ ] Add/Delete investors
+  - [ ] Update individual investor Capital/Deposit (row-by-row logic)
+  - [ ] Display change history in investor's personal table
+- [ ] **3. Main Dashboard**
+  - [ ] Header with Total Capital and Total Deposit (sum of all investors)
+  - [ ] Table of all investors with their current Capital and Deposit
+- [ ] **4. Trading Logs**
+  - [ ] Investor Detail View: List of all trades + capital changes (as shown in Excel)
+  - [ ] Total Trades View: Global log of all trading activity across the project
+- [ ] **5. Core Logic Implementation**
+  - [ ] Calculation of position sizes based on total capital
+  - [ ] Row-by-row balance updates (changes only affect future rows)
+
+## Technologies
+
+- **Next.js 16.1.1** - React framework with App Router
+- **React 19.2.3** - UI library
+- **TypeScript 5** - type safety
+- **SQLite (better-sqlite3)** - local file-based database
+- **SCSS (Sass)** - CSS preprocessor
+- **Yarn 4.12.0** - package manager
+
+## Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+yarn install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Development
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+yarn dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Learn More
+## Project Structure
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `app/` - Next.js App Router (pages and components)
+- `lib/` - utilities and database configuration
+- `*.db` - SQLite database files
