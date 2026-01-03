@@ -1,0 +1,5 @@
+export enum LedgerType {
+  TRADE = 'TRADE',
+  CAPITAL_CHANGE = 'CAPITAL_CHANGE',
+  DEPOSIT_CHANGE = 'DEPOSIT_CHANGE',
+}

@@ -2,7 +2,8 @@
 
 import { db } from '@/shared/api';
 import { revalidatePath } from 'next/cache';
-import { Investor } from '../types';
+import { Investor, LedgerEntry } from '../types';
+import { LedgerType } from '@/shared/enum';
 
 export async function getInvestors(): Promise<Investor[]> {
   const investors = db
@@ -57,12 +58,25 @@ export async function getTotalStats(): Promise<{ total_capital: number; total_de
   return stats;
 }
 
+export async function getInvestorLedger(id: number): Promise<LedgerEntry[]> {
+  const ledger = db
+    .prepare(
+      `
+    SELECT * FROM ledger 
+    WHERE investor_id = ? 
+    ORDER BY id ASC
+  `
+    )
+    .all(id) as LedgerEntry[];
+  return ledger;
+}
+
 export async function addInvestor(name: string, initialCapital: number, initialDeposit: number) {
   const insertInvestor = db.prepare('INSERT INTO investors (name) VALUES (?)');
   const insertLedger = db.prepare(`
     INSERT INTO ledger (
       investor_id, type, capital_before, deposit_before, capital_after, deposit_after
-    ) VALUES (?, 'CAPITAL_CHANGE', 0, 0, ?, ?)
+    ) VALUES (?, '${LedgerType.CAPITAL_CHANGE}', 0, 0, ?, ?)
   `);
 
   const transaction = db.transaction((name: string, cap: number, dep: number) => {
@@ -94,7 +108,7 @@ export async function updateInvestorBalance(
   id: number,
   newCapital: number,
   newDeposit: number,
-  type: 'CAPITAL_CHANGE' | 'DEPOSIT_CHANGE'
+  type: LedgerType.CAPITAL_CHANGE | LedgerType.DEPOSIT_CHANGE
 ) {
   const lastLedger = db
     .prepare(

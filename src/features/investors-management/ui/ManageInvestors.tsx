@@ -110,7 +110,18 @@ export async function ManageInvestors() {
                 ) : (
                   investors.map((investor) => (
                     <TableRow key={investor.id} hover>
-                      <TableCell>{investor.name}</TableCell>
+                      <TableCell>
+                        <Link
+                          href={`/investors/${investor.id}`}
+                          style={{
+                            color: '#2196f3',
+                            textDecoration: 'none',
+                            fontWeight: 'medium',
+                          }}
+                        >
+                          {investor.name}
+                        </Link>
+                      </TableCell>
                       <TableCell align="right">
                         $
                         {investor.current_capital.toLocaleString(undefined, {

@@ -73,7 +73,7 @@ When taking a trade with **1% risk** on capital ($100), you use the **$3,500** a
 - [x] **2. Management Screen**
   - [x] Add/Delete investors
   - [x] Update individual investor Capital/Deposit (row-by-row logic)
-  - [ ] Display change history in investor's personal table
+  - [x] Display change history in investor's personal table
 - [x] **3. Main Dashboard**
   - [x] Header with Total Capital and Total Deposit (sum of all investors)
   - [x] Table of all investors with their current Capital and Deposit

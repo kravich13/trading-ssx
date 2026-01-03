@@ -1,4 +1,5 @@
 import { getInvestorById } from '@/entities/investor';
+import { LedgerType } from '@/shared/enum';
 import {
   Box,
   Button,
@@ -12,8 +13,8 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { updateBalanceAction } from '../api';
 import Link from 'next/link';
+import { updateBalanceAction } from '../api';
 
 export async function UpdateInvestorBalance({ id }: { id: number }) {
   const investor = await getInvestorById(id);
@@ -57,11 +58,11 @@ export async function UpdateInvestorBalance({ id }: { id: number }) {
                 name="type"
                 labelId="change-type-label"
                 label="Update Type"
-                defaultValue="CAPITAL_CHANGE"
+                defaultValue={LedgerType.CAPITAL_CHANGE}
                 required
               >
-                <MenuItem value="CAPITAL_CHANGE">Capital Change (Manual)</MenuItem>
-                <MenuItem value="DEPOSIT_CHANGE">Deposit Change (Actual Funds)</MenuItem>
+                <MenuItem value={LedgerType.CAPITAL_CHANGE}>Capital Change (Manual)</MenuItem>
+                <MenuItem value={LedgerType.DEPOSIT_CHANGE}>Deposit Change (Actual Funds)</MenuItem>
               </Select>
             </FormControl>
 

@@ -16,6 +16,7 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
+import Link from 'next/link';
 
 export async function DashboardOverview() {
   const [investors, stats] = await Promise.all([getInvestors(), getTotalStats()]);
@@ -128,7 +129,16 @@ export async function DashboardOverview() {
               return (
                 <TableRow key={investor.id} hover>
                   <TableCell component="th" scope="row">
-                    <Typography fontWeight="medium">{investor.name}</Typography>
+                    <Link
+                      href={`/investors/${investor.id}`}
+                      style={{
+                        color: '#2196f3',
+                        textDecoration: 'none',
+                        fontWeight: 'medium',
+                      }}
+                    >
+                      {investor.name}
+                    </Link>
                   </TableCell>
                   <TableCell align="right">{capitalShare.toFixed(2)}%</TableCell>
                   <TableCell align="right">{formatCurrency(investor.current_capital)}</TableCell>
