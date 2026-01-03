@@ -24,6 +24,25 @@ export async function getInvestors(): Promise<Investor[]> {
   return investors;
 }
 
+export async function getInvestorById(id: number): Promise<Investor | undefined> {
+  const investor = db
+    .prepare(
+      `
+    SELECT 
+      i.id,
+      i.name,
+      COALESCE(l.capital_after, 0) as current_capital,
+      COALESCE(l.deposit_after, 0) as current_deposit
+    FROM investors i
+    LEFT JOIN ledger l ON l.investor_id = i.id 
+    AND l.id = (SELECT MAX(id) FROM ledger WHERE investor_id = i.id)
+    WHERE i.id = ?
+  `
+    )
+    .get(id) as Investor | undefined;
+  return investor;
+}
+
 export async function getTotalStats(): Promise<{ total_capital: number; total_deposit: number }> {
   const stats = db
     .prepare(
@@ -83,15 +102,21 @@ export async function updateInvestorBalance(
     )
     .get(id) as { capital_after: number; deposit_after: number };
 
+  const changeAmount =
+    type === 'CAPITAL_CHANGE'
+      ? newCapital - lastLedger.capital_after
+      : newDeposit - lastLedger.deposit_after;
+
   const insertLedger = db.prepare(`
     INSERT INTO ledger (
-      investor_id, type, capital_before, deposit_before, capital_after, deposit_after
-    ) VALUES (?, ?, ?, ?, ?, ?)
+      investor_id, type, change_amount, capital_before, capital_after, deposit_before, deposit_after
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)
   `);
 
   insertLedger.run(
     id,
     type,
+    changeAmount,
     lastLedger.capital_after,
     lastLedger.deposit_after,
     newCapital,

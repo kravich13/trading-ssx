@@ -1,5 +1,6 @@
 import { getInvestors } from '@/entities/investor';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
 import {
   Box,
   Button,
@@ -18,6 +19,7 @@ import {
   Typography,
 } from '@mui/material';
 import { addInvestorAction, deleteInvestorAction } from '../api';
+import Link from 'next/link';
 
 export async function ManageInvestors() {
   const investors = await getInvestors();
@@ -124,16 +126,23 @@ export async function ManageInvestors() {
                         })}
                       </TableCell>
                       <TableCell align="center">
-                        <form action={deleteInvestorAction.bind(null, investor.id)}>
-                          <IconButton
-                            type="submit"
-                            color="error"
-                            size="small"
-                            title="Delete investor"
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </form>
+                        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+                          <Link href={`/investors/${investor.id}/update`} passHref>
+                            <IconButton color="primary" size="small" title="Update Balance">
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          </Link>
+                          <form action={deleteInvestorAction.bind(null, investor.id)}>
+                            <IconButton
+                              type="submit"
+                              color="error"
+                              size="small"
+                              title="Delete investor"
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </form>
+                        </Box>
                       </TableCell>
                     </TableRow>
                   ))
