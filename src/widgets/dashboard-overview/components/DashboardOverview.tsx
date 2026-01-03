@@ -108,13 +108,16 @@ export async function DashboardOverview() {
             <TableRow sx={{ backgroundColor: 'action.hover' }}>
               <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>
               <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                Capital Share
-              </TableCell>
-              <TableCell align="right" sx={{ fontWeight: 'bold' }}>
                 Current Capital
               </TableCell>
               <TableCell align="right" sx={{ fontWeight: 'bold' }}>
                 Current Deposit
+              </TableCell>
+              <TableCell align="right" sx={{ fontWeight: 'bold' }}>
+                Capital Share
+              </TableCell>
+              <TableCell align="right" sx={{ fontWeight: 'bold' }}>
+                Deposit Share
               </TableCell>
             </TableRow>
           </TableHead>
@@ -123,6 +126,11 @@ export async function DashboardOverview() {
               const capitalShare =
                 stats.total_capital > 0
                   ? (investor.current_capital / stats.total_capital) * 100
+                  : 0;
+
+              const depositShare =
+                stats.total_deposit > 0
+                  ? (investor.current_deposit / stats.total_deposit) * 100
                   : 0;
 
               return (
@@ -139,22 +147,26 @@ export async function DashboardOverview() {
                       {investor.name}
                     </Link>
                   </TableCell>
-                  <TableCell align="right">{capitalShare.toFixed(2)}%</TableCell>
                   <TableCell align="right">{formatCurrency(investor.current_capital)}</TableCell>
                   <TableCell align="right">{formatCurrency(investor.current_deposit)}</TableCell>
+                  <TableCell align="right">{capitalShare.toFixed(2)}%</TableCell>
+                  <TableCell align="right">{depositShare.toFixed(2)}%</TableCell>
                 </TableRow>
               );
             })}
             <TableRow sx={{ bgcolor: 'action.selected' }}>
               <TableCell sx={{ fontWeight: 'bold' }}>TOTAL</TableCell>
               <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                100.00%
-              </TableCell>
-              <TableCell align="right" sx={{ fontWeight: 'bold' }}>
                 {formatCurrency(stats.total_capital)}
               </TableCell>
               <TableCell align="right" sx={{ fontWeight: 'bold' }}>
                 {formatCurrency(stats.total_deposit)}
+              </TableCell>
+              <TableCell align="right" sx={{ fontWeight: 'bold' }}>
+                100.00%
+              </TableCell>
+              <TableCell align="right" sx={{ fontWeight: 'bold' }}>
+                100.00%
               </TableCell>
             </TableRow>
           </TableBody>
