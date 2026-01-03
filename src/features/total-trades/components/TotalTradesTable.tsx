@@ -4,6 +4,7 @@ import { deleteTrade, updateTrade } from '@/entities/trade/api';
 import { Trade } from '@/entities/trade/types';
 import { TradeStatus } from '@/shared/enum';
 import { ConfirmModal } from '@/shared/ui/modals';
+import { normalizeDate } from '@/shared/utils/date.util';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import {
@@ -13,9 +14,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  FormControl,
   IconButton,
-  InputLabel,
   MenuItem,
   Paper,
   Select,
@@ -28,7 +27,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { useState, memo, useCallback } from 'react';
+import { memo, useCallback, useState } from 'react';
 
 interface TotalTradesTableProps {
   trades: Trade[];
@@ -39,7 +38,6 @@ export const TotalTradesTable = memo(({ trades }: TotalTradesTableProps) => {
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editDate, setEditDate] = useState<string>('');
-  const [editStatus, setEditStatus] = useState<TradeStatus>(TradeStatus.CLOSED);
 
   const formatCurrency = useCallback(
     (value: number) =>
@@ -65,18 +63,17 @@ export const TotalTradesTable = memo(({ trades }: TotalTradesTableProps) => {
 
   const handleEditClick = useCallback((trade: Trade) => {
     setSelectedTrade(trade);
-    setEditDate(trade.closed_date ? trade.closed_date.split(' ')[0] : '');
-    setEditStatus(trade.status || TradeStatus.CLOSED);
+    setEditDate(normalizeDate(trade.closed_date));
     setEditModalOpen(true);
   }, []);
 
   const handleConfirmEdit = useCallback(async () => {
     if (selectedTrade) {
-      await updateTrade(selectedTrade.id, editDate, editStatus);
+      await updateTrade(selectedTrade.id, editDate, selectedTrade.status || TradeStatus.CLOSED);
       setEditModalOpen(false);
       setSelectedTrade(null);
     }
-  }, [selectedTrade, editDate, editStatus]);
+  }, [selectedTrade, editDate]);
 
   const handleStatusChange = useCallback(
     async (tradeId: number, closedDate: string, newStatus: TradeStatus) => {
@@ -256,18 +253,6 @@ export const TotalTradesTable = memo(({ trades }: TotalTradesTableProps) => {
                 },
               }}
             />
-            <FormControl fullWidth size="small">
-              <InputLabel id="trade-status-label">Status</InputLabel>
-              <Select
-                labelId="trade-status-label"
-                label="Status"
-                value={editStatus}
-                onChange={(e) => setEditStatus(e.target.value as TradeStatus)}
-              >
-                <MenuItem value={TradeStatus.IN_PROGRESS}>In Progress</MenuItem>
-                <MenuItem value={TradeStatus.CLOSED}>Closed</MenuItem>
-              </Select>
-            </FormControl>
           </Box>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>

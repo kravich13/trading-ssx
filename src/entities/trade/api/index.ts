@@ -31,7 +31,6 @@ export async function updateTrade(id: number, closedDate: string, status: TradeS
     id
   );
 
-  // Also update ledger entries associated with this trade if needed
   db.prepare('UPDATE ledger SET closed_date = ? WHERE trade_id = ?').run(closedDate, id);
 
   revalidatePath('/');
@@ -40,9 +39,7 @@ export async function updateTrade(id: number, closedDate: string, status: TradeS
 
 export async function deleteTrade(id: number) {
   const transaction = db.transaction(() => {
-    // Delete ledger entries first due to FK or logic
     db.prepare('DELETE FROM ledger WHERE trade_id = ?').run(id);
-    // Delete the trade
     db.prepare('DELETE FROM trades WHERE id = ?').run(id);
   });
 

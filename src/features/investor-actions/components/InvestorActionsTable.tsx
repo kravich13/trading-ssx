@@ -1,14 +1,20 @@
 'use client';
 
+import { deleteLedgerEntry, updateLedgerEntry } from '@/entities/investor/api';
 import { LedgerEntry } from '@/entities/investor/types';
 import { LedgerType } from '@/shared/enum';
-import { deleteLedgerEntry, updateLedgerEntry } from '@/entities/investor/api';
 import { ConfirmModal } from '@/shared/ui/modals';
-import EditIcon from '@mui/icons-material/Edit';
+import { normalizeDate } from '@/shared/utils/date.util';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
 import {
   Box,
+  Button,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   IconButton,
   Paper,
   Table,
@@ -17,15 +23,10 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Typography,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
   TextField,
+  Typography,
 } from '@mui/material';
-import { useState, memo, useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 
 interface InvestorActionsTableProps {
   ledger: LedgerEntry[];
@@ -78,7 +79,7 @@ export const InvestorActionsTable = memo(({ ledger, investorId }: InvestorAction
     setSelectedEntry(entry);
     setSelectedRowNumber(rowNumber);
     setEditAmount(entry.change_amount.toString());
-    setEditDate(entry.created_at ? entry.created_at.split(' ')[0] : '');
+    setEditDate(normalizeDate(entry.created_at));
     setEditModalOpen(true);
   }, []);
 

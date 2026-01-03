@@ -1,8 +1,19 @@
 'use client';
 
-import { memo, useState, useCallback } from 'react';
+import { LedgerEntry } from '@/entities/investor/types';
+import { deleteTrade, updateTrade } from '@/entities/trade/api';
+import { LedgerType, TradeStatus } from '@/shared/enum';
+import { ConfirmModal } from '@/shared/ui/modals';
+import { normalizeDate } from '@/shared/utils/date.util';
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
 import {
   Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   IconButton,
   MenuItem,
   Paper,
@@ -13,21 +24,9 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   TextField,
-  FormControl,
-  InputLabel,
-  Button,
 } from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import { deleteTrade, updateTrade } from '@/entities/trade/api';
-import { LedgerType, TradeStatus } from '@/shared/enum';
-import { ConfirmModal } from '@/shared/ui/modals';
-import { LedgerEntry } from '@/entities/investor/types';
+import { memo, useCallback, useState } from 'react';
 
 type LedgerWithStatus = LedgerEntry & { status?: TradeStatus };
 
@@ -40,7 +39,6 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
   const [selectedTrade, setSelectedTrade] = useState<LedgerWithStatus | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editDate, setEditDate] = useState<string>('');
-  const [editStatus, setEditStatus] = useState<TradeStatus>(TradeStatus.CLOSED);
 
   const tradesOnlyLedger = ledger.filter((row) => row.type === LedgerType.TRADE);
 
@@ -65,18 +63,21 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
 
   const handleEditClick = useCallback((trade: LedgerWithStatus) => {
     setSelectedTrade(trade);
-    setEditDate(trade.closed_date ? trade.closed_date.split(' ')[0] : '');
-    setEditStatus(trade.status || TradeStatus.CLOSED);
+    setEditDate(normalizeDate(trade.closed_date));
     setEditModalOpen(true);
   }, []);
 
   const handleConfirmEdit = useCallback(async () => {
     if (selectedTrade) {
-      await updateTrade(selectedTrade.trade_id || selectedTrade.id, editDate, editStatus);
+      await updateTrade(
+        selectedTrade.trade_id || selectedTrade.id,
+        editDate,
+        selectedTrade.status || TradeStatus.CLOSED
+      );
       setEditModalOpen(false);
       setSelectedTrade(null);
     }
-  }, [selectedTrade, editDate, editStatus]);
+  }, [selectedTrade, editDate]);
 
   const handleStatusChange = useCallback(
     async (tradeId: number, closedDate: string, newStatus: TradeStatus) => {
@@ -250,18 +251,6 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
                 },
               }}
             />
-            <FormControl fullWidth size="small">
-              <InputLabel id="trade-status-label">Status</InputLabel>
-              <Select
-                labelId="trade-status-label"
-                label="Status"
-                value={editStatus}
-                onChange={(e) => setEditStatus(e.target.value as TradeStatus)}
-              >
-                <MenuItem value={TradeStatus.IN_PROGRESS}>In Progress</MenuItem>
-                <MenuItem value={TradeStatus.CLOSED}>Closed</MenuItem>
-              </Select>
-            </FormControl>
           </Box>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
