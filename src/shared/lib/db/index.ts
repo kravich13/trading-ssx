@@ -10,6 +10,7 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE,
     is_active INTEGER DEFAULT 1,
+    archived_at DATETIME,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 

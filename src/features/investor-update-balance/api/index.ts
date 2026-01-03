@@ -13,6 +13,10 @@ export async function updateBalanceAction(id: number, formData: FormData) {
     throw new Error('Invalid input');
   }
 
+  if (!Number.isInteger(newCapital) || !Number.isInteger(newDeposit)) {
+    throw new Error('Only integer values are allowed for capital and deposit');
+  }
+
   await updateInvestorBalance(id, newCapital, newDeposit, type);
   redirect('/investors');
 }

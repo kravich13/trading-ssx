@@ -1,9 +1,7 @@
 import { getInvestors } from '@/entities/investor';
-import EditIcon from '@mui/icons-material/Edit';
 import HistoryIcon from '@mui/icons-material/History';
 import {
   Box,
-  Button,
   Card,
   CardContent,
   Chip,
@@ -15,12 +13,11 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TextField,
   Typography,
 } from '@mui/material';
 import Link from 'next/link';
-import { addInvestorAction } from '../api';
 import { ToggleInvestorStatusButton } from './ToggleInvestorStatusButton';
+import { AddInvestorForm } from './AddInvestorForm';
 
 export async function ManageInvestors() {
   const investors = await getInvestors();
@@ -38,43 +35,7 @@ export async function ManageInvestors() {
               <Typography variant="h6" gutterBottom>
                 Add New Investor
               </Typography>
-              <Box
-                component="form"
-                action={addInvestorAction}
-                sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
-              >
-                <TextField
-                  name="name"
-                  label="Name"
-                  variant="outlined"
-                  fullWidth
-                  required
-                  size="small"
-                />
-                <TextField
-                  name="capital"
-                  label="Initial Capital ($)"
-                  type="number"
-                  variant="outlined"
-                  fullWidth
-                  required
-                  size="small"
-                  slotProps={{ htmlInput: { step: '0.01' } }}
-                />
-                <TextField
-                  name="deposit"
-                  label="Initial Deposit ($)"
-                  type="number"
-                  variant="outlined"
-                  fullWidth
-                  required
-                  size="small"
-                  slotProps={{ htmlInput: { step: '0.01' } }}
-                />
-                <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 1 }}>
-                  Add Investor
-                </Button>
-              </Box>
+              <AddInvestorForm />
             </CardContent>
           </Card>
         </Box>
@@ -94,7 +55,7 @@ export async function ManageInvestors() {
                   <TableCell align="right" sx={{ fontWeight: 'bold' }}>
                     Current Deposit
                   </TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 'bold' }}>
+                  <TableCell align="left" sx={{ fontWeight: 'bold', width: '120px' }}>
                     Actions
                   </TableCell>
                 </TableRow>
@@ -151,16 +112,11 @@ export async function ManageInvestors() {
                           maximumFractionDigits: 0,
                         })}
                       </TableCell>
-                      <TableCell align="center">
-                        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+                      <TableCell align="left">
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-start', gap: 1 }}>
                           <Link href={`/investors/${investor.id}/trades`} passHref>
                             <IconButton color="info" size="small" title="View Trade Log">
                               <HistoryIcon fontSize="small" />
-                            </IconButton>
-                          </Link>
-                          <Link href={`/investors/${investor.id}/update`} passHref>
-                            <IconButton color="primary" size="small" title="Update Balance">
-                              <EditIcon fontSize="small" />
                             </IconButton>
                           </Link>
                           <ToggleInvestorStatusButton

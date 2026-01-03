@@ -1,4 +1,5 @@
 import { getInvestorById, getInvestorLedger } from '@/entities/investor';
+import AddIcon from '@mui/icons-material/Add';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import HistoryIcon from '@mui/icons-material/History';
 import { Box, Button, Typography } from '@mui/material';
@@ -36,11 +37,18 @@ export async function InvestorActions({ id }: { id: number }) {
             {investor.name}&apos;s Actions Log
           </Typography>
         </Box>
-        <Link href={`/investors/${id}/trades`} passHref>
-          <Button variant="contained" color="info" startIcon={<HistoryIcon />}>
-            View Trade Log
-          </Button>
-        </Link>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Link href={`/investors/${id}/update`} passHref>
+            <Button variant="contained" color="primary" startIcon={<AddIcon />}>
+              Add Action
+            </Button>
+          </Link>
+          <Link href={`/investors/${id}/trades`} passHref>
+            <Button variant="contained" color="info" startIcon={<HistoryIcon />}>
+              View Trade Log
+            </Button>
+          </Link>
+        </Box>
       </Box>
 
       <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>

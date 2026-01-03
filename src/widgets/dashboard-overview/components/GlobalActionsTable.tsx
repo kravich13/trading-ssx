@@ -26,31 +26,31 @@ import {
   TextField,
 } from '@mui/material';
 import { useState } from 'react';
+import Link from 'next/link';
 
-interface InvestorActionsTableProps {
-  ledger: LedgerEntry[];
-  investorId: number;
+interface GlobalActionsTableProps {
+  actions: (LedgerEntry & { investor_name: string })[];
 }
 
-export function InvestorActionsTable({ ledger, investorId }: InvestorActionsTableProps) {
+export function GlobalActionsTable({ actions }: GlobalActionsTableProps) {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [selectedEntry, setSelectedEntry] = useState<LedgerEntry | null>(null);
+  const [selectedEntry, setSelectedEntry] = useState<
+    (LedgerEntry & { investor_name: string }) | null
+  >(null);
   const [selectedRowNumber, setSelectedRowNumber] = useState<number | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editAmount, setEditAmount] = useState<string>('');
   const [editDate, setEditDate] = useState<string>('');
 
-  const actionsOnly = ledger.filter(
-    (row) => row.type === LedgerType.CAPITAL_CHANGE || row.type === LedgerType.DEPOSIT_CHANGE
-  );
-
   const formatCurrency = (value: number) =>
     value.toLocaleString(undefined, {
+      style: 'currency',
+      currency: 'USD',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     });
 
-  const handleDeleteClick = (entry: LedgerEntry, rowNumber: number) => {
+  const handleDeleteClick = (entry: LedgerEntry & { investor_name: string }, rowNumber: number) => {
     setSelectedEntry(entry);
     setSelectedRowNumber(rowNumber);
     setDeleteModalOpen(true);
@@ -58,13 +58,13 @@ export function InvestorActionsTable({ ledger, investorId }: InvestorActionsTabl
 
   const handleConfirmDelete = async () => {
     if (selectedEntry) {
-      await deleteLedgerEntry(selectedEntry.id, investorId);
+      await deleteLedgerEntry(selectedEntry.id, selectedEntry.investor_id);
       setDeleteModalOpen(false);
       setSelectedEntry(null);
     }
   };
 
-  const handleEditClick = (entry: LedgerEntry, rowNumber: number) => {
+  const handleEditClick = (entry: LedgerEntry & { investor_name: string }, rowNumber: number) => {
     setSelectedEntry(entry);
     setSelectedRowNumber(rowNumber);
     setEditAmount(entry.change_amount.toString());
@@ -76,7 +76,7 @@ export function InvestorActionsTable({ ledger, investorId }: InvestorActionsTabl
     if (selectedEntry && editAmount !== '') {
       await updateLedgerEntry(
         selectedEntry.id,
-        investorId,
+        selectedEntry.investor_id,
         parseFloat(editAmount),
         editDate + ' 00:00:00'
       );
@@ -95,6 +95,7 @@ export function InvestorActionsTable({ ledger, investorId }: InvestorActionsTabl
               <TableCell align="right" sx={{ fontWeight: 'bold', width: '100px' }}>
                 Date
               </TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Investor</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Type</TableCell>
               <TableCell align="right" sx={{ fontWeight: 'bold' }}>
                 Change Amount
@@ -111,16 +112,16 @@ export function InvestorActionsTable({ ledger, investorId }: InvestorActionsTabl
             </TableRow>
           </TableHead>
           <TableBody>
-            {actionsOnly.length === 0 ? (
+            {actions.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
+                <TableCell colSpan={8} align="center" sx={{ py: 3 }}>
                   <Typography variant="body2" color="text.secondary">
                     No balance actions found.
                   </Typography>
                 </TableCell>
               </TableRow>
             ) : (
-              actionsOnly.map((row, index) => {
+              actions.map((row, index) => {
                 const color = row.change_amount > 0 ? 'success.main' : 'error.main';
                 const isInitial = row.capital_before === 0 && row.deposit_before === 0;
 
@@ -139,13 +140,24 @@ export function InvestorActionsTable({ ledger, investorId }: InvestorActionsTabl
                   chipColor = 'secondary';
                 }
 
-                const rowNumber = actionsOnly.length - index;
+                const rowNumber = actions.length - index;
 
                 return (
                   <TableRow key={row.id} hover>
                     <TableCell>{rowNumber}</TableCell>
                     <TableCell align="right" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
                       {row.created_at ? row.created_at.split(' ')[0] : '-'}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 'medium' }}>
+                      <Link
+                        href={`/investors/${row.investor_id}`}
+                        style={{
+                          color: '#2196f3',
+                          textDecoration: 'none',
+                        }}
+                      >
+                        {row.investor_name}
+                      </Link>
                     </TableCell>
                     <TableCell>
                       <Chip
@@ -161,9 +173,9 @@ export function InvestorActionsTable({ ledger, investorId }: InvestorActionsTabl
                       {formatCurrency(row.change_amount)}
                     </TableCell>
                     <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                      ${formatCurrency(row.capital_after)}
+                      {formatCurrency(row.capital_after)}
                     </TableCell>
-                    <TableCell align="right">${formatCurrency(row.deposit_after)}</TableCell>
+                    <TableCell align="right">{formatCurrency(row.deposit_after)}</TableCell>
                     <TableCell align="left">
                       <Box sx={{ display: 'flex', justifyContent: 'flex-start', gap: 0.5 }}>
                         <IconButton
@@ -174,7 +186,9 @@ export function InvestorActionsTable({ ledger, investorId }: InvestorActionsTabl
                         >
                           <EditIcon fontSize="small" />
                         </IconButton>
-                        {(!isInitial || actionsOnly.length === 1) && (
+                        {(!isInitial ||
+                          actions.filter((a) => a.investor_id === row.investor_id).length ===
+                            1) && (
                           <IconButton
                             size="small"
                             color="error"
@@ -197,7 +211,7 @@ export function InvestorActionsTable({ ledger, investorId }: InvestorActionsTabl
       <ConfirmModal
         open={deleteModalOpen}
         title={`Delete Entry № ${selectedRowNumber}`}
-        description={`Are you sure you want to delete balance change entry № ${selectedRowNumber}? This action cannot be undone.`}
+        description={`Are you sure you want to delete balance change entry № ${selectedRowNumber} for investor ${selectedEntry?.investor_name}? This action cannot be undone.`}
         onConfirm={handleConfirmDelete}
         onClose={() => setDeleteModalOpen(false)}
         color="error"
@@ -205,7 +219,9 @@ export function InvestorActionsTable({ ledger, investorId }: InvestorActionsTabl
       />
 
       <Dialog open={editModalOpen} onClose={() => setEditModalOpen(false)}>
-        <DialogTitle>Edit Action (№ {selectedRowNumber})</DialogTitle>
+        <DialogTitle>
+          Edit Action (№ {selectedRowNumber} - {selectedEntry?.investor_name})
+        </DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField

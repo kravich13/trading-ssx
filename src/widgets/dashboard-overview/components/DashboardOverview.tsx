@@ -19,6 +19,7 @@ import {
   Typography,
 } from '@mui/material';
 import Link from 'next/link';
+import { GlobalActionsTable } from './GlobalActionsTable';
 
 export async function DashboardOverview() {
   const [investors, stats, globalActions] = await Promise.all([
@@ -204,97 +205,7 @@ export async function DashboardOverview() {
       <Typography variant="h5" gutterBottom sx={{ mt: 6, mb: 3 }} fontWeight="medium">
         Global Actions Log
       </Typography>
-      <TableContainer component={Paper} elevation={2}>
-        <Table size="small">
-          <TableHead>
-            <TableRow sx={{ backgroundColor: 'action.hover' }}>
-              <TableCell sx={{ fontWeight: 'bold', width: '50px' }}>№</TableCell>
-              <TableCell align="right" sx={{ fontWeight: 'bold', width: '100px' }}>
-                Date
-              </TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Investor</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Type</TableCell>
-              <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                Change Amount
-              </TableCell>
-              <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                Capital After
-              </TableCell>
-              <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                Deposit After
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {globalActions.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    No balance actions found.
-                  </Typography>
-                </TableCell>
-              </TableRow>
-            ) : (
-              globalActions.map((row, index) => {
-                const color = row.change_amount > 0 ? 'success.main' : 'error.main';
-                const isInitial = row.capital_before === 0 && row.deposit_before === 0;
-
-                let chipLabel = row.type.replace('_CHANGE', '');
-                let chipColor: 'primary' | 'secondary' | 'warning' | 'info' | 'default' =
-                  'secondary';
-
-                if (isInitial) {
-                  chipLabel = 'INITIAL';
-                  chipColor = 'primary';
-                } else if (row.type === 'DEPOSIT_CHANGE') {
-                  chipLabel = `DEPOSIT ${row.change_amount > 0 ? 'IN' : 'OUT'}`;
-                  chipColor = 'warning';
-                } else if (row.type === 'CAPITAL_CHANGE') {
-                  chipLabel = `CAPITAL ${row.change_amount > 0 ? 'ADD' : 'SUB'}`;
-                  chipColor = 'secondary';
-                }
-
-                return (
-                  <TableRow key={row.id} hover>
-                    <TableCell>{globalActions.length - index}</TableCell>
-                    <TableCell align="right" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
-                      {row.created_at ? row.created_at.split(' ')[0] : '-'}
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 'medium' }}>
-                      <Link
-                        href={`/investors/${row.investor_id}`}
-                        style={{
-                          color: '#2196f3',
-                          textDecoration: 'none',
-                        }}
-                      >
-                        {row.investor_name}
-                      </Link>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={chipLabel}
-                        size="small"
-                        color={chipColor}
-                        variant="outlined"
-                        sx={{ fontSize: '0.7rem', fontWeight: 'bold' }}
-                      />
-                    </TableCell>
-                    <TableCell align="right" sx={{ color, fontWeight: 'medium' }}>
-                      {row.change_amount > 0 ? '+' : ''}
-                      {formatCurrency(row.change_amount)}
-                    </TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                      {formatCurrency(row.capital_after)}
-                    </TableCell>
-                    <TableCell align="right">{formatCurrency(row.deposit_after)}</TableCell>
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <GlobalActionsTable actions={globalActions} />
     </Box>
   );
 }

@@ -109,7 +109,13 @@ export async function addInvestor(name: string, initialCapital: number, initialD
 }
 
 export async function toggleInvestorStatus(id: number, isActive: boolean) {
-  db.prepare('UPDATE investors SET is_active = ? WHERE id = ?').run(isActive ? 1 : 0, id);
+  if (isActive) {
+    db.prepare('UPDATE investors SET is_active = 1, archived_at = NULL WHERE id = ?').run(id);
+  } else {
+    db.prepare(
+      'UPDATE investors SET is_active = 0, archived_at = CURRENT_TIMESTAMP WHERE id = ?'
+    ).run(id);
+  }
   revalidatePath('/');
   revalidatePath('/investors');
   revalidatePath(`/investors/${id}`);
@@ -154,6 +160,21 @@ export async function updateInvestorBalance(
 }
 
 export async function deleteLedgerEntry(id: number, investorId: number) {
+  const entry = db.prepare('SELECT * FROM ledger WHERE id = ?').get(id) as LedgerEntry;
+  if (!entry) return;
+
+  const isInitial = entry.capital_before === 0 && entry.deposit_before === 0;
+
+  if (isInitial) {
+    const otherEntries = db
+      .prepare('SELECT COUNT(*) as count FROM ledger WHERE investor_id = ? AND id != ?')
+      .get(investorId, id) as { count: number };
+
+    if (otherEntries.count > 0) {
+      throw new Error('Cannot delete initial entry when subsequent entries exist');
+    }
+  }
+
   db.prepare('DELETE FROM ledger WHERE id = ?').run(id);
   revalidatePath('/');
   revalidatePath('/investors');
