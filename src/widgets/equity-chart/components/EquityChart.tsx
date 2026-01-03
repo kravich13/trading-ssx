@@ -61,6 +61,7 @@ export function EquityChart({
         return savedMode;
       }
     }
+
     return 'percent';
   });
 
