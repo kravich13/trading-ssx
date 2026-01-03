@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Roboto } from 'next/font/google';
 import { MUIProvider } from './_providers';
+import { ScrollToTop } from '@/shared/ui';
 
 import './globals.scss';
 
@@ -38,6 +39,7 @@ export default function RootLayout({
             </div>
           </nav>
           <main className="container">{children}</main>
+          <ScrollToTop />
         </MUIProvider>
       </body>
     </html>
