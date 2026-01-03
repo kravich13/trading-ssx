@@ -64,7 +64,7 @@ export async function getInvestorLedger(id: number): Promise<LedgerEntry[]> {
       `
     SELECT * FROM ledger 
     WHERE investor_id = ? 
-    ORDER BY id ASC
+    ORDER BY id DESC
   `
     )
     .all(id) as LedgerEntry[];

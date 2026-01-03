@@ -114,7 +114,7 @@ export async function InvestorDetails({ id }: { id: number }) {
 
               return (
                 <TableRow key={row.id} hover>
-                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>{ledger.length - index}</TableCell>
                   <TableCell>
                     <Chip
                       label={row.type.replace('_CHANGE', '')}
