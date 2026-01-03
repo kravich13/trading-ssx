@@ -66,7 +66,7 @@ When taking a trade with **1% risk** on capital ($100), you use the **$3,500** a
 
 ## Development Progress (TODO)
 
-- [ ] **1. Database & Infrastructure**
+- [x] **1. Database & Infrastructure**
   - [x] Install dependencies (`better-sqlite3`, `sass`)
   - [x] Design SQLite schema (Investors, Ledger for trades and balance changes)
   - [x] Implement database connection utility
@@ -80,6 +80,15 @@ When taking a trade with **1% risk** on capital ($100), you use the **$3,500** a
 - [ ] **4. Trading Logs**
   - [ ] Investor Detail View: List of all trades + capital changes (as shown in Excel)
   - [ ] Total Trades View: Global log of all trading activity across the project
+  - [ ] Statistics Dashboard (above Total Trades):
+    - Trade counts (Total, Positive, Negative)
+    - Profit/Loss metrics (Total Profit, Total Loss, P/L Correlation, Reward Ratio)
+    - Averages (USD and % of depo for both P and L)
+    - Streaks & Extremes (Max Profit/Loss, Max Win/Loss series)
+    - Accuracy (Win Rate %)
+  - [ ] Visual Analytics (on Total Trades screen):
+    - **Equity Curve Chart**: Capital growth based strictly on trade results (ignoring manual capital changes)
+    - **Galton Board (Histogram)**: Dynamic distribution of trade returns (PL%)
 - [ ] **5. Core Logic Implementation**
   - [ ] Calculation of position sizes based on total capital
   - [ ] Row-by-row balance updates (changes only affect future rows)
