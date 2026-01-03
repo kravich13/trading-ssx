@@ -59,7 +59,7 @@ export async function TotalTrades() {
           <TableHead>
             <TableRow sx={{ backgroundColor: 'action.hover' }}>
               <TableCell sx={{ fontWeight: 'bold', width: '50px' }}>№</TableCell>
-              <TableCell align="right" sx={{ fontWeight: 'bold', width: '100px' }}>
+              <TableCell align="right" sx={{ fontWeight: 'bold', width: '120px' }}>
                 Closed Date
               </TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Ticker</TableCell>
