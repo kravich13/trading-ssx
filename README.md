@@ -119,15 +119,16 @@ yarn install
 yarn dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:7777](http://localhost:7777) in your browser.
 
 ## Project Structure
 
-- `app/` - Next.js App Router (only routing and entry points)
+- `app/` - Next.js App Router (Routing and Page entry points)
 - `src/` - FSD Architecture:
-  - `pages/` - Full pages components
-  - `widgets/` - Large UI components
-  - `features/` - User interactions (actions)
-  - `entities/` - Business logic and data
+  - `features/` - User interactions and page-level feature components (e.g., `investors-management`)
+    - `ui/`, `api/`, `lib/`, `types/`, `styles/`
+  - `entities/` - Business logic and data (e.g., `investor`, `trade`)
+    - `ui/`, `api/`, `lib/`, `types/`
   - `shared/` - Reusable helpers and UI
+    - `api/`, `lib/`, `ui/`
 - `*.db` - SQLite database files
