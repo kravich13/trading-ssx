@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
-import './globals.scss';
 import Link from 'next/link';
-import { MUIProvider } from '@/shared/lib/mui';
+import { MUIProvider } from './_providers';
+
+import './globals.scss';
 
 export const metadata: Metadata = {
   title: 'Trading SSX',
