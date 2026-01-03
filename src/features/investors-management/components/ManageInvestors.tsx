@@ -1,5 +1,4 @@
 import { getInvestors } from '@/entities/investor';
-import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import HistoryIcon from '@mui/icons-material/History';
 import {
@@ -18,8 +17,9 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { addInvestorAction, deleteInvestorAction } from '../api';
 import Link from 'next/link';
+import { addInvestorAction } from '../api';
+import { DeleteInvestorButton } from './DeleteInvestorButton';
 
 export async function ManageInvestors() {
   const investors = await getInvestors();
@@ -148,16 +148,10 @@ export async function ManageInvestors() {
                               <EditIcon fontSize="small" />
                             </IconButton>
                           </Link>
-                          <form action={deleteInvestorAction.bind(null, investor.id)}>
-                            <IconButton
-                              type="submit"
-                              color="error"
-                              size="small"
-                              title="Delete investor"
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </form>
+                          <DeleteInvestorButton
+                            investorId={investor.id}
+                            investorName={investor.name}
+                          />
                         </Box>
                       </TableCell>
                     </TableRow>
