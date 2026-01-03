@@ -58,6 +58,8 @@ export async function InvestorDetails({ id }: { id: number }) {
   const firstTrade = ledger.find((r) => r.type === LedgerType.TRADE);
   const initialInvestorDeposit = firstTrade ? firstTrade.deposit_before : 0;
 
+  const tradesOnlyLedger = ledger.filter((row) => row.type === LedgerType.TRADE);
+
   return (
     <Box sx={{ py: 4 }}>
       <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -86,22 +88,18 @@ export async function InvestorDetails({ id }: { id: number }) {
           <TableHead>
             <TableRow sx={{ backgroundColor: 'action.hover' }}>
               <TableCell sx={{ fontWeight: 'bold' }}>№</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Type</TableCell>
-              <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                Changes
-              </TableCell>
-              <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                Capital After
-              </TableCell>
-              <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                Deposit After
-              </TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Ticker</TableCell>
               <TableCell align="right" sx={{ fontWeight: 'bold' }}>
                 PL%
               </TableCell>
               <TableCell align="right" sx={{ fontWeight: 'bold' }}>
                 PL$
+              </TableCell>
+              <TableCell align="right" sx={{ fontWeight: 'bold' }}>
+                Capital After
+              </TableCell>
+              <TableCell align="right" sx={{ fontWeight: 'bold' }}>
+                Deposit After
               </TableCell>
               <TableCell align="right" sx={{ fontWeight: 'bold' }}>
                 Closed Date
@@ -112,8 +110,7 @@ export async function InvestorDetails({ id }: { id: number }) {
             </TableRow>
           </TableHead>
           <TableBody>
-            {ledger.map((row, index) => {
-              const isTrade = row.type === LedgerType.TRADE;
+            {tradesOnlyLedger.map((row, index) => {
               const plColor =
                 row.change_amount > 0
                   ? 'success.main'
@@ -123,32 +120,22 @@ export async function InvestorDetails({ id }: { id: number }) {
 
               return (
                 <TableRow key={row.id} hover>
-                  <TableCell>{ledger.length - index}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={row.type.replace('_CHANGE', '')}
-                      size="small"
-                      color={isTrade ? 'primary' : 'secondary'}
-                      variant="outlined"
-                      sx={{ fontSize: '0.7rem' }}
-                    />
-                  </TableCell>
-                  <TableCell align="right" sx={{ color: plColor, fontWeight: 'medium' }}>
-                    {row.change_amount !== 0
-                      ? `${row.change_amount > 0 ? '+' : ''}${formatCurrency(row.change_amount)}`
-                      : '-'}
-                  </TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                    ${formatCurrency(row.capital_after)}
-                  </TableCell>
-                  <TableCell align="right">${formatCurrency(row.deposit_after)}</TableCell>
+                  <TableCell>{tradesOnlyLedger.length - index}</TableCell>
                   <TableCell>{row.ticker || '-'}</TableCell>
                   <TableCell align="right" sx={{ color: plColor }}>
                     {row.pl_percent !== null ? `${row.pl_percent.toFixed(2)}%` : '-'}
                   </TableCell>
                   <TableCell align="right" sx={{ color: plColor }}>
-                    {row.type === LedgerType.TRADE ? `$${formatCurrency(row.change_amount)}` : '-'}
+                    $
+                    {row.change_amount.toLocaleString(undefined, {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 0,
+                    })}
                   </TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 'bold' }}>
+                    ${formatCurrency(row.capital_after)}
+                  </TableCell>
+                  <TableCell align="right">${formatCurrency(row.deposit_after)}</TableCell>
                   <TableCell align="right" sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
                     {row.closed_date || '-'}
                   </TableCell>
