@@ -1,6 +1,6 @@
 'use server';
 
-import { addInvestor, deleteInvestor } from '@/entities/investor';
+import { addInvestor, toggleInvestorStatus } from '@/entities/investor';
 
 export async function addInvestorAction(formData: FormData) {
   const name = formData.get('name') as string;
@@ -14,6 +14,6 @@ export async function addInvestorAction(formData: FormData) {
   await addInvestor(name, capital, deposit);
 }
 
-export async function deleteInvestorAction(id: number) {
-  await deleteInvestor(id);
+export async function toggleInvestorStatusAction(id: number, isActive: boolean) {
+  await toggleInvestorStatus(id, isActive);
 }

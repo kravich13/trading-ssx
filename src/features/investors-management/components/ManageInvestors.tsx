@@ -6,6 +6,7 @@ import {
   Button,
   Card,
   CardContent,
+  Chip,
   IconButton,
   Paper,
   Table,
@@ -19,7 +20,7 @@ import {
 } from '@mui/material';
 import Link from 'next/link';
 import { addInvestorAction } from '../api';
-import { DeleteInvestorButton } from './DeleteInvestorButton';
+import { ToggleInvestorStatusButton } from './ToggleInvestorStatusButton';
 
 export async function ManageInvestors() {
   const investors = await getInvestors();
@@ -109,18 +110,32 @@ export async function ManageInvestors() {
                   </TableRow>
                 ) : (
                   investors.map((investor) => (
-                    <TableRow key={investor.id} hover>
+                    <TableRow
+                      key={investor.id}
+                      hover
+                      sx={{ opacity: investor.is_active ? 1 : 0.6 }}
+                    >
                       <TableCell>
-                        <Link
-                          href={`/investors/${investor.id}`}
-                          style={{
-                            color: '#2196f3',
-                            textDecoration: 'none',
-                            fontWeight: 'medium',
-                          }}
-                        >
-                          {investor.name}
-                        </Link>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Link
+                            href={`/investors/${investor.id}`}
+                            style={{
+                              color: investor.is_active ? '#2196f3' : '#9e9e9e',
+                              textDecoration: 'none',
+                              fontWeight: 'medium',
+                            }}
+                          >
+                            {investor.name}
+                          </Link>
+                          {!investor.is_active && (
+                            <Chip
+                              label="Archived"
+                              size="small"
+                              variant="outlined"
+                              sx={{ fontSize: '0.65rem', height: 20 }}
+                            />
+                          )}
+                        </Box>
                       </TableCell>
                       <TableCell align="right">
                         $
@@ -148,9 +163,10 @@ export async function ManageInvestors() {
                               <EditIcon fontSize="small" />
                             </IconButton>
                           </Link>
-                          <DeleteInvestorButton
+                          <ToggleInvestorStatusButton
                             investorId={investor.id}
                             investorName={investor.name}
+                            isActive={investor.is_active}
                           />
                         </Box>
                       </TableCell>

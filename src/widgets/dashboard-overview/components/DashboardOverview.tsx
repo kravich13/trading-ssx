@@ -144,18 +144,28 @@ export async function DashboardOverview() {
                   : 0;
 
               return (
-                <TableRow key={investor.id} hover>
+                <TableRow key={investor.id} hover sx={{ opacity: investor.is_active ? 1 : 0.6 }}>
                   <TableCell component="th" scope="row">
-                    <Link
-                      href={`/investors/${investor.id}`}
-                      style={{
-                        color: '#2196f3',
-                        textDecoration: 'none',
-                        fontWeight: 'medium',
-                      }}
-                    >
-                      {investor.name}
-                    </Link>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Link
+                        href={`/investors/${investor.id}`}
+                        style={{
+                          color: investor.is_active ? '#2196f3' : '#9e9e9e',
+                          textDecoration: 'none',
+                          fontWeight: 'medium',
+                        }}
+                      >
+                        {investor.name}
+                      </Link>
+                      {!investor.is_active && (
+                        <Chip
+                          label="Archived"
+                          size="small"
+                          variant="outlined"
+                          sx={{ fontSize: '0.65rem', height: 20 }}
+                        />
+                      )}
+                    </Box>
                   </TableCell>
                   <TableCell align="right">{formatCurrency(investor.current_capital)}</TableCell>
                   <TableCell align="right">{formatCurrency(investor.current_deposit)}</TableCell>

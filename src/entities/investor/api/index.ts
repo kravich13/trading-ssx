@@ -12,12 +12,13 @@ export async function getInvestors(): Promise<Investor[]> {
     SELECT 
       i.id,
       i.name,
+      i.is_active,
       COALESCE(l.capital_after, 0) as current_capital,
       COALESCE(l.deposit_after, 0) as current_deposit
     FROM investors i
     LEFT JOIN ledger l ON l.investor_id = i.id 
     AND l.id = (SELECT MAX(id) FROM ledger WHERE investor_id = i.id)
-    ORDER BY CASE WHEN i.name = 'Me' THEN 0 ELSE 1 END, i.name ASC
+    ORDER BY i.is_active DESC, CASE WHEN i.name = 'Me' THEN 0 ELSE 1 END, i.name ASC
   `
     )
     .all() as Investor[];
@@ -32,6 +33,7 @@ export async function getInvestorById(id: number): Promise<Investor | undefined>
     SELECT 
       i.id,
       i.name,
+      i.is_active,
       COALESCE(l.capital_after, 0) as current_capital,
       COALESCE(l.deposit_after, 0) as current_deposit
     FROM investors i
@@ -52,6 +54,7 @@ export async function getTotalStats(): Promise<{ total_capital: number; total_de
       SUM(current_capital) as total_capital,
       SUM(current_deposit) as total_deposit
     FROM investor_current_stats
+    WHERE is_active = 1
   `
     )
     .get() as { total_capital: number; total_deposit: number };
@@ -105,18 +108,11 @@ export async function addInvestor(name: string, initialCapital: number, initialD
   revalidatePath('/investors');
 }
 
-export async function deleteInvestor(id: number) {
-  const deleteLedger = db.prepare('DELETE FROM ledger WHERE investor_id = ?');
-  const deleteInv = db.prepare('DELETE FROM investors WHERE id = ?');
-
-  const transaction = db.transaction((investorId: number) => {
-    deleteLedger.run(investorId);
-    deleteInv.run(investorId);
-  });
-
-  transaction(id);
+export async function toggleInvestorStatus(id: number, isActive: boolean) {
+  db.prepare('UPDATE investors SET is_active = ? WHERE id = ?').run(isActive ? 1 : 0, id);
   revalidatePath('/');
   revalidatePath('/investors');
+  revalidatePath(`/investors/${id}`);
 }
 
 export async function updateInvestorBalance(

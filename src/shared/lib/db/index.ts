@@ -9,6 +9,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS investors (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE,
+    is_active INTEGER DEFAULT 1,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
@@ -44,6 +45,7 @@ db.exec(`
   SELECT 
     i.id,
     i.name,
+    i.is_active,
     COALESCE(l.capital_after, 0) as current_capital,
     COALESCE(l.deposit_after, 0) as current_deposit
   FROM investors i

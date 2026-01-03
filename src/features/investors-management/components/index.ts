@@ -1,2 +1,2 @@
 export * from './ManageInvestors';
-export * from './DeleteInvestorButton';
+export * from './ToggleInvestorStatusButton';

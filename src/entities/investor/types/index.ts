@@ -3,6 +3,7 @@ import { LedgerType } from '@/shared/enum';
 export type Investor = {
   id: number;
   name: string;
+  is_active: boolean;
   current_capital: number;
   current_deposit: number;
 };
