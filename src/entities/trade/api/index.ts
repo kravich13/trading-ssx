@@ -10,7 +10,8 @@ export async function getAllTrades(): Promise<Trade[]> {
     SELECT 
       t.*,
       SUM(l.change_amount) as total_pl_usd,
-      SUM(l.capital_after) as total_capital_after
+      SUM(l.capital_after) as total_capital_after,
+      SUM(l.deposit_after) as total_deposit_after
     FROM trades t
     LEFT JOIN ledger l ON l.trade_id = t.id AND l.type = 'TRADE'
     GROUP BY t.id

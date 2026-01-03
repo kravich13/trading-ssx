@@ -3,6 +3,8 @@ export interface TradeLike {
   ticker: string | null;
   pl_percent: number | null;
   change_amount: number;
+  absolute_value: number; // Total capital
+  deposit_value: number; // Total deposit
   default_risk_percent: number | null;
 }
 

@@ -44,6 +44,8 @@ export async function InvestorDetails({ id }: { id: number }) {
       ticker: row.ticker,
       pl_percent: row.pl_percent,
       change_amount: row.change_amount,
+      absolute_value: row.capital_after,
+      deposit_value: row.deposit_after,
       default_risk_percent: row.default_risk_percent,
     }));
 
@@ -52,6 +54,9 @@ export async function InvestorDetails({ id }: { id: number }) {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     });
+
+  const firstTrade = ledger.find((r) => r.type === LedgerType.TRADE);
+  const initialInvestorDeposit = firstTrade ? firstTrade.deposit_before : 0;
 
   return (
     <Box sx={{ py: 4 }}>
@@ -68,7 +73,11 @@ export async function InvestorDetails({ id }: { id: number }) {
 
       <TradeStatsDashboard trades={tradesOnly} />
 
-      <EquityChart trades={tradesOnly} title={`${investor.name}'s Equity Curve`} />
+      <EquityChart
+        trades={tradesOnly}
+        title={`${investor.name}'s Equity Curve`}
+        initialBalance={initialInvestorDeposit}
+      />
 
       <GaltonBoard trades={tradesOnly} />
 

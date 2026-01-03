@@ -22,6 +22,8 @@ export async function TotalTrades() {
     ticker: t.ticker,
     pl_percent: t.pl_percent,
     change_amount: t.total_pl_usd,
+    absolute_value: t.total_capital_after,
+    deposit_value: t.total_deposit_after,
     default_risk_percent: t.default_risk_percent,
   }));
 
@@ -31,6 +33,11 @@ export async function TotalTrades() {
       maximumFractionDigits: 0,
     });
 
+  const initialTotalDeposit =
+    trades.length > 0
+      ? trades[trades.length - 1].total_deposit_after - trades[trades.length - 1].total_pl_usd
+      : 0;
+
   return (
     <Box sx={{ py: 4 }}>
       <Typography variant="h4" component="h1" gutterBottom fontWeight="bold" sx={{ mb: 4 }}>
@@ -39,7 +46,11 @@ export async function TotalTrades() {
 
       <TradeStatsDashboard trades={tradeLikeData} />
 
-      <EquityChart trades={tradeLikeData} title="Global Equity Curve (Aggregated)" />
+      <EquityChart
+        trades={tradeLikeData}
+        title="Global Equity Curve (Aggregated)"
+        initialBalance={initialTotalDeposit}
+      />
 
       <GaltonBoard trades={tradeLikeData} />
 
@@ -59,6 +70,9 @@ export async function TotalTrades() {
                 Total Capital
               </TableCell>
               <TableCell align="right" sx={{ fontWeight: 'bold' }}>
+                Total Deposit
+              </TableCell>
+              <TableCell align="right" sx={{ fontWeight: 'bold' }}>
                 Closed Date
               </TableCell>
               <TableCell align="right" sx={{ fontWeight: 'bold' }}>
@@ -69,7 +83,7 @@ export async function TotalTrades() {
           <TableBody>
             {trades.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
+                <TableCell colSpan={8} align="center" sx={{ py: 3 }}>
                   <Typography variant="body2" color="text.secondary">
                     No trades found.
                   </Typography>
@@ -96,6 +110,9 @@ export async function TotalTrades() {
                     </TableCell>
                     <TableCell align="right" sx={{ fontWeight: 'bold' }}>
                       ${formatCurrency(trade.total_capital_after)}
+                    </TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 'bold' }}>
+                      ${formatCurrency(trade.total_deposit_after)}
                     </TableCell>
                     <TableCell align="right" sx={{ color: 'text.secondary' }}>
                       {trade.closed_date || '-'}

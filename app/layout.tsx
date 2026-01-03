@@ -32,7 +32,6 @@ export default function RootLayout({
                 Trading SSX
               </Link>
               <div className="links">
-                <Link href="/">Overview</Link>
                 <Link href="/total">Total Trades</Link>
                 <Link href="/investors">Management</Link>
               </div>
