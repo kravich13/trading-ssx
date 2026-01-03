@@ -6,7 +6,6 @@ import {
   Button,
   Card,
   CardContent,
-  Container,
   IconButton,
   Paper,
   Table,
@@ -25,7 +24,7 @@ export async function ManageInvestors() {
   const investors = await getInvestors();
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Box sx={{ py: 4 }}>
       <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
         Investor Management
       </Typography>
@@ -163,6 +162,6 @@ export async function ManageInvestors() {
           </TableContainer>
         </Box>
       </Box>
-    </Container>
+    </Box>
   );
 }

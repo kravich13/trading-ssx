@@ -5,7 +5,6 @@ import {
   Button,
   Card,
   CardContent,
-  Container,
   FormControl,
   InputLabel,
   MenuItem,
@@ -21,7 +20,7 @@ export async function UpdateInvestorBalance({ id }: { id: number }) {
 
   if (!investor) {
     return (
-      <Container maxWidth="sm" sx={{ py: 8, textAlign: 'center' }}>
+      <Box sx={{ py: 8, textAlign: 'center' }}>
         <Typography variant="h5" color="error" gutterBottom>
           Investor not found
         </Typography>
@@ -30,17 +29,17 @@ export async function UpdateInvestorBalance({ id }: { id: number }) {
             Back to Investors
           </Button>
         </Link>
-      </Container>
+      </Box>
     );
   }
 
   return (
-    <Container maxWidth="sm" sx={{ py: 4 }}>
+    <Box sx={{ py: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
         Update Balance: {investor.name}
       </Typography>
 
-      <Card elevation={2} sx={{ mt: 4 }}>
+      <Card elevation={2} sx={{ mt: 4, maxWidth: '600px', width: '100%' }}>
         <CardContent sx={{ p: 4 }}>
           <Box
             component="form"
@@ -108,6 +107,6 @@ export async function UpdateInvestorBalance({ id }: { id: number }) {
           </Box>
         </CardContent>
       </Card>
-    </Container>
+    </Box>
   );
 }

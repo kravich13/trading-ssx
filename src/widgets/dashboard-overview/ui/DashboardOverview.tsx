@@ -5,7 +5,6 @@ import {
   Box,
   Card,
   CardContent,
-  Container,
   Grid,
   Paper,
   Table,
@@ -30,7 +29,7 @@ export async function DashboardOverview() {
     });
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Box sx={{ py: 4 }}>
       <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
         Overview
       </Typography>
@@ -161,6 +160,6 @@ export async function DashboardOverview() {
           </TableBody>
         </Table>
       </TableContainer>
-    </Container>
+    </Box>
   );
 }

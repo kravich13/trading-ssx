@@ -2,7 +2,6 @@ import { getInvestorById, getInvestorLedger } from '@/entities/investor';
 import {
   Box,
   Button,
-  Container,
   Paper,
   Table,
   TableBody,
@@ -22,7 +21,7 @@ export async function InvestorDetails({ id }: { id: number }) {
 
   if (!investor) {
     return (
-      <Container maxWidth="lg" sx={{ py: 8, textAlign: 'center' }}>
+      <Box sx={{ py: 8, textAlign: 'center' }}>
         <Typography variant="h5" color="error">
           Investor not found
         </Typography>
@@ -31,7 +30,7 @@ export async function InvestorDetails({ id }: { id: number }) {
             Back to Investors
           </Button>
         </Link>
-      </Container>
+      </Box>
     );
   }
 
@@ -42,7 +41,7 @@ export async function InvestorDetails({ id }: { id: number }) {
     });
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
+    <Box sx={{ py: 4 }}>
       <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
         <Link href="/investors" passHref>
           <Button variant="text" startIcon={<ArrowBackIcon />} sx={{ color: 'text.secondary' }}>
@@ -136,6 +135,6 @@ export async function InvestorDetails({ id }: { id: number }) {
           </TableBody>
         </Table>
       </TableContainer>
-    </Container>
+    </Box>
   );
 }

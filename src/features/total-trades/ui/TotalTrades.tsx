@@ -1,0 +1,103 @@
+import { getAllTrades } from '@/entities/trade';
+import { TradeStatsDashboard } from '@/widgets/trade-stats';
+import {
+  Box,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from '@mui/material';
+
+export async function TotalTrades() {
+  const trades = await getAllTrades();
+
+  const formatCurrency = (value: number) =>
+    value.toLocaleString(undefined, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    });
+
+  return (
+    <Box sx={{ py: 4 }}>
+      <Typography variant="h4" component="h1" gutterBottom fontWeight="bold" sx={{ mb: 4 }}>
+        Total Trades Log
+      </Typography>
+
+      <TradeStatsDashboard trades={trades} />
+
+      <TableContainer component={Paper} elevation={2}>
+        <Table size="small">
+          <TableHead>
+            <TableRow sx={{ backgroundColor: 'action.hover' }}>
+              <TableCell sx={{ fontWeight: 'bold' }}>№</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Ticker</TableCell>
+              <TableCell align="right" sx={{ fontWeight: 'bold' }}>
+                PL%
+              </TableCell>
+              <TableCell align="right" sx={{ fontWeight: 'bold' }}>
+                Total PL$
+              </TableCell>
+              <TableCell align="right" sx={{ fontWeight: 'bold' }}>
+                Total Capital
+              </TableCell>
+              <TableCell align="right" sx={{ fontWeight: 'bold' }}>
+                Closed Date
+              </TableCell>
+              <TableCell align="right" sx={{ fontWeight: 'bold' }}>
+                Default Risk%
+              </TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {trades.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    No trades found.
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            ) : (
+              trades.map((trade) => {
+                const plColor =
+                  trade.total_pl_usd > 0
+                    ? 'success.main'
+                    : trade.total_pl_usd < 0
+                      ? 'error.main'
+                      : 'inherit';
+
+                return (
+                  <TableRow key={trade.id} hover>
+                    <TableCell>{trade.id}</TableCell>
+                    <TableCell sx={{ fontWeight: 'medium' }}>{trade.ticker}</TableCell>
+                    <TableCell align="right" sx={{ color: plColor }}>
+                      {trade.pl_percent.toFixed(2)}%
+                    </TableCell>
+                    <TableCell align="right" sx={{ color: plColor, fontWeight: 'bold' }}>
+                      ${formatCurrency(trade.total_pl_usd)}
+                    </TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 'bold' }}>
+                      ${formatCurrency(trade.total_capital_after)}
+                    </TableCell>
+                    <TableCell align="right" sx={{ color: 'text.secondary' }}>
+                      {trade.closed_date || '-'}
+                    </TableCell>
+                    <TableCell align="right">
+                      {trade.default_risk_percent !== null
+                        ? `${trade.default_risk_percent.toFixed(2)}%`
+                        : '-'}
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
+  );
+}

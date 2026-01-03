@@ -78,9 +78,9 @@ When taking a trade with **1% risk** on capital ($100), you use the **$3,500** a
   - [x] Header with Total Capital and Total Deposit (sum of all investors)
   - [x] Table of all investors with their current Capital and Deposit
 - [ ] **4. Trading Logs**
-  - [ ] Investor Detail View: List of all trades + capital changes (as shown in Excel)
-  - [ ] Total Trades View: Global log of all trading activity across the project
-  - [ ] Statistics Dashboard (above Total Trades):
+  - [x] Investor Detail View: List of all trades + capital changes (as shown in Excel)
+  - [x] Total Trades View: Global log of all trading activity across the project
+  - [x] Statistics Dashboard (above Total Trades):
     - Trade counts (Total, Positive, Negative)
     - Profit/Loss metrics (Total Profit, Total Loss, P/L Correlation, Reward Ratio)
     - Averages (USD and % of depo for both P and L)
