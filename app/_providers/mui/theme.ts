@@ -4,12 +4,16 @@ import { createTheme } from '@mui/material/styles';
 
 export const theme = createTheme({
   palette: {
-    mode: 'light',
+    mode: 'dark',
     primary: {
-      main: '#0070f3',
+      main: '#2196f3',
+    },
+    background: {
+      default: '#0a1929',
+      paper: '#132f4c',
     },
   },
   typography: {
-    fontFamily: 'inherit',
+    fontFamily: 'var(--font-roboto), Roboto, sans-serif',
   },
 });

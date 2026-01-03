@@ -114,13 +114,15 @@ export async function ManageInvestors() {
                       <TableCell align="right">
                         $
                         {investor.current_capital.toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 0,
                         })}
                       </TableCell>
                       <TableCell align="right">
                         $
                         {investor.current_deposit.toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 0,
                         })}
                       </TableCell>
                       <TableCell align="center">

@@ -1,8 +1,16 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { Roboto } from 'next/font/google';
 import { MUIProvider } from './_providers';
 
 import './globals.scss';
+
+const roboto = Roboto({
+  weight: ['300', '400', '500', '700'],
+  subsets: ['latin', 'cyrillic'],
+  display: 'swap',
+  variable: '--font-roboto',
+});
 
 export const metadata: Metadata = {
   title: 'Trading SSX',
@@ -15,7 +23,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={roboto.variable}>
       <body>
         <MUIProvider>
           <nav className="navbar">

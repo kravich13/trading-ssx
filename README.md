@@ -71,7 +71,7 @@ When taking a trade with **1% risk** on capital ($100), you use the **$3,500** a
   - [x] Design SQLite schema (Investors, Ledger for trades and balance changes)
   - [x] Implement database connection utility
 - [ ] **2. Management Screen**
-  - [ ] Add/Delete investors
+  - [x] Add/Delete investors
   - [ ] Update individual investor Capital/Deposit (row-by-row logic)
   - [ ] Display change history in investor's personal table
 - [ ] **3. Main Dashboard**

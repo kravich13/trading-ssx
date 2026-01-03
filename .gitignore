@@ -44,3 +44,4 @@ next-env.d.ts
 /database/*.db
 /database/*.db-shm
 /database/*.db-wal
+/src/shared/lib/db/initial-data.json

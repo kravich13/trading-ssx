@@ -16,11 +16,26 @@ export async function getInvestors(): Promise<Investor[]> {
     FROM investors i
     LEFT JOIN ledger l ON l.investor_id = i.id 
     AND l.id = (SELECT MAX(id) FROM ledger WHERE investor_id = i.id)
-    ORDER BY i.name ASC
+    ORDER BY CASE WHEN i.name = 'Me' THEN 0 ELSE 1 END, i.name ASC
   `
     )
     .all() as Investor[];
+
   return investors;
+}
+
+export async function getTotalStats(): Promise<{ total_capital: number; total_deposit: number }> {
+  const stats = db
+    .prepare(
+      `
+    SELECT 
+      SUM(current_capital) as total_capital,
+      SUM(current_deposit) as total_deposit
+    FROM investor_current_stats
+  `
+    )
+    .get() as { total_capital: number; total_deposit: number };
+  return stats;
 }
 
 export async function addInvestor(name: string, initialCapital: number, initialDeposit: number) {

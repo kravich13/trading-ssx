@@ -42,6 +42,7 @@ db.exec(`
     ticker TEXT,                     -- Ticker for trades
     pl_percent REAL,                 -- PL% for trades
     default_risk_percent REAL,       -- Risk% for trades
+    closed_date DATETIME,            -- Closed date for trades
     
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (investor_id) REFERENCES investors(id),
