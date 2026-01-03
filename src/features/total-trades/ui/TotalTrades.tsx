@@ -1,5 +1,7 @@
 import { getAllTrades } from '@/entities/trade';
 import { TradeStatsDashboard } from '@/widgets/trade-stats';
+import { EquityChart } from '@/widgets/equity-chart';
+import { GaltonBoard } from '@/widgets/galton-board';
 import {
   Box,
   Paper,
@@ -15,6 +17,14 @@ import {
 export async function TotalTrades() {
   const trades = await getAllTrades();
 
+  const tradeLikeData = trades.map((t) => ({
+    id: t.id,
+    ticker: t.ticker,
+    pl_percent: t.pl_percent,
+    change_amount: t.total_pl_usd,
+    default_risk_percent: t.default_risk_percent,
+  }));
+
   const formatCurrency = (value: number) =>
     value.toLocaleString(undefined, {
       minimumFractionDigits: 0,
@@ -27,7 +37,11 @@ export async function TotalTrades() {
         Total Trades Log
       </Typography>
 
-      <TradeStatsDashboard trades={trades} />
+      <TradeStatsDashboard trades={tradeLikeData} />
+
+      <EquityChart trades={tradeLikeData} title="Global Equity Curve (Aggregated)" />
+
+      <GaltonBoard trades={tradeLikeData} />
 
       <TableContainer component={Paper} elevation={2}>
         <Table size="small">
@@ -55,7 +69,7 @@ export async function TotalTrades() {
           <TableBody>
             {trades.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
+                <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
                   <Typography variant="body2" color="text.secondary">
                     No trades found.
                   </Typography>

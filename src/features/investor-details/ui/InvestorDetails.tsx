@@ -1,7 +1,13 @@
 import { getInvestorById, getInvestorLedger } from '@/entities/investor';
+import { LedgerType } from '@/shared/enum';
+import { EquityChart } from '@/widgets/equity-chart';
+import { GaltonBoard } from '@/widgets/galton-board';
+import { TradeStatsDashboard } from '@/widgets/trade-stats';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import {
   Box,
   Button,
+  Chip,
   Paper,
   Table,
   TableBody,
@@ -10,11 +16,8 @@ import {
   TableHead,
   TableRow,
   Typography,
-  Chip,
 } from '@mui/material';
 import Link from 'next/link';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { LedgerType } from '@/shared/enum';
 
 export async function InvestorDetails({ id }: { id: number }) {
   const [investor, ledger] = await Promise.all([getInvestorById(id), getInvestorLedger(id)]);
@@ -34,6 +37,16 @@ export async function InvestorDetails({ id }: { id: number }) {
     );
   }
 
+  const tradesOnly = ledger
+    .filter((row) => row.type === LedgerType.TRADE)
+    .map((row) => ({
+      id: row.trade_id || row.id,
+      ticker: row.ticker,
+      pl_percent: row.pl_percent,
+      change_amount: row.change_amount,
+      default_risk_percent: row.default_risk_percent,
+    }));
+
   const formatCurrency = (value: number) =>
     value.toLocaleString(undefined, {
       minimumFractionDigits: 0,
@@ -52,6 +65,12 @@ export async function InvestorDetails({ id }: { id: number }) {
           {investor.name}&apos;s Trading Log
         </Typography>
       </Box>
+
+      <TradeStatsDashboard trades={tradesOnly} />
+
+      <EquityChart trades={tradesOnly} title={`${investor.name}'s Equity Curve`} />
+
+      <GaltonBoard trades={tradesOnly} />
 
       <TableContainer component={Paper} elevation={2} sx={{ mb: 4 }}>
         <Table size="small">

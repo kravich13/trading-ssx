@@ -1,8 +1,8 @@
-import { Trade, calculateTradeStats } from '@/entities/trade';
+import { calculateTradeStats, TradeLike } from '@/entities/trade';
 import { Box, Card, CardContent, Grid, Typography, Divider } from '@mui/material';
 
 interface TradeStatsDashboardProps {
-  trades: Trade[];
+  trades: TradeLike[];
 }
 
 const StatRow = ({

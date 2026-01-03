@@ -1,4 +1,10 @@
-import { Trade } from '../types';
+export interface TradeLike {
+  id: number;
+  ticker: string | null;
+  pl_percent: number | null;
+  change_amount: number;
+  default_risk_percent: number | null;
+}
 
 export type TradeStats = {
   totalTrades: number;
@@ -21,7 +27,7 @@ export type TradeStats = {
   maxLossStreak: number;
 };
 
-export function calculateTradeStats(trades: Trade[]): TradeStats {
+export function calculateTradeStats(trades: TradeLike[]): TradeStats {
   if (trades.length === 0) {
     return {
       totalTrades: 0,
@@ -45,37 +51,37 @@ export function calculateTradeStats(trades: Trade[]): TradeStats {
     };
   }
 
-  // Sort by ID ASC to calculate streaks correctly (history order)
   const chronologicalTrades = [...trades].sort((a, b) => a.id - b.id);
 
-  const winsList = chronologicalTrades.filter((t) => t.total_pl_usd > 0);
-  const lossesList = chronologicalTrades.filter((t) => t.total_pl_usd < 0);
+  const winsList = chronologicalTrades.filter((t) => t.change_amount > 0);
+  const lossesList = chronologicalTrades.filter((t) => t.change_amount < 0);
 
-  const totalProfitUsd = winsList.reduce((sum, t) => sum + t.total_pl_usd, 0);
-  const totalLossUsd = lossesList.reduce((sum, t) => sum + t.total_pl_usd, 0);
+  const totalProfitUsd = winsList.reduce((sum, t) => sum + t.change_amount, 0);
+  const totalLossUsd = lossesList.reduce((sum, t) => sum + t.change_amount, 0);
 
   const avgWinUsd = winsList.length > 0 ? totalProfitUsd / winsList.length : 0;
   const avgLossUsd = lossesList.length > 0 ? totalLossUsd / lossesList.length : 0;
 
   const avgWinPercent =
-    winsList.length > 0 ? winsList.reduce((sum, t) => sum + t.pl_percent, 0) / winsList.length : 0;
+    winsList.length > 0
+      ? winsList.reduce((sum, t) => sum + (t.pl_percent || 0), 0) / winsList.length
+      : 0;
   const avgLossPercent =
     lossesList.length > 0
-      ? lossesList.reduce((sum, t) => sum + t.pl_percent, 0) / lossesList.length
+      ? lossesList.reduce((sum, t) => sum + (t.pl_percent || 0), 0) / lossesList.length
       : 0;
 
-  // Streaks
   let maxWinStreak = 0;
   let maxLossStreak = 0;
   let currentWinStreak = 0;
   let currentLossStreak = 0;
 
   chronologicalTrades.forEach((t) => {
-    if (t.total_pl_usd > 0) {
+    if (t.change_amount > 0) {
       currentWinStreak++;
       currentLossStreak = 0;
       if (currentWinStreak > maxWinStreak) maxWinStreak = currentWinStreak;
-    } else if (t.total_pl_usd < 0) {
+    } else if (t.change_amount < 0) {
       currentLossStreak++;
       currentWinStreak = 0;
       if (currentLossStreak > maxLossStreak) maxLossStreak = currentLossStreak;
@@ -98,10 +104,10 @@ export function calculateTradeStats(trades: Trade[]): TradeStats {
     rewardRatio: avgLossUsd !== 0 ? Math.abs(avgWinUsd / avgLossUsd) : 0,
     avgWinPercent,
     avgLossPercent,
-    maxWinUsd: Math.max(...trades.map((t) => t.total_pl_usd), 0),
-    maxLossUsd: Math.min(...trades.map((t) => t.total_pl_usd), 0),
-    maxProfitPercent: Math.max(...trades.map((t) => t.pl_percent), 0),
-    maxLossPercent: Math.min(...trades.map((t) => t.pl_percent), 0),
+    maxWinUsd: Math.max(...trades.map((t) => t.change_amount), 0),
+    maxLossUsd: Math.min(...trades.map((t) => t.change_amount), 0),
+    maxProfitPercent: Math.max(...trades.map((t) => t.pl_percent || 0), 0),
+    maxLossPercent: Math.min(...trades.map((t) => t.pl_percent || 0), 0),
     maxWinStreak,
     maxLossStreak,
   };
