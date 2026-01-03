@@ -1,1 +1,1 @@
-export * from './ui/GaltonBoard';
+export * from './components';
