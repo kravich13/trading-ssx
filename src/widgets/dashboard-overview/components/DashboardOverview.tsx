@@ -1,4 +1,4 @@
-import { getInvestors, getTotalStats } from '@/entities/investor';
+import { getInvestors, getTotalStats, getGlobalActionsLog } from '@/entities/investor';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import HistoryIcon from '@mui/icons-material/History';
@@ -6,6 +6,7 @@ import {
   Box,
   Card,
   CardContent,
+  Chip,
   Grid,
   IconButton,
   Paper,
@@ -20,7 +21,11 @@ import {
 import Link from 'next/link';
 
 export async function DashboardOverview() {
-  const [investors, stats] = await Promise.all([getInvestors(), getTotalStats()]);
+  const [investors, stats, globalActions] = await Promise.all([
+    getInvestors(),
+    getTotalStats(),
+    getGlobalActionsLog(),
+  ]);
 
   const formatCurrency = (value: number) =>
     value.toLocaleString(undefined, {
@@ -182,6 +187,74 @@ export async function DashboardOverview() {
               </TableCell>
               <TableCell />
             </TableRow>
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      <Typography variant="h5" gutterBottom sx={{ mt: 6, mb: 3 }} fontWeight="medium">
+        Global Actions Log
+      </Typography>
+      <TableContainer component={Paper} elevation={2}>
+        <Table size="small">
+          <TableHead>
+            <TableRow sx={{ backgroundColor: 'action.hover' }}>
+              <TableCell sx={{ fontWeight: 'bold' }}>№</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Investor</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Type</TableCell>
+              <TableCell align="right" sx={{ fontWeight: 'bold' }}>
+                Change Amount
+              </TableCell>
+              <TableCell align="right" sx={{ fontWeight: 'bold' }}>
+                Capital After
+              </TableCell>
+              <TableCell align="right" sx={{ fontWeight: 'bold' }}>
+                Deposit After
+              </TableCell>
+              <TableCell align="right" sx={{ fontWeight: 'bold' }}>
+                Date
+              </TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {globalActions.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    No balance actions found.
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            ) : (
+              globalActions.map((row, index) => {
+                const color = row.change_amount > 0 ? 'success.main' : 'error.main';
+                return (
+                  <TableRow key={row.id} hover>
+                    <TableCell>{globalActions.length - index}</TableCell>
+                    <TableCell sx={{ fontWeight: 'medium' }}>{row.investor_name}</TableCell>
+                    <TableCell>
+                      <Chip
+                        label={row.type.replace('_CHANGE', '')}
+                        size="small"
+                        color="secondary"
+                        variant="outlined"
+                        sx={{ fontSize: '0.7rem' }}
+                      />
+                    </TableCell>
+                    <TableCell align="right" sx={{ color, fontWeight: 'medium' }}>
+                      {row.change_amount > 0 ? '+' : ''}
+                      {formatCurrency(row.change_amount)}
+                    </TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 'bold' }}>
+                      {formatCurrency(row.capital_after)}
+                    </TableCell>
+                    <TableCell align="right">{formatCurrency(row.deposit_after)}</TableCell>
+                    <TableCell align="right" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
+                      {row.created_at ? row.created_at.split(' ')[0] : '-'}
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
           </TableBody>
         </Table>
       </TableContainer>

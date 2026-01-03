@@ -71,6 +71,21 @@ export async function getInvestorLedger(id: number): Promise<LedgerEntry[]> {
   return ledger;
 }
 
+export async function getGlobalActionsLog(): Promise<(LedgerEntry & { investor_name: string })[]> {
+  const ledger = db
+    .prepare(
+      `
+    SELECT l.*, i.name as investor_name
+    FROM ledger l
+    JOIN investors i ON l.investor_id = i.id
+    WHERE l.type IN ('${LedgerType.CAPITAL_CHANGE}', '${LedgerType.DEPOSIT_CHANGE}')
+    ORDER BY l.id DESC
+  `
+    )
+    .all() as (LedgerEntry & { investor_name: string })[];
+  return ledger;
+}
+
 export async function addInvestor(name: string, initialCapital: number, initialDeposit: number) {
   const insertInvestor = db.prepare('INSERT INTO investors (name) VALUES (?)');
   const insertLedger = db.prepare(`
