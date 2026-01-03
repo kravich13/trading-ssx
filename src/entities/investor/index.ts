@@ -1,6 +1,6 @@
 'use server';
 
-import db from './db';
+import { db } from '@/shared/api';
 import { revalidatePath } from 'next/cache';
 
 export type Investor = {
@@ -23,7 +23,7 @@ export async function getInvestors(): Promise<Investor[]> {
     LEFT JOIN ledger l ON l.investor_id = i.id 
     AND l.id = (SELECT MAX(id) FROM ledger WHERE investor_id = i.id)
     ORDER BY i.name ASC
-  `,
+  `
     )
     .all() as Investor[];
   return investors;

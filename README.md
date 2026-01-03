@@ -87,6 +87,7 @@ When taking a trade with **1% risk** on capital ($100), you use the **$3,500** a
 ## Technologies
 
 - **Next.js 16.1.1** - React framework with App Router
+- **Architecture: FSD (Feature-Sliced Design)** - Project organization
 - **React 19.2.3** - UI library
 - **TypeScript 5** - type safety
 - **SQLite (better-sqlite3)** - local file-based database
@@ -109,6 +110,12 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Project Structure
 
-- `app/` - Next.js App Router (pages and components)
-- `lib/` - utilities and database configuration
+- `app/` - Next.js App Router (only routing and entry points)
+- `src/` - FSD Architecture:
+  - `processes/` (optional)
+  - `pages/` - Full pages components
+  - `widgets/` - Large UI components
+  - `features/` - User interactions (actions)
+  - `entities/` - Business logic and data
+  - `shared/` - Reusable helpers and UI
 - `*.db` - SQLite database files

@@ -3,7 +3,7 @@ import path from 'path';
 
 const DB_PATH = path.join(process.cwd(), 'trading.db');
 
-const db = new Database(DB_PATH);
+export const db = new Database(DB_PATH);
 
 // Initialize database
 db.exec(`
@@ -42,5 +42,3 @@ db.exec(`
   WHERE l.id = (SELECT MAX(id) FROM ledger WHERE investor_id = i.id)
   OR l.id IS NULL;
 `);
-
-export default db;
