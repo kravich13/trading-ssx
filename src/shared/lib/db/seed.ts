@@ -5,7 +5,6 @@ import fs from 'fs';
 const DB_PATH = path.join(process.cwd(), 'database', 'trading.db');
 const db = new Database(DB_PATH);
 
-// Ensure schema is created
 db.exec(`
   CREATE TABLE IF NOT EXISTS investors (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -45,13 +44,11 @@ db.exec(`
 async function seed() {
   console.log('🌱 Starting fresh seeding...');
 
-  // Clear existing data safely
   db.exec('DELETE FROM ledger');
   db.exec('DELETE FROM trades');
   db.exec('DELETE FROM investors');
   db.exec("DELETE FROM sqlite_sequence WHERE name IN ('investors', 'trades', 'ledger')");
 
-  // 1. Create investors
   const createInv = db.prepare('INSERT INTO investors (name) VALUES (?)');
   const meId = createInv.run('Me').lastInsertRowid;
   const maxId = createInv.run('Max').lastInsertRowid;
@@ -67,7 +64,6 @@ async function seed() {
 
   console.log('Created investors:', Object.keys(investorIds).join(', '));
 
-  // Helper to get current investor balances
   const getInvestorBalance = (id: number | bigint) => {
     return db
       .prepare(
@@ -76,7 +72,6 @@ async function seed() {
       .get(id) as { capital_after: number; deposit_after: number } | undefined;
   };
 
-  // 2. Initial Setup (Row 1: Capital $6000, Deposit $6000)
   db.prepare(
     `
     INSERT INTO ledger (investor_id, type, change_amount, capital_before, capital_after, deposit_before, deposit_after)
@@ -84,7 +79,6 @@ async function seed() {
   `
   ).run(meId);
 
-  // Helper to add trade
   const addTrade = (
     ticker: string,
     plPercent: number,
@@ -98,7 +92,6 @@ async function seed() {
       )
       .run(ticker, plPercent, date || null, risk || null).lastInsertRowid;
 
-    // Manual finding of active investors to be safe
     const investors = db.prepare('SELECT id FROM investors').all() as { id: number }[];
     const activeStates = investors
       .map((inv) => ({ id: inv.id, state: getInvestorBalance(inv.id) }))
@@ -148,7 +141,6 @@ async function seed() {
     ).run(id, amount, capB, capB + amount, depB, newDep);
   };
 
-  // --- LOADING EVENTS FROM EXTERNAL FILE ---
   const DATA_PATH = path.join(process.cwd(), 'src', 'shared', 'lib', 'db', 'initial-data.json');
 
   if (!fs.existsSync(DATA_PATH)) {
@@ -156,15 +148,26 @@ async function seed() {
     return;
   }
 
-  const events = JSON.parse(fs.readFileSync(DATA_PATH, 'utf-8'));
+  interface SeedEvent {
+    type: 'TRADE' | 'CHANGE';
+    t?: string;
+    p?: number;
+    u?: number;
+    d?: string;
+    r?: number;
+    invName?: string;
+    amount?: number;
+  }
+
+  const events: SeedEvent[] = JSON.parse(fs.readFileSync(DATA_PATH, 'utf-8'));
 
   for (const event of events) {
     if (event.type === 'TRADE') {
-      addTrade(event.t, event.p, event.u, event.d, event.r);
+      addTrade(event.t!, event.p!, event.u!, event.d, event.r);
     } else if (event.type === 'CHANGE') {
-      const invId = investorIds[event.invName];
+      const invId = investorIds[event.invName!];
       if (invId) {
-        changeCapital(invId, event.amount);
+        changeCapital(invId, event.amount!);
       }
     }
   }

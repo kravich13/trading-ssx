@@ -34,7 +34,6 @@ export async function DashboardOverview() {
         Overview
       </Typography>
 
-      {/* Summary Cards */}
       <Grid container spacing={3} sx={{ mb: 4, mt: 2 }}>
         <Grid size={{ xs: 12, md: 6 }}>
           <Card
@@ -100,7 +99,6 @@ export async function DashboardOverview() {
         </Grid>
       </Grid>
 
-      {/* Investors Table Summary */}
       <Typography variant="h5" gutterBottom sx={{ mt: 6, mb: 3 }} fontWeight="medium">
         Investors Summary
       </Typography>
@@ -138,7 +136,6 @@ export async function DashboardOverview() {
                 </TableRow>
               );
             })}
-            {/* Total Row */}
             <TableRow sx={{ bgcolor: 'action.selected' }}>
               <TableCell sx={{ fontWeight: 'bold' }}>TOTAL</TableCell>
               <TableCell align="right" sx={{ fontWeight: 'bold' }}>

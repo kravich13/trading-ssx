@@ -29,7 +29,6 @@ export async function ManageInvestors() {
       </Typography>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: { md: '1fr 2fr' }, gap: 4, mt: 4 }}>
-        {/* Add New Investor Form */}
         <Box>
           <Card elevation={2}>
             <CardContent>
@@ -77,7 +76,6 @@ export async function ManageInvestors() {
           </Card>
         </Box>
 
-        {/* Existing Investors Table */}
         <Box>
           <Typography variant="h6" gutterBottom>
             Existing Investors
