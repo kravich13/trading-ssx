@@ -58,7 +58,10 @@ export async function TotalTrades() {
         <Table size="small">
           <TableHead>
             <TableRow sx={{ backgroundColor: 'action.hover' }}>
-              <TableCell sx={{ fontWeight: 'bold' }}>№</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', width: '50px' }}>№</TableCell>
+              <TableCell align="right" sx={{ fontWeight: 'bold', width: '100px' }}>
+                Closed Date
+              </TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Ticker</TableCell>
               <TableCell align="right" sx={{ fontWeight: 'bold' }}>
                 PL%
@@ -71,9 +74,6 @@ export async function TotalTrades() {
               </TableCell>
               <TableCell align="right" sx={{ fontWeight: 'bold' }}>
                 Total Deposit
-              </TableCell>
-              <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                Closed Date
               </TableCell>
               <TableCell align="right" sx={{ fontWeight: 'bold' }}>
                 Default Risk%
@@ -101,6 +101,9 @@ export async function TotalTrades() {
                 return (
                   <TableRow key={trade.id} hover>
                     <TableCell>{trade.id}</TableCell>
+                    <TableCell align="right" sx={{ color: 'text.secondary' }}>
+                      {trade.closed_date || '-'}
+                    </TableCell>
                     <TableCell sx={{ fontWeight: 'medium' }}>{trade.ticker}</TableCell>
                     <TableCell align="right" sx={{ color: plColor }}>
                       {trade.pl_percent.toFixed(2)}%
@@ -113,9 +116,6 @@ export async function TotalTrades() {
                     </TableCell>
                     <TableCell align="right" sx={{ fontWeight: 'bold' }}>
                       ${formatCurrency(trade.total_deposit_after)}
-                    </TableCell>
-                    <TableCell align="right" sx={{ color: 'text.secondary' }}>
-                      {trade.closed_date || '-'}
                     </TableCell>
                     <TableCell align="right">
                       {trade.default_risk_percent !== null

@@ -86,7 +86,10 @@ export async function InvestorDetails({ id }: { id: number }) {
         <Table size="small">
           <TableHead>
             <TableRow sx={{ backgroundColor: 'action.hover' }}>
-              <TableCell sx={{ fontWeight: 'bold' }}>№</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', width: '50px' }}>№</TableCell>
+              <TableCell align="right" sx={{ fontWeight: 'bold', width: '100px' }}>
+                Closed Date
+              </TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Ticker</TableCell>
               <TableCell align="right" sx={{ fontWeight: 'bold' }}>
                 PL%
@@ -99,9 +102,6 @@ export async function InvestorDetails({ id }: { id: number }) {
               </TableCell>
               <TableCell align="right" sx={{ fontWeight: 'bold' }}>
                 Deposit After
-              </TableCell>
-              <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                Closed Date
               </TableCell>
               <TableCell align="right" sx={{ fontWeight: 'bold' }}>
                 Risk%
@@ -120,6 +120,9 @@ export async function InvestorDetails({ id }: { id: number }) {
               return (
                 <TableRow key={row.id} hover>
                   <TableCell>{tradesOnlyLedger.length - index}</TableCell>
+                  <TableCell align="right" sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
+                    {row.closed_date || '-'}
+                  </TableCell>
                   <TableCell>{row.ticker || '-'}</TableCell>
                   <TableCell align="right" sx={{ color: plColor }}>
                     {row.pl_percent !== null ? `${row.pl_percent.toFixed(2)}%` : '-'}
@@ -135,9 +138,6 @@ export async function InvestorDetails({ id }: { id: number }) {
                     ${formatCurrency(row.capital_after)}
                   </TableCell>
                   <TableCell align="right">${formatCurrency(row.deposit_after)}</TableCell>
-                  <TableCell align="right" sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
-                    {row.closed_date || '-'}
-                  </TableCell>
                   <TableCell align="right">
                     {row.default_risk_percent !== null
                       ? `${row.default_risk_percent.toFixed(2)}%`

@@ -208,7 +208,10 @@ export async function DashboardOverview() {
         <Table size="small">
           <TableHead>
             <TableRow sx={{ backgroundColor: 'action.hover' }}>
-              <TableCell sx={{ fontWeight: 'bold' }}>№</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', width: '50px' }}>№</TableCell>
+              <TableCell align="right" sx={{ fontWeight: 'bold', width: '100px' }}>
+                Date
+              </TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Investor</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Type</TableCell>
               <TableCell align="right" sx={{ fontWeight: 'bold' }}>
@@ -219,9 +222,6 @@ export async function DashboardOverview() {
               </TableCell>
               <TableCell align="right" sx={{ fontWeight: 'bold' }}>
                 Deposit After
-              </TableCell>
-              <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                Date
               </TableCell>
             </TableRow>
           </TableHead>
@@ -257,7 +257,20 @@ export async function DashboardOverview() {
                 return (
                   <TableRow key={row.id} hover>
                     <TableCell>{globalActions.length - index}</TableCell>
-                    <TableCell sx={{ fontWeight: 'medium' }}>{row.investor_name}</TableCell>
+                    <TableCell align="right" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
+                      {row.created_at ? row.created_at.split(' ')[0] : '-'}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 'medium' }}>
+                      <Link
+                        href={`/investors/${row.investor_id}`}
+                        style={{
+                          color: '#2196f3',
+                          textDecoration: 'none',
+                        }}
+                      >
+                        {row.investor_name}
+                      </Link>
+                    </TableCell>
                     <TableCell>
                       <Chip
                         label={chipLabel}
@@ -275,9 +288,6 @@ export async function DashboardOverview() {
                       {formatCurrency(row.capital_after)}
                     </TableCell>
                     <TableCell align="right">{formatCurrency(row.deposit_after)}</TableCell>
-                    <TableCell align="right" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
-                      {row.created_at ? row.created_at.split(' ')[0] : '-'}
-                    </TableCell>
                   </TableRow>
                 );
               })

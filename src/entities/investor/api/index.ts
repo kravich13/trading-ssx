@@ -138,17 +138,40 @@ export async function updateInvestorBalance(
     ) VALUES (?, ?, ?, ?, ?, ?, ?)
   `);
 
-  insertLedger.run(
-    id,
-    type,
-    changeAmount,
-    lastLedger.capital_after,
-    lastLedger.deposit_after,
-    newCapital,
-    newDeposit
-  );
-
   revalidatePath('/');
   revalidatePath('/investors');
   revalidatePath(`/investors/${id}`);
+}
+
+export async function deleteLedgerEntry(id: number, investorId: number) {
+  db.prepare('DELETE FROM ledger WHERE id = ?').run(id);
+  revalidatePath('/');
+  revalidatePath('/investors');
+  revalidatePath(`/investors/${investorId}`);
+}
+
+export async function updateLedgerEntry(
+  id: number,
+  investorId: number,
+  amount: number,
+  createdAt: string
+) {
+  const entry = db.prepare('SELECT * FROM ledger WHERE id = ?').get(id) as LedgerEntry;
+  if (!entry) return;
+
+  const diff = amount - entry.change_amount;
+
+  if (entry.type === LedgerType.CAPITAL_CHANGE) {
+    db.prepare(
+      'UPDATE ledger SET change_amount = ?, capital_after = capital_after + ?, created_at = ? WHERE id = ?'
+    ).run(amount, diff, createdAt, id);
+  } else if (entry.type === LedgerType.DEPOSIT_CHANGE) {
+    db.prepare(
+      'UPDATE ledger SET change_amount = ?, deposit_after = deposit_after + ?, created_at = ? WHERE id = ?'
+    ).run(amount, diff, createdAt, id);
+  }
+
+  revalidatePath('/');
+  revalidatePath('/investors');
+  revalidatePath(`/investors/${investorId}`);
 }
