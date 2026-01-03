@@ -1,9 +1,9 @@
 'use server';
 
 import { db } from '@/shared/api';
+import { LedgerType } from '@/shared/enum';
 import { revalidatePath } from 'next/cache';
 import { Investor, LedgerEntry } from '../types';
-import { LedgerType } from '@/shared/enum';
 
 export async function getInvestors(): Promise<Investor[]> {
   const investors = db

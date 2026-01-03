@@ -24,11 +24,19 @@ export async function ManageInvestors() {
 
   return (
     <Box sx={{ py: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
+      <Typography
+        variant="h4"
+        component="h1"
+        gutterBottom
+        fontWeight="bold"
+        sx={{ fontSize: { xs: '1.8rem', sm: '2.125rem' } }}
+      >
         Investor Management
       </Typography>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { md: '1fr 2fr' }, gap: 4, mt: 4 }}>
+      <Box
+        sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 2fr' }, gap: 4, mt: 4 }}
+      >
         <Box>
           <Card elevation={2}>
             <CardContent>
@@ -45,7 +53,7 @@ export async function ManageInvestors() {
             Existing Investors
           </Typography>
           <TableContainer component={Paper} elevation={2}>
-            <Table>
+            <Table sx={{ minWidth: 600 }}>
               <TableHead>
                 <TableRow sx={{ backgroundColor: 'action.hover' }}>
                   <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>

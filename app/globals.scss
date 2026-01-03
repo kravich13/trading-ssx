@@ -2,6 +2,32 @@ html {
   scrollbar-gutter: stable;
 }
 
+/* Custom Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0d1e31;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e4976;
+  border-radius: 10px;
+  border: 2px solid #0d1e31;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #2196f3;
+}
+
+// Firefox support
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #1e4976 #0d1e31;
+}
+
 .container {
   max-width: 1400px;
   margin: 0 auto;
@@ -74,17 +100,42 @@ body {
   }
 }
 
-// Sticky table headers under the navbar
+// Table Container horizontal scroll support
 .MuiTableContainer-root {
-  overflow: visible !important; // Allow sticky to work relative to the window
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
 }
 
-.MuiTableCell-head {
-  position: sticky !important;
-  top: 61px !important; // Stick exactly under the navbar
-  z-index: 100 !important;
-  background-color: #132f4c !important; // Match table header background
-  border-bottom: 2px solid #1e4976 !important;
+// Sticky table headers support
+// Note: overflow: visible is usually required for position: sticky to work relative to the window.
+// We apply it only on larger screens where horizontal scroll is less likely to be needed
+// OR we rely on MUI's default behavior.
+@media (min-width: 1024px) {
+  .MuiTableContainer-root {
+    overflow: visible !important;
+  }
+
+  .MuiTableCell-head {
+    position: sticky !important;
+    top: 61px !important; // Stick exactly under the navbar
+    z-index: 100 !important;
+    background-color: #132f4c !important;
+    border-bottom: 2px solid #1e4976 !important;
+  }
+}
+
+@media (max-width: 599px) {
+  .container {
+    padding: 0 16px;
+  }
+
+  .navbar {
+    .links {
+      gap: 12px;
+      font-size: 0.9rem;
+    }
+  }
 }
 
 .card {

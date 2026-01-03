@@ -51,16 +51,16 @@ export function UpdateInvestorBalanceModal({
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
-      <DialogTitle sx={{ fontWeight: 'bold' }}>Add Action: {investor.name}</DialogTitle>
+      <DialogTitle sx={{ fontWeight: 'bold' }}>Add Action</DialogTitle>
       <Box component="form" action={handleFormAction}>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, pt: 1 }}>
-            <Box>
-              <Typography variant="body2" color="text.secondary">
+            <Box sx={{ mb: 1 }}>
+              <Typography variant="body1" sx={{ color: 'text.primary', mb: 0.5 }}>
                 Current Capital:{' '}
                 <strong>${Math.round(investor.current_capital).toLocaleString()}</strong>
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body1" sx={{ color: 'text.primary' }}>
                 Current Deposit:{' '}
                 <strong>${Math.round(investor.current_deposit).toLocaleString()}</strong>
               </Typography>
@@ -105,8 +105,13 @@ export function UpdateInvestorBalanceModal({
             />
           </Box>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 3 }}>
-          <Button onClick={onClose} color="inherit">
+        <DialogActions sx={{ px: 3, pb: 3, flexDirection: { xs: 'column', sm: 'row' }, gap: 1 }}>
+          <Button
+            onClick={onClose}
+            color="inherit"
+            fullWidth
+            sx={{ display: { xs: 'block', sm: 'none' } }}
+          >
             Cancel
           </Button>
           <Button
@@ -114,9 +119,13 @@ export function UpdateInvestorBalanceModal({
             variant="contained"
             color="primary"
             disabled={!isFormValid}
-            sx={{ px: 4 }}
+            fullWidth={true}
+            sx={{ px: 4, order: { xs: -1, sm: 0 } }}
           >
             Save
+          </Button>
+          <Button onClick={onClose} color="inherit" sx={{ display: { xs: 'none', sm: 'block' } }}>
+            Cancel
           </Button>
         </DialogActions>
       </Box>

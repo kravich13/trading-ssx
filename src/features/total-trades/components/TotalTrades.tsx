@@ -40,7 +40,13 @@ export async function TotalTrades() {
 
   return (
     <Box sx={{ py: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom fontWeight="bold" sx={{ mb: 4 }}>
+      <Typography
+        variant="h4"
+        component="h1"
+        gutterBottom
+        fontWeight="bold"
+        sx={{ mb: 4, fontSize: { xs: '1.8rem', sm: '2.125rem' } }}
+      >
         Total Trades Log
       </Typography>
 
@@ -55,7 +61,7 @@ export async function TotalTrades() {
       <GaltonBoard trades={tradeLikeData} />
 
       <TableContainer component={Paper} elevation={2}>
-        <Table size="small">
+        <Table size="small" sx={{ minWidth: 900 }}>
           <TableHead>
             <TableRow sx={{ backgroundColor: 'action.hover' }}>
               <TableCell sx={{ fontWeight: 'bold', width: '50px' }}>№</TableCell>

@@ -61,13 +61,30 @@ export async function InvestorDetails({ id }: { id: number }) {
 
   return (
     <Box sx={{ py: 4 }}>
-      <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
+      <Box
+        sx={{
+          mb: 4,
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          gap: 2,
+        }}
+      >
         <Link href="/investors" passHref>
-          <Button variant="text" startIcon={<ArrowBackIcon />} sx={{ color: 'text.secondary' }}>
+          <Button
+            variant="text"
+            startIcon={<ArrowBackIcon />}
+            sx={{ color: 'text.secondary', minWidth: 'auto' }}
+          >
             Back
           </Button>
         </Link>
-        <Typography variant="h4" component="h1" fontWeight="bold">
+        <Typography
+          variant="h4"
+          component="h1"
+          fontWeight="bold"
+          sx={{ fontSize: { xs: '1.5rem', sm: '2.125rem' } }}
+        >
           {investor.name}&apos;s Trading Log
         </Typography>
       </Box>
@@ -83,7 +100,7 @@ export async function InvestorDetails({ id }: { id: number }) {
       <GaltonBoard trades={tradesOnly} />
 
       <TableContainer component={Paper} elevation={2} sx={{ mb: 4 }}>
-        <Table size="small">
+        <Table size="small" sx={{ minWidth: 800 }}>
           <TableHead>
             <TableRow sx={{ backgroundColor: 'action.hover' }}>
               <TableCell sx={{ fontWeight: 'bold', width: '50px' }}>№</TableCell>

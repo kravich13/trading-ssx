@@ -46,29 +46,73 @@ export function InvestorActions({ id }: { id: number }) {
 
   return (
     <Box sx={{ py: 4 }}>
-      <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      <Box
+        sx={{
+          mb: 4,
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          alignItems: { xs: 'flex-start', md: 'center' },
+          justifyContent: 'space-between',
+          gap: 2,
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 } }}>
           <Link href="/investors" passHref>
-            <Button variant="text" startIcon={<ArrowBackIcon />} sx={{ color: 'text.secondary' }}>
+            <Button
+              variant="text"
+              startIcon={<ArrowBackIcon />}
+              sx={{ color: 'text.secondary', minWidth: 'auto' }}
+            >
               Back
             </Button>
           </Link>
-          <Typography variant="h4" component="h1" fontWeight="bold">
+          <Typography
+            variant="h4"
+            component="h1"
+            fontWeight="bold"
+            sx={{ fontSize: { xs: '1.5rem', sm: '2.125rem' } }}
+          >
             {investor.name}&apos;s Actions Log
           </Typography>
         </Box>
-        <Box sx={{ display: 'flex', gap: 2 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 1.5,
+            width: { xs: '100%', md: 'auto' },
+            justifyContent: { xs: 'center', sm: 'flex-end' },
+          }}
+        >
           <Button
             variant="contained"
             color="primary"
             startIcon={<AddIcon />}
             onClick={() => setIsModalOpen(true)}
+            sx={{
+              flex: { xs: '1 1 100%', sm: 'none' },
+              minWidth: { xs: '100%', sm: '140px' },
+              whiteSpace: 'nowrap',
+            }}
           >
             Add Action
           </Button>
-          <Link href={`/investors/${id}/trades`} passHref>
-            <Button variant="contained" color="info" startIcon={<HistoryIcon />}>
-              View Trade Log
+          <Link
+            href={`/investors/${id}/trades`}
+            passHref
+            style={{ textDecoration: 'none', flex: '1 1 100%', display: 'contents' }}
+          >
+            <Button
+              variant="contained"
+              color="info"
+              startIcon={<HistoryIcon />}
+              sx={{
+                flex: { xs: '1 1 100%', sm: 'none' },
+                minWidth: { xs: '100%', sm: '140px' },
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Trade Log
             </Button>
           </Link>
         </Box>

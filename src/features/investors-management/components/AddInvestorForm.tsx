@@ -95,7 +95,7 @@ export const AddInvestorForm = memo(function AddInvestorForm() {
         variant="contained"
         color="primary"
         fullWidth
-        sx={{ mt: 1 }}
+        sx={{ mt: 1, py: { xs: 1.2, sm: 1 } }}
         disabled={!isFormValid}
       >
         Add Investor

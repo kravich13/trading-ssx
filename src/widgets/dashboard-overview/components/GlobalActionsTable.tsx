@@ -88,7 +88,7 @@ export function GlobalActionsTable({ actions }: GlobalActionsTableProps) {
   return (
     <>
       <TableContainer component={Paper} elevation={2}>
-        <Table size="small">
+        <Table size="small" sx={{ minWidth: 800 }}>
           <TableHead>
             <TableRow sx={{ backgroundColor: 'action.hover' }}>
               <TableCell sx={{ fontWeight: 'bold', width: '50px' }}>№</TableCell>

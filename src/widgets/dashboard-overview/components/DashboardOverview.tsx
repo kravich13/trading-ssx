@@ -38,7 +38,13 @@ export async function DashboardOverview() {
 
   return (
     <Box sx={{ py: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
+      <Typography
+        variant="h4"
+        component="h1"
+        gutterBottom
+        fontWeight="bold"
+        sx={{ fontSize: { xs: '2rem', sm: '2.125rem' } }}
+      >
         Overview
       </Typography>
 
@@ -111,7 +117,7 @@ export async function DashboardOverview() {
         Investors Summary
       </Typography>
       <TableContainer component={Paper} elevation={2}>
-        <Table>
+        <Table sx={{ minWidth: 650 }}>
           <TableHead>
             <TableRow sx={{ backgroundColor: 'action.hover' }}>
               <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>

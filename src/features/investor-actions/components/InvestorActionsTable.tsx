@@ -91,7 +91,7 @@ export function InvestorActionsTable({ ledger, investorId }: InvestorActionsTabl
   return (
     <>
       <TableContainer component={Paper} elevation={2}>
-        <Table size="small">
+        <Table size="small" sx={{ minWidth: 700 }}>
           <TableHead>
             <TableRow sx={{ backgroundColor: 'action.hover' }}>
               <TableCell sx={{ fontWeight: 'bold', width: '50px' }}>№</TableCell>

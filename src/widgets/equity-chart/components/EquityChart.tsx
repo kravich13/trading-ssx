@@ -140,11 +140,28 @@ export function EquityChart({
   return (
     <Card elevation={1} sx={{ bgcolor: 'background.paper', border: '1px solid #1e4976', mb: 4 }}>
       <CardContent>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            justifyContent: 'space-between',
+            alignItems: { xs: 'flex-start', sm: 'center' },
+            gap: 2,
+            mb: 3,
+          }}
+        >
           <Typography variant="h6" fontWeight="bold" sx={{ color: 'primary.main' }}>
             {title}
           </Typography>
-          <Box sx={{ display: 'flex', gap: 3, alignItems: 'center' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: { xs: 1, sm: 3 },
+              alignItems: 'center',
+              width: { xs: '100%', sm: 'auto' },
+              justifyContent: 'space-between',
+            }}
+          >
             <FormControlLabel
               control={
                 <Switch
