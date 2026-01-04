@@ -20,10 +20,9 @@ import { TradeRow } from './TradeRow';
 
 interface TotalTradesTableProps {
   trades: Trade[];
-  onRefresh?: () => void;
 }
 
-export const TotalTradesTable = memo(({ trades, onRefresh }: TotalTradesTableProps) => {
+export const TotalTradesTable = memo(({ trades }: TotalTradesTableProps) => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -45,11 +44,10 @@ export const TotalTradesTable = memo(({ trades, onRefresh }: TotalTradesTablePro
   const handleConfirmDelete = useCallback(async () => {
     if (selectedTrade) {
       await deleteTrade(selectedTrade.id);
-      onRefresh?.();
       setDeleteModalOpen(false);
       setSelectedTrade(null);
     }
-  }, [selectedTrade, onRefresh]);
+  }, [selectedTrade]);
 
   const handleEditClick = useCallback((trade: Trade) => {
     setSelectedTrade(trade);
@@ -59,9 +57,8 @@ export const TotalTradesTable = memo(({ trades, onRefresh }: TotalTradesTablePro
   const handleStatusChange = useCallback(
     async (tradeId: number, closedDate: string, newStatus: TradeStatus) => {
       await updateTrade(tradeId, closedDate, newStatus);
-      onRefresh?.();
     },
-    [onRefresh]
+    []
   );
 
   return (
@@ -135,7 +132,6 @@ export const TotalTradesTable = memo(({ trades, onRefresh }: TotalTradesTablePro
         key={selectedTrade ? `edit-${selectedTrade.id}-${editModalOpen}` : 'edit-none'}
         open={editModalOpen}
         onClose={() => setEditModalOpen(false)}
-        onSuccess={onRefresh}
         trade={selectedTrade}
       />
     </>
