@@ -52,13 +52,20 @@ export function TotalTrades() {
   });
 
   let initialTotalDeposit = 0;
+  let initialTotalCapital = 0;
+
   if (trades.length > 0) {
-    const lastTrade = trades[trades.length - 1];
-    let lastPlUsd = lastTrade.total_pl_usd;
-    if (lastTrade.profits && lastTrade.profits.length > 0) {
-      lastPlUsd = lastTrade.profits.reduce((sum, p) => sum + p, 0);
-    }
-    initialTotalDeposit = lastTrade.total_deposit_after - lastPlUsd;
+    const totalProjectPl = trades.reduce((sum, t) => {
+      let pl = t.total_pl_usd;
+      if (t.profits && t.profits.length > 0) {
+        pl = t.profits.reduce((s, p) => s + p, 0);
+      }
+      return sum + pl;
+    }, 0);
+
+    const latestTrade = trades[0];
+    initialTotalDeposit = latestTrade.total_deposit_after - totalProjectPl;
+    initialTotalCapital = latestTrade.total_capital_after - totalProjectPl;
   }
 
   return (
@@ -87,7 +94,8 @@ export function TotalTrades() {
       <EquityChart
         trades={tradeLikeData}
         title="Global Equity Curve (Aggregated)"
-        initialBalance={initialTotalDeposit}
+        initialDeposit={initialTotalDeposit}
+        initialCapital={initialTotalCapital}
       />
 
       <GaltonBoard trades={tradeLikeData} />

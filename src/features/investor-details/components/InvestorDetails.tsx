@@ -44,6 +44,7 @@ export async function InvestorDetails({ id }: InvestorDetailsProps) {
 
   const firstTrade = ledger.find((r) => r.type === LedgerType.TRADE);
   const initialInvestorDeposit = firstTrade ? firstTrade.deposit_before : 0;
+  const initialInvestorCapital = firstTrade ? firstTrade.capital_before : 0;
 
   return (
     <Box sx={{ py: 4 }}>
@@ -80,7 +81,8 @@ export async function InvestorDetails({ id }: InvestorDetailsProps) {
       <EquityChart
         trades={tradesOnly}
         title={`${investor.name}'s Equity Curve`}
-        initialBalance={initialInvestorDeposit}
+        initialDeposit={initialInvestorDeposit}
+        initialCapital={initialInvestorCapital}
       />
 
       <GaltonBoard trades={tradesOnly} />
