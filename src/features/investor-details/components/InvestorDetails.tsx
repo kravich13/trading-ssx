@@ -2,7 +2,7 @@ import { getInvestorById, getInvestorLedger } from '@/entities/investor';
 import { LedgerType } from '@/shared/enum';
 import { EquityChart } from '@/widgets/equity-chart';
 import { GaltonBoard } from '@/widgets/galton-board';
-import { TradeStatsDashboard } from '@/widgets/trade-stats';
+import { TradeStatsDashboard, FinanceStatsDashboard } from '@/widgets/trade-stats';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { Box, Button, Typography } from '@mui/material';
 import Link from 'next/link';
@@ -77,6 +77,8 @@ export async function InvestorDetails({ id }: InvestorDetailsProps) {
       </Box>
 
       <TradeStatsDashboard trades={tradesOnly} />
+
+      <FinanceStatsDashboard ledger={ledger} />
 
       <EquityChart
         trades={tradesOnly}

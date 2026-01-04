@@ -1,15 +1,19 @@
+import { getGlobalFinanceStats } from '@/entities/investor';
 import { getAllTrades } from '@/entities/trade';
 import { TradeType } from '@/shared/enum';
 import { EquityChart } from '@/widgets/equity-chart';
 import { GaltonBoard } from '@/widgets/galton-board';
-import { TradeStatsDashboard } from '@/widgets/trade-stats';
+import { FinanceStatsDashboard, TradeStatsDashboard } from '@/widgets/trade-stats';
 import { Box, Typography } from '@mui/material';
 import { processTotalTradesData } from '../utils';
 import { AddTradeButton } from './AddTradeButton';
 import { TotalTradesTable } from './TotalTradesTable';
 
 export async function TotalTrades() {
-  const trades = await getAllTrades(TradeType.GLOBAL);
+  const [trades, financeStats] = await Promise.all([
+    getAllTrades(TradeType.GLOBAL),
+    getGlobalFinanceStats(),
+  ]);
 
   const { tradeLikeData, initialTotalDeposit, initialTotalCapital } =
     processTotalTradesData(trades);
@@ -29,6 +33,8 @@ export async function TotalTrades() {
       </Box>
 
       <TradeStatsDashboard trades={tradeLikeData} />
+
+      <FinanceStatsDashboard stats={financeStats} />
 
       <EquityChart
         trades={tradeLikeData}

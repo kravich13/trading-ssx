@@ -3,6 +3,7 @@
 import { db } from '@/shared/api';
 import { LedgerType, TradeStatus, TradeType } from '@/shared/enum';
 import { revalidatePath } from 'next/cache';
+import { FinanceStats } from '../lib';
 import { Investor, LedgerEntry } from '../types';
 
 export async function getInvestors(): Promise<Investor[]> {
@@ -229,14 +230,6 @@ export async function updateLedgerEntry({
     const isInitial = entry.capital_before === 0 && entry.deposit_before === 0;
     const effectiveDepositAmount = depositAmount !== undefined ? depositAmount : amount;
 
-    const capitalDiff = isInitial ? amount - entry.capital_after : amount - entry.change_amount;
-    const depositDiff = isInitial
-      ? effectiveDepositAmount - entry.deposit_after
-      : entry.type === LedgerType.BOTH_CHANGE || entry.type === LedgerType.DEPOSIT_CHANGE
-        ? (depositAmount !== undefined ? depositAmount : amount) -
-          (entry.type === LedgerType.DEPOSIT_CHANGE ? entry.change_amount : entry.change_amount)
-        : 0;
-
     // Special case for BOTH_CHANGE or initial where we might want different diffs
     // But for now let's stick to the simplest logic:
     // If it's initial, we just set the new values and update all subsequent
@@ -297,4 +290,52 @@ export async function updateLedgerEntry({
   revalidatePath('/');
   revalidatePath('/investors');
   revalidatePath(`/investors/${investorId}`);
+}
+
+export async function getGlobalFinanceStats(): Promise<FinanceStats> {
+  const current = await getTotalStats();
+
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+  const base = db
+    .prepare(
+      `
+    SELECT 
+      SUM(capital_after) as total_capital,
+      SUM(deposit_after) as total_deposit
+    FROM (
+      SELECT capital_after, deposit_after
+      FROM ledger
+      WHERE id IN (
+        SELECT MAX(l2.id)
+        FROM ledger l2
+        JOIN investors i ON l2.investor_id = i.id
+        WHERE i.is_active = 1 AND i.type = 'GLOBAL' AND l2.created_at < ?
+        GROUP BY l2.investor_id
+      )
+    )
+  `
+    )
+    .get(startOfMonth) as { total_capital: number; total_deposit: number } | undefined;
+
+  const baseCapital = base?.total_capital || 0;
+  const baseDeposit = base?.total_deposit || 0;
+
+  const monthCapitalGrowthUsd = current.total_capital - baseCapital;
+  const monthCapitalGrowthPercent =
+    baseCapital !== 0 ? (monthCapitalGrowthUsd / baseCapital) * 100 : 0;
+
+  const monthDepositGrowthUsd = current.total_deposit - baseDeposit;
+  const monthDepositGrowthPercent =
+    baseDeposit !== 0 ? (monthDepositGrowthUsd / baseDeposit) * 100 : 0;
+
+  return {
+    currentCapital: current.total_capital,
+    currentDeposit: current.total_deposit,
+    monthCapitalGrowthUsd,
+    monthCapitalGrowthPercent,
+    monthDepositGrowthUsd,
+    monthDepositGrowthPercent,
+  };
 }
