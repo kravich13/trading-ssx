@@ -8,20 +8,32 @@ import { TotalTradesTable } from './TotalTradesTable';
 export async function TotalTrades() {
   const trades = await getAllTrades();
 
-  const tradeLikeData = trades.map((t) => ({
-    id: t.id,
-    ticker: t.ticker,
-    pl_percent: t.pl_percent,
-    change_amount: t.total_pl_usd,
-    absolute_value: t.total_capital_after,
-    deposit_value: t.total_deposit_after,
-    default_risk_percent: t.default_risk_percent,
-  }));
+  const tradeLikeData = trades.map((t) => {
+    let change_amount = t.total_pl_usd;
+    if (t.profits && t.profits.length > 0) {
+      change_amount = t.profits.reduce((sum, p) => sum + p, 0);
+    }
 
-  const initialTotalDeposit =
-    trades.length > 0
-      ? trades[trades.length - 1].total_deposit_after - trades[trades.length - 1].total_pl_usd
-      : 0;
+    return {
+      id: t.id,
+      ticker: t.ticker,
+      pl_percent: t.pl_percent,
+      change_amount,
+      absolute_value: t.total_capital_after,
+      deposit_value: t.total_deposit_after,
+      default_risk_percent: t.default_risk_percent,
+    };
+  });
+
+  let initialTotalDeposit = 0;
+  if (trades.length > 0) {
+    const lastTrade = trades[trades.length - 1];
+    let lastPlUsd = lastTrade.total_pl_usd;
+    if (lastTrade.profits && lastTrade.profits.length > 0) {
+      lastPlUsd = lastTrade.profits.reduce((sum, p) => sum + p, 0);
+    }
+    initialTotalDeposit = lastTrade.total_deposit_after - lastPlUsd;
+  }
 
   return (
     <Box sx={{ py: 4 }}>

@@ -1,33 +1,22 @@
 'use client';
 
+import { EditTradeModal } from '@/entities/trade';
 import { deleteTrade, updateTrade } from '@/entities/trade/api';
 import { Trade } from '@/entities/trade/types';
 import { TradeStatus } from '@/shared/enum';
 import { ConfirmModal } from '@/shared/ui/modals';
-import { normalizeDate } from '@/shared/utils/date.util';
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
 import {
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  MenuItem,
   Paper,
-  Select,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  TextField,
   Typography,
 } from '@mui/material';
 import { memo, useCallback, useState } from 'react';
+import { TradeRow } from './TradeRow';
 
 interface TotalTradesTableProps {
   trades: Trade[];
@@ -37,7 +26,6 @@ export const TotalTradesTable = memo(({ trades }: TotalTradesTableProps) => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editDate, setEditDate] = useState<string>('');
 
   const formatCurrency = useCallback(
     (value: number) =>
@@ -63,17 +51,8 @@ export const TotalTradesTable = memo(({ trades }: TotalTradesTableProps) => {
 
   const handleEditClick = useCallback((trade: Trade) => {
     setSelectedTrade(trade);
-    setEditDate(normalizeDate(trade.closed_date));
     setEditModalOpen(true);
   }, []);
-
-  const handleConfirmEdit = useCallback(async () => {
-    if (selectedTrade) {
-      await updateTrade(selectedTrade.id, editDate, selectedTrade.status || TradeStatus.CLOSED);
-      setEditModalOpen(false);
-      setSelectedTrade(null);
-    }
-  }, [selectedTrade, editDate]);
 
   const handleStatusChange = useCallback(
     async (tradeId: number, closedDate: string, newStatus: TradeStatus) => {
@@ -124,102 +103,16 @@ export const TotalTradesTable = memo(({ trades }: TotalTradesTableProps) => {
                 </TableCell>
               </TableRow>
             ) : (
-              trades.map((trade) => {
-                const plColor =
-                  trade.total_pl_usd > 0
-                    ? 'success.main'
-                    : trade.total_pl_usd < 0
-                      ? 'error.main'
-                      : 'inherit';
-
-                return (
-                  <TableRow key={trade.id} hover>
-                    <TableCell>{trade.id}</TableCell>
-                    <TableCell align="right" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
-                      {trade.closed_date || '-'}
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 'medium' }}>{trade.ticker}</TableCell>
-                    <TableCell>
-                      <Select
-                        value={trade.status || TradeStatus.CLOSED}
-                        onChange={(e) =>
-                          handleStatusChange(
-                            trade.id,
-                            trade.closed_date || '',
-                            e.target.value as TradeStatus
-                          )
-                        }
-                        size="small"
-                        sx={{
-                          fontSize: '0.65rem',
-                          fontWeight: 'bold',
-                          height: 24,
-                          '& .MuiSelect-select': {
-                            py: 0,
-                            display: 'flex',
-                            alignItems: 'center',
-                            color:
-                              trade.status === TradeStatus.IN_PROGRESS
-                                ? 'warning.main'
-                                : 'success.main',
-                          },
-                          '& .MuiOutlinedInput-notchedOutline': {
-                            borderColor:
-                              trade.status === TradeStatus.IN_PROGRESS
-                                ? 'warning.main'
-                                : 'success.main',
-                            opacity: 0.5,
-                          },
-                        }}
-                      >
-                        <MenuItem value={TradeStatus.IN_PROGRESS} sx={{ fontSize: '0.75rem' }}>
-                          IN PROGRESS
-                        </MenuItem>
-                        <MenuItem value={TradeStatus.CLOSED} sx={{ fontSize: '0.75rem' }}>
-                          CLOSED
-                        </MenuItem>
-                      </Select>
-                    </TableCell>
-                    <TableCell align="right" sx={{ color: plColor }}>
-                      {trade.pl_percent.toFixed(2)}%
-                    </TableCell>
-                    <TableCell align="right" sx={{ color: plColor, fontWeight: 'bold' }}>
-                      ${formatCurrency(trade.total_pl_usd)}
-                    </TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                      ${formatCurrency(trade.total_capital_after)}
-                    </TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                      ${formatCurrency(trade.total_deposit_after)}
-                    </TableCell>
-                    <TableCell align="right">
-                      {trade.default_risk_percent !== null
-                        ? `${trade.default_risk_percent.toFixed(2)}%`
-                        : '-'}
-                    </TableCell>
-                    <TableCell align="left">
-                      <Box sx={{ display: 'flex', justifyContent: 'flex-start', gap: 0.5 }}>
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          onClick={() => handleEditClick(trade)}
-                          title="Edit"
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() => handleDeleteClick(trade)}
-                          title="Delete"
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                );
-              })
+              trades.map((trade) => (
+                <TradeRow
+                  key={trade.id}
+                  trade={trade}
+                  formatCurrency={formatCurrency}
+                  onEdit={handleEditClick}
+                  onDelete={handleDeleteClick}
+                  onStatusChange={handleStatusChange}
+                />
+              ))
             )}
           </TableBody>
         </Table>
@@ -235,35 +128,12 @@ export const TotalTradesTable = memo(({ trades }: TotalTradesTableProps) => {
         confirmText="Delete"
       />
 
-      <Dialog open={editModalOpen} onClose={() => setEditModalOpen(false)} fullWidth maxWidth="xs">
-        <DialogTitle sx={{ fontWeight: 'bold' }}>Edit Trade № {selectedTrade?.id}</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <TextField
-              label="Closed Date"
-              type="date"
-              fullWidth
-              value={editDate}
-              onChange={(e) => setEditDate(e.target.value)}
-              variant="outlined"
-              size="small"
-              slotProps={{
-                inputLabel: {
-                  shrink: true,
-                },
-              }}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setEditModalOpen(false)} color="inherit">
-            Cancel
-          </Button>
-          <Button onClick={handleConfirmEdit} variant="contained" color="primary">
-            Save
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <EditTradeModal
+        key={selectedTrade ? `edit-${selectedTrade.id}-${editModalOpen}` : 'edit-none'}
+        open={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        trade={selectedTrade}
+      />
     </>
   );
 });

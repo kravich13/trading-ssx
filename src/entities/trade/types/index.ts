@@ -11,4 +11,5 @@ export type Trade = {
   total_deposit_after: number;
   status: TradeStatus;
   created_at: string;
+  profits: number[];
 };

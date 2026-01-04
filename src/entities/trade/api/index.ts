@@ -5,36 +5,216 @@ import { TradeStatus } from '@/shared/enum';
 import { revalidatePath } from 'next/cache';
 import { Trade } from '../types';
 
+interface TradeRowRaw extends Omit<Trade, 'profits'> {
+  profits_json: string | null;
+}
+
 export async function getAllTrades(): Promise<Trade[]> {
   const trades = db
     .prepare(
       `
     SELECT 
       t.*,
-      SUM(l.change_amount) as total_pl_usd,
-      SUM(l.capital_after) as total_capital_after,
-      SUM(l.deposit_after) as total_deposit_after
+      COALESCE(SUM(l.change_amount), 0) as total_pl_usd,
+      COALESCE(MAX(l_all.total_cap), 0) as total_capital_after,
+      COALESCE(MAX(l_all.total_dep), 0) as total_deposit_after
     FROM trades t
     LEFT JOIN ledger l ON l.trade_id = t.id AND l.type = 'TRADE'
+    LEFT JOIN (
+      SELECT trade_id, SUM(capital_after) as total_cap, SUM(deposit_after) as total_dep
+      FROM ledger
+      GROUP BY trade_id
+    ) l_all ON l_all.trade_id = t.id
     GROUP BY t.id
     ORDER BY t.id DESC
   `
     )
-    .all() as Trade[];
-  return trades;
+    .all() as TradeRowRaw[];
+
+  return trades.map((t) => ({
+    ...t,
+    profits: JSON.parse(t.profits_json || '[]'),
+  }));
 }
 
-export async function updateTrade(id: number, closedDate: string, status: TradeStatus) {
-  db.prepare('UPDATE trades SET closed_date = ?, status = ? WHERE id = ?').run(
-    closedDate,
-    status,
-    id
-  );
+export async function updateTrade(
+  id: number,
+  closedDate: string,
+  status: TradeStatus,
+  profits?: number[]
+) {
+  const transaction = db.transaction(() => {
+    // 1. Update trade record
+    if (profits !== undefined) {
+      db.prepare(
+        'UPDATE trades SET closed_date = ?, status = ?, profits_json = ? WHERE id = ?'
+      ).run(closedDate, status, JSON.stringify(profits), id);
+    } else {
+      db.prepare('UPDATE trades SET closed_date = ?, status = ? WHERE id = ?').run(
+        closedDate,
+        status,
+        id
+      );
+    }
 
-  db.prepare('UPDATE ledger SET closed_date = ? WHERE trade_id = ?').run(closedDate, id);
+    // 2. Update ledger entries date
+    db.prepare('UPDATE ledger SET closed_date = ? WHERE trade_id = ?').run(closedDate, id);
+
+    // 3. If profits changed, update ledger change_amounts and recalculate balances
+    if (profits !== undefined) {
+      const newTotalPlUsd = profits.reduce((sum, p) => sum + p, 0);
+
+      const ledgerEntries = db
+        .prepare('SELECT * FROM ledger WHERE trade_id = ? AND type = "TRADE"')
+        .all(id) as {
+        id: number;
+        investor_id: number;
+        change_amount: number;
+        capital_before: number;
+      }[];
+
+      if (ledgerEntries.length > 0) {
+        const currentTotalPlUsd = ledgerEntries.reduce((sum, l) => sum + l.change_amount, 0);
+
+        const affectedInvestorIds = new Set<number>();
+
+        if (currentTotalPlUsd !== 0) {
+          // Proportional update
+          for (const entry of ledgerEntries) {
+            const share = entry.change_amount / currentTotalPlUsd;
+            const newInvestorPlUsd = newTotalPlUsd * share;
+            db.prepare('UPDATE ledger SET change_amount = ? WHERE id = ?').run(
+              newInvestorPlUsd,
+              entry.id
+            );
+            affectedInvestorIds.add(entry.investor_id);
+          }
+        } else {
+          // If previous total was 0, use capital_before share
+          const totalCapitalBefore = ledgerEntries.reduce((sum, l) => sum + l.capital_before, 0);
+          if (totalCapitalBefore > 0) {
+            for (const entry of ledgerEntries) {
+              const share = entry.capital_before / totalCapitalBefore;
+              const newInvestorPlUsd = newTotalPlUsd * share;
+              db.prepare('UPDATE ledger SET change_amount = ? WHERE id = ?').run(
+                newInvestorPlUsd,
+                entry.id
+              );
+              affectedInvestorIds.add(entry.investor_id);
+            }
+          }
+        }
+
+        // Recalculate all affected investors
+        for (const investorId of affectedInvestorIds) {
+          recalculateInvestorBalances(investorId);
+        }
+      } else if (newTotalPlUsd !== 0) {
+        // Create new ledger entries if none exist and we have a profit
+        const investors = db.prepare('SELECT id FROM investors WHERE is_active = 1').all() as {
+          id: number;
+        }[];
+
+        const activeStates = investors
+          .map((inv) => ({
+            id: inv.id,
+            last: db
+              .prepare(
+                'SELECT capital_after, deposit_after FROM ledger WHERE investor_id = ? ORDER BY id DESC LIMIT 1'
+              )
+              .get(inv.id) as { capital_after: number; deposit_after: number } | undefined,
+          }))
+          .filter(
+            (s): s is { id: number; last: { capital_after: number; deposit_after: number } } =>
+              !!s.last && s.last.capital_after > 0
+          );
+
+        const totalCapitalBefore = activeStates.reduce((sum, s) => sum + s.last.capital_after, 0);
+
+        if (totalCapitalBefore > 0) {
+          const trade = db
+            .prepare('SELECT ticker, pl_percent, default_risk_percent FROM trades WHERE id = ?')
+            .get(id) as { ticker: string; pl_percent: number; default_risk_percent: number | null };
+
+          for (const s of activeStates) {
+            const share = s.last.capital_after / totalCapitalBefore;
+            const investorPlUsd = newTotalPlUsd * share;
+
+            db.prepare(
+              `
+              INSERT INTO ledger (
+                investor_id, trade_id, type, ticker, pl_percent, change_amount, 
+                capital_before, capital_after, deposit_before, deposit_after, closed_date, default_risk_percent
+              ) VALUES (?, ?, 'TRADE', ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `
+            ).run(
+              s.id,
+              id,
+              trade.ticker,
+              trade.pl_percent,
+              investorPlUsd,
+              s.last.capital_after,
+              s.last.capital_after + investorPlUsd,
+              s.last.deposit_after,
+              s.last.deposit_after + investorPlUsd,
+              closedDate,
+              trade.default_risk_percent
+            );
+          }
+        }
+      }
+    }
+  });
+
+  transaction();
 
   revalidatePath('/');
   revalidatePath('/trades');
+  revalidatePath('/investors');
+}
+
+function recalculateInvestorBalances(investorId: number) {
+  const entries = db
+    .prepare('SELECT * FROM ledger WHERE investor_id = ? ORDER BY id ASC')
+    .all(investorId) as {
+    id: number;
+    type: string;
+    change_amount: number;
+  }[];
+
+  let currentCapital = 0;
+  let currentDeposit = 0;
+
+  for (const entry of entries) {
+    const capitalBefore = currentCapital;
+    const depositBefore = currentDeposit;
+
+    let capitalAfter = currentCapital;
+    let depositAfter = currentDeposit;
+
+    if (entry.type === 'TRADE') {
+      capitalAfter += entry.change_amount;
+      depositAfter += entry.change_amount;
+    } else if (entry.type === 'CAPITAL_CHANGE') {
+      capitalAfter += entry.change_amount;
+    } else if (entry.type === 'DEPOSIT_CHANGE') {
+      depositAfter += entry.change_amount;
+    } else if (entry.type === 'BOTH_CHANGE') {
+      capitalAfter += entry.change_amount;
+      depositAfter += entry.change_amount;
+    }
+
+    db.prepare(
+      `
+      UPDATE ledger 
+      SET capital_before = ?, capital_after = ?, deposit_before = ?, deposit_after = ?
+      WHERE id = ?
+    `
+    ).run(capitalBefore, capitalAfter, depositBefore, depositAfter, entry.id);
+
+    currentCapital = capitalAfter;
+    currentDeposit = depositAfter;
+  }
 }
 
 export async function deleteTrade(id: number) {

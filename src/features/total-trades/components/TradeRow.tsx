@@ -1,0 +1,101 @@
+'use client';
+
+import { Trade } from '@/entities/trade/types';
+import { TradeStatus } from '@/shared/enum';
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import { Box, IconButton, MenuItem, Select, TableCell, TableRow } from '@mui/material';
+import { memo } from 'react';
+
+interface TradeRowProps {
+  trade: Trade;
+  formatCurrency: (value: number) => string;
+  onEdit: (trade: Trade) => void;
+  onDelete: (trade: Trade) => void;
+  onStatusChange: (id: number, date: string, status: TradeStatus) => void;
+}
+
+export const TradeRow: React.FC<TradeRowProps> = memo(
+  ({ trade, formatCurrency, onEdit, onDelete, onStatusChange }) => {
+    let totalPlUsd = trade.total_pl_usd;
+    if (trade.profits && trade.profits.length > 0) {
+      totalPlUsd = trade.profits.reduce((sum, p) => sum + p, 0);
+    }
+
+    let plColor = 'inherit';
+    if (totalPlUsd > 0) {
+      plColor = 'success.main';
+    } else if (totalPlUsd < 0) {
+      plColor = 'error.main';
+    }
+
+    return (
+      <TableRow hover>
+        <TableCell>{trade.id}</TableCell>
+        <TableCell align="right" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
+          {trade.closed_date || '-'}
+        </TableCell>
+        <TableCell sx={{ fontWeight: 'medium' }}>{trade.ticker}</TableCell>
+        <TableCell>
+          <Select
+            value={trade.status || TradeStatus.CLOSED}
+            onChange={(e) =>
+              onStatusChange(trade.id, trade.closed_date || '', e.target.value as TradeStatus)
+            }
+            size="small"
+            sx={{
+              fontSize: '0.65rem',
+              fontWeight: 'bold',
+              height: 24,
+              '& .MuiSelect-select': {
+                py: 0,
+                display: 'flex',
+                alignItems: 'center',
+                color: trade.status === TradeStatus.IN_PROGRESS ? 'warning.main' : 'success.main',
+              },
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor:
+                  trade.status === TradeStatus.IN_PROGRESS ? 'warning.main' : 'success.main',
+                opacity: 0.5,
+              },
+            }}
+          >
+            <MenuItem value={TradeStatus.IN_PROGRESS} sx={{ fontSize: '0.75rem' }}>
+              IN PROGRESS
+            </MenuItem>
+            <MenuItem value={TradeStatus.CLOSED} sx={{ fontSize: '0.75rem' }}>
+              CLOSED
+            </MenuItem>
+          </Select>
+        </TableCell>
+        <TableCell align="right" sx={{ color: plColor }}>
+          {trade.pl_percent.toFixed(2)}%
+        </TableCell>
+        <TableCell align="right" sx={{ color: plColor, fontWeight: 'bold' }}>
+          ${formatCurrency(totalPlUsd)}
+        </TableCell>
+        <TableCell align="right" sx={{ fontWeight: 'bold' }}>
+          ${formatCurrency(trade.total_capital_after)}
+        </TableCell>
+        <TableCell align="right" sx={{ fontWeight: 'bold' }}>
+          ${formatCurrency(trade.total_deposit_after)}
+        </TableCell>
+        <TableCell align="right">
+          {trade.default_risk_percent !== null ? `${trade.default_risk_percent.toFixed(2)}%` : '-'}
+        </TableCell>
+        <TableCell align="left">
+          <Box sx={{ display: 'flex', justifyContent: 'flex-start', gap: 0.5 }}>
+            <IconButton size="small" color="primary" onClick={() => onEdit(trade)} title="Edit">
+              <EditIcon fontSize="small" />
+            </IconButton>
+            <IconButton size="small" color="error" onClick={() => onDelete(trade)} title="Delete">
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Box>
+        </TableCell>
+      </TableRow>
+    );
+  }
+);
+
+TradeRow.displayName = 'TradeRow';

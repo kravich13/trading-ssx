@@ -20,7 +20,9 @@ db.exec(`
     pl_percent REAL NOT NULL,
     default_risk_percent REAL,
     closed_date DATETIME,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    status TEXT DEFAULT 'CLOSED',
+    profits_json TEXT DEFAULT '[]'
   );
 
   CREATE TABLE IF NOT EXISTS ledger (
@@ -54,3 +56,15 @@ db.exec(`
   WHERE l.id = (SELECT MAX(id) FROM ledger WHERE investor_id = i.id)
   OR l.id IS NULL;
 `);
+
+try {
+  db.exec('ALTER TABLE trades ADD COLUMN status TEXT DEFAULT "CLOSED"');
+} catch (_e) {
+  // ignore if column exists
+}
+
+try {
+  db.exec('ALTER TABLE trades ADD COLUMN profits_json TEXT DEFAULT "[]"');
+} catch (_e) {
+  // ignore if column exists
+}
