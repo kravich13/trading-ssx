@@ -1,6 +1,6 @@
 'use client';
 
-import { CHART_COLORS } from '@/shared/consts';
+import { COLORS } from '@/shared/consts';
 import { Box, Typography, useTheme } from '@mui/material';
 import { memo, useCallback, useMemo } from 'react';
 import {
@@ -40,9 +40,9 @@ export const EquityChartCore = memo(
 
     const emaLegendItems = useMemo(
       () => [
-        { label: 'EMA 14', color: CHART_COLORS.EMA_14 },
-        { label: 'EMA 50', color: CHART_COLORS.EMA_50 },
-        { label: 'EMA 200', color: CHART_COLORS.EMA_200 },
+        { label: 'EMA 14', color: COLORS.chartEma14 },
+        { label: 'EMA 50', color: COLORS.chartEma50 },
+        { label: 'EMA 200', color: COLORS.chartEma200 },
       ],
       []
     );
@@ -74,15 +74,11 @@ export const EquityChartCore = memo(
             <AreaChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
               <defs>
                 <linearGradient id="colorEquity" x1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={CHART_COLORS.EQUITY} stopOpacity={0.2} />
-                  <stop offset="95%" stopColor={CHART_COLORS.EQUITY} stopOpacity={0} />
+                  <stop offset="5%" stopColor={COLORS.chartEquity} stopOpacity={0.2} />
+                  <stop offset="95%" stopColor={COLORS.chartEquity} stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="rgba(255,255,255,0.1)"
-                vertical={false}
-              />
+              <CartesianGrid strokeDasharray="3 3" stroke={COLORS.whiteAlpha10} vertical={false} />
               <XAxis
                 dataKey="name"
                 stroke={theme.palette.text.secondary}
@@ -105,33 +101,33 @@ export const EquityChartCore = memo(
                     return (
                       <Box
                         sx={{
-                          backgroundColor: '#132f4c',
-                          border: '1px solid #1e4976',
+                          backgroundColor: COLORS.bgPaper,
+                          border: `1px solid ${COLORS.borderPrimary}`,
                           borderRadius: '4px',
                           p: 1.5,
-                          color: '#fff',
+                          color: COLORS.white,
                         }}
                       >
                         <Typography
                           variant="body2"
-                          sx={{ color: CHART_COLORS.EQUITY, fontWeight: 'bold', mb: 1 }}
+                          sx={{ color: COLORS.chartEquity, fontWeight: 'bold', mb: 1 }}
                         >
                           {viewLabel} {mode === 'percent' ? '%' : ''}: {formatValue(d.value)}
                         </Typography>
 
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mb: 1 }}>
                           {showEmas && d.ema14 !== null && (
-                            <Typography variant="caption" sx={{ color: CHART_COLORS.EMA_14 }}>
+                            <Typography variant="caption" sx={{ color: COLORS.chartEma14 }}>
                               EMA 14: {formatValue(d.ema14)}
                             </Typography>
                           )}
                           {showEmas && d.ema50 !== null && (
-                            <Typography variant="caption" sx={{ color: CHART_COLORS.EMA_50 }}>
+                            <Typography variant="caption" sx={{ color: COLORS.chartEma50 }}>
                               EMA 50: {formatValue(d.ema50)}
                             </Typography>
                           )}
                           {showEmas && d.ema200 !== null && (
-                            <Typography variant="caption" sx={{ color: CHART_COLORS.EMA_200 }}>
+                            <Typography variant="caption" sx={{ color: COLORS.chartEma200 }}>
                               EMA 200: {formatValue(d.ema200)}
                             </Typography>
                           )}
@@ -142,7 +138,7 @@ export const EquityChartCore = memo(
                             variant="caption"
                             sx={{
                               display: 'block',
-                              borderTop: '1px solid rgba(255,255,255,0.1)',
+                              borderTop: `1px solid ${COLORS.whiteAlpha10}`,
                               pt: 0.5,
                             }}
                           >
@@ -168,12 +164,16 @@ export const EquityChartCore = memo(
                   return null;
                 }}
               />
-              <ReferenceLine y={initialReferenceValue} stroke="#f44336" strokeDasharray="3 3" />
+              <ReferenceLine
+                y={initialReferenceValue}
+                stroke={COLORS.errorMain}
+                strokeDasharray="3 3"
+              />
 
               <Area
                 type="monotone"
                 dataKey="value"
-                stroke={CHART_COLORS.EQUITY}
+                stroke={COLORS.chartEquity}
                 strokeWidth={2}
                 fillOpacity={1}
                 fill="url(#colorEquity)"
@@ -186,21 +186,21 @@ export const EquityChartCore = memo(
                   <Line
                     type="monotone"
                     dataKey="ema14"
-                    stroke={CHART_COLORS.EMA_14}
+                    stroke={COLORS.chartEma14}
                     strokeWidth={1.5}
                     dot={false}
                   />
                   <Line
                     type="monotone"
                     dataKey="ema50"
-                    stroke={CHART_COLORS.EMA_50}
+                    stroke={COLORS.chartEma50}
                     strokeWidth={1.5}
                     dot={false}
                   />
                   <Line
                     type="monotone"
                     dataKey="ema200"
-                    stroke={CHART_COLORS.EMA_200}
+                    stroke={COLORS.chartEma200}
                     strokeWidth={2}
                     dot={false}
                   />

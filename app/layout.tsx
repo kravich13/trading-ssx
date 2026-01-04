@@ -1,3 +1,4 @@
+import { COLORS } from '@/shared/consts';
 import { ScrollToTop } from '@/shared/ui';
 import type { Metadata } from 'next';
 import { Roboto } from 'next/font/google';
@@ -36,7 +37,7 @@ export default function RootLayout({
     <html lang="en" className={roboto.variable}>
       <body>
         <NextTopLoader
-          color="#2196f3"
+          color={COLORS.primaryMain}
           initialPosition={0.08}
           crawlSpeed={200}
           height={3}
@@ -44,7 +45,7 @@ export default function RootLayout({
           showSpinner={false}
           easing="ease"
           speed={200}
-          shadow="0 0 10px #2196f3,0 0 5px #2196f3"
+          shadow={`0 0 10px ${COLORS.primaryMain}, 0 0 5px ${COLORS.primaryMain}`}
         />
         <MUIProvider>
           <nav className="navbar">

@@ -4,6 +4,7 @@ import { updateTrade } from '@/entities/trade/api';
 import { Trade } from '@/entities/trade/types';
 import { getInitialTradeProfits } from '@/entities/trade/utils';
 import { TradeStatus } from '@/shared/enum';
+import { COLORS } from '@/shared/consts';
 import { normalizeDate } from '@/shared/utils/date.util';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -173,7 +174,7 @@ export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTra
                   fontWeight: 'bold',
                   textAlign: 'right',
                   color: totalEditProfit >= 0 ? 'success.main' : 'error.main',
-                  bgcolor: 'rgba(255, 255, 255, 0.05)',
+                  bgcolor: COLORS.whiteAlpha05,
                   p: 1,
                   borderRadius: 1,
                 }}

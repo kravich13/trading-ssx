@@ -1,6 +1,7 @@
 'use client';
 
 import { TradeLike } from '@/entities/trade';
+import { COLORS } from '@/shared/consts';
 import { Card, CardContent } from '@mui/material';
 import { useCallback, useMemo, useState } from 'react';
 import { EquityChartStorageKeys } from '../enums';
@@ -132,7 +133,14 @@ export function EquityChart({
   }, [trades, view, mode, initialCapital, initialDeposit]);
 
   return (
-    <Card elevation={1} sx={{ bgcolor: 'background.paper', border: '1px solid #1e4976', mb: 4 }}>
+    <Card
+      elevation={1}
+      sx={{
+        bgcolor: 'background.paper',
+        border: `1px solid ${COLORS.borderPrimary}`,
+        mb: 4,
+      }}
+    >
       <CardContent>
         <EquityChartHeader
           title={title}

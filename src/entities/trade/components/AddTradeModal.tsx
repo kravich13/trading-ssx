@@ -4,6 +4,7 @@ import { getInvestors } from '@/entities/investor/api';
 import { Investor } from '@/entities/investor/types';
 import { addTrade } from '@/entities/trade/api';
 import { TradeStatus, TradeType } from '@/shared/enum';
+import { COLORS } from '@/shared/consts';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import {
@@ -323,7 +324,7 @@ export const AddTradeModal = memo(({ open, onClose, onSuccess }: AddTradeModalPr
                       fontWeight: 'bold',
                       textAlign: 'right',
                       color: totalProfit >= 0 ? 'success.main' : 'error.main',
-                      bgcolor: 'rgba(255, 255, 255, 0.05)',
+                      bgcolor: COLORS.whiteAlpha05,
                       p: 1,
                       borderRadius: 1,
                     }}

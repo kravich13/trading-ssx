@@ -1,5 +1,6 @@
 'use client';
 
+import { COLORS } from '@/shared/consts';
 import {
   Box,
   FormControlLabel,
@@ -79,8 +80,8 @@ export const EquityChartHeader = memo(
             onChange={(_, newView) => onViewChange(newView)}
             size="small"
             sx={{
-              bgcolor: 'rgba(0, 0, 0, 0.2)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
+              bgcolor: COLORS.blackAlpha20,
+              border: `1px solid ${COLORS.whiteAlpha10}`,
               '& .MuiToggleButton-root': {
                 color: 'text.secondary',
                 px: 1.5,
@@ -90,11 +91,11 @@ export const EquityChartHeader = memo(
                 border: 'none',
                 transition: 'all 0.2s',
                 '&:hover': {
-                  bgcolor: 'rgba(255, 255, 255, 0.05)',
+                  bgcolor: COLORS.whiteAlpha05,
                   color: 'text.primary',
                 },
                 '&.Mui-selected': {
-                  color: '#fff',
+                  color: COLORS.white,
                   bgcolor: 'primary.main',
                   '&:hover': {
                     bgcolor: 'primary.dark',
@@ -113,8 +114,8 @@ export const EquityChartHeader = memo(
             onChange={(_, newMode) => onModeChange(newMode)}
             size="small"
             sx={{
-              bgcolor: 'rgba(0, 0, 0, 0.2)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
+              bgcolor: COLORS.blackAlpha20,
+              border: `1px solid ${COLORS.whiteAlpha10}`,
               '& .MuiToggleButton-root': {
                 color: 'text.secondary',
                 px: 2,
@@ -123,11 +124,11 @@ export const EquityChartHeader = memo(
                 border: 'none',
                 transition: 'all 0.2s',
                 '&:hover': {
-                  bgcolor: 'rgba(255, 255, 255, 0.05)',
+                  bgcolor: COLORS.whiteAlpha05,
                   color: 'text.primary',
                 },
                 '&.Mui-selected': {
-                  color: '#fff',
+                  color: COLORS.white,
                   bgcolor: 'primary.main',
                   '&:hover': {
                     bgcolor: 'primary.dark',

@@ -1,16 +1,17 @@
 'use client';
 
+import { COLORS } from '@/shared/consts';
 import { createTheme } from '@mui/material/styles';
 
 export const theme = createTheme({
   palette: {
     mode: 'dark',
     primary: {
-      main: '#2196f3',
+      main: COLORS.primaryMain,
     },
     background: {
-      default: '#0a1929',
-      paper: '#132f4c',
+      default: COLORS.bgDefault,
+      paper: COLORS.bgPaper,
     },
   },
   typography: {

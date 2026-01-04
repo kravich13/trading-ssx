@@ -1,6 +1,7 @@
 'use client';
 
 import { TradeLike } from '@/entities/trade';
+import { COLORS } from '@/shared/consts';
 import { Box, Card, CardContent, Typography, useTheme } from '@mui/material';
 import { memo, useCallback, useMemo } from 'react';
 import {
@@ -59,7 +60,9 @@ export const GaltonBoard = memo(({ trades }: GaltonBoardProps) => {
     (entry: { bin: number }, index: number) => (
       <Cell
         key={`cell-${index}`}
-        fill={entry.bin > 0 ? '#4caf50' : entry.bin < 0 ? '#f44336' : '#9e9e9e'}
+        fill={
+          entry.bin > 0 ? COLORS.successMain : entry.bin < 0 ? COLORS.errorMain : COLORS.textMuted
+        }
       />
     ),
     []
@@ -68,7 +71,14 @@ export const GaltonBoard = memo(({ trades }: GaltonBoardProps) => {
   if (data.length === 0) return null;
 
   return (
-    <Card elevation={1} sx={{ bgcolor: 'background.paper', border: '1px solid #1e4976', mb: 4 }}>
+    <Card
+      elevation={1}
+      sx={{
+        bgcolor: 'background.paper',
+        border: `1px solid ${COLORS.borderPrimary}`,
+        mb: 4,
+      }}
+    >
       <CardContent>
         <Typography
           variant="h6"
@@ -81,11 +91,7 @@ export const GaltonBoard = memo(({ trades }: GaltonBoardProps) => {
         <Box sx={{ width: '100%', height: 300 }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="rgba(255,255,255,0.1)"
-                vertical={false}
-              />
+              <CartesianGrid strokeDasharray="3 3" stroke={COLORS.whiteAlpha10} vertical={false} />
               <XAxis
                 dataKey="label"
                 stroke={theme.palette.text.secondary}
@@ -104,11 +110,11 @@ export const GaltonBoard = memo(({ trades }: GaltonBoardProps) => {
                     return (
                       <Box
                         sx={{
-                          backgroundColor: '#132f4c',
-                          border: '1px solid #1e4976',
+                          backgroundColor: COLORS.bgPaper,
+                          border: `1px solid ${COLORS.borderPrimary}`,
                           borderRadius: '4px',
                           p: 1.5,
-                          color: '#fff',
+                          color: COLORS.white,
                         }}
                       >
                         <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
@@ -122,7 +128,7 @@ export const GaltonBoard = memo(({ trades }: GaltonBoardProps) => {
                   }
                   return null;
                 }}
-                cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                cursor={{ fill: COLORS.whiteAlpha05 }}
               />
               <Bar dataKey="count" name="Trades">
                 {data.map(renderCell)}

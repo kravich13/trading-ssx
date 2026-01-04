@@ -1,6 +1,7 @@
 'use client';
 
-import { YearStat, QuarterStat } from '@/entities/investor';
+import { QuarterStat, YearStat } from '@/entities/investor';
+import { COLORS } from '@/shared/consts';
 import { Box, Card, CardContent, Grid, Tab, Tabs, Typography } from '@mui/material';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { QuarterCard } from './QuarterCard';
@@ -41,7 +42,10 @@ export const Client = memo(({ stats }: ClientProps) => {
   const currentYearData = stats[selectedYearIdx];
 
   return (
-    <Card elevation={1} sx={{ bgcolor: 'background.paper', border: '1px solid #1e4976' }}>
+    <Card
+      elevation={1}
+      sx={{ bgcolor: 'background.paper', border: `1px solid ${COLORS.borderPrimary}` }}
+    >
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs
           value={selectedYearIdx}

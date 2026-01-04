@@ -1,16 +1,17 @@
 'use client';
 
+import { COLORS } from '@/shared/consts';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import {
   Box,
+  Button,
   Checkbox,
   Divider,
   FormControlLabel,
+  InputAdornment,
   TextField,
   Typography,
-  InputAdornment,
-  Button,
 } from '@mui/material';
-import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { memo, useEffect, useMemo, useState } from 'react';
 import { getLatestCapital } from '../api';
 
@@ -97,9 +98,9 @@ export const TradePositionCalculator = memo(
               sx={{
                 mt: 1,
                 p: 2,
-                bgcolor: 'rgba(255, 255, 255, 0.03)',
+                bgcolor: COLORS.whiteAlpha03,
                 borderRadius: 1,
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                border: `1px solid ${COLORS.whiteAlpha10}`,
                 display: 'flex',
                 flexDirection: 'column',
                 gap: 2,

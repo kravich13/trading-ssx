@@ -1,5 +1,6 @@
 import { LedgerEntryWithInvestor } from '@/entities/investor/types';
 import { LedgerType } from '@/shared/enum';
+import { COLORS } from '@/shared/consts';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import { Box, Chip, IconButton, TableCell, TableRow } from '@mui/material';
@@ -47,7 +48,7 @@ export const GlobalActionRow = memo(
           <Link
             href={`/investors/${row.investor_id}`}
             style={{
-              color: '#2196f3',
+              color: COLORS.primaryMain,
               textDecoration: 'none',
             }}
           >

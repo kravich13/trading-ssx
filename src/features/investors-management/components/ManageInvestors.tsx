@@ -1,5 +1,6 @@
 import { getInvestors } from '@/entities/investor';
 import { TradeType } from '@/shared/enum';
+import { COLORS } from '@/shared/consts';
 import HistoryIcon from '@mui/icons-material/History';
 import {
   Box,
@@ -17,8 +18,8 @@ import {
   Typography,
 } from '@mui/material';
 import Link from 'next/link';
-import { ToggleInvestorStatusButton } from './ToggleInvestorStatusButton';
 import { AddInvestorForm } from './AddInvestorForm';
+import { ToggleInvestorStatusButton } from './ToggleInvestorStatusButton';
 
 export async function ManageInvestors() {
   const investors = await getInvestors();
@@ -91,7 +92,7 @@ export async function ManageInvestors() {
                           <Link
                             href={`/investors/${investor.id}`}
                             style={{
-                              color: investor.is_active ? '#2196f3' : '#9e9e9e',
+                              color: investor.is_active ? COLORS.primaryMain : COLORS.textMuted,
                               textDecoration: 'none',
                               fontWeight: 'medium',
                             }}

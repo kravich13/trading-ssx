@@ -1,6 +1,7 @@
 import { calculateFinanceStats, FinanceStats } from '@/entities/investor';
 import { LedgerEntry } from '@/entities/investor/types';
-import { Box, Card, CardContent, Grid, Typography, Divider } from '@mui/material';
+import { COLORS } from '@/shared/consts';
+import { Box, Card, CardContent, Divider, Grid, Typography } from '@mui/material';
 
 interface FinanceStatsDashboardProps {
   ledger?: LedgerEntry[];
@@ -60,11 +61,14 @@ export function FinanceStatsDashboard({
     <Box sx={{ mb: 4, px: 0.5 }}>
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, md: 6 }}>
-          <Card elevation={1} sx={{ bgcolor: 'background.paper', border: '1px solid #1e4976' }}>
+          <Card
+            elevation={1}
+            sx={{ bgcolor: 'background.paper', border: `1px solid ${COLORS.borderPrimary}` }}
+          >
             <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
               <Typography
                 variant="subtitle2"
-                sx={{ mb: 1.5, fontWeight: 'bold', color: '#2196f3' }}
+                sx={{ mb: 1.5, fontWeight: 'bold', color: COLORS.primaryMain }}
               >
                 Capital Metrics
               </Typography>
@@ -73,7 +77,7 @@ export function FinanceStatsDashboard({
                 value={`$${formatCurrency(stats.currentCapital)}`}
                 isBold
               />
-              <Divider sx={{ my: 1, borderColor: 'rgba(255,255,255,0.1)' }} />
+              <Divider sx={{ my: 1, borderColor: COLORS.whiteAlpha10 }} />
               <StatRow
                 label="Growth MTD ($)"
                 value={`${stats.monthCapitalGrowthUsd >= 0 ? '+' : ''}$${formatCurrency(
@@ -101,11 +105,14 @@ export function FinanceStatsDashboard({
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <Card elevation={1} sx={{ bgcolor: 'background.paper', border: '1px solid #1e4976' }}>
+          <Card
+            elevation={1}
+            sx={{ bgcolor: 'background.paper', border: `1px solid ${COLORS.borderPrimary}` }}
+          >
             <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
               <Typography
                 variant="subtitle2"
-                sx={{ mb: 1.5, fontWeight: 'bold', color: '#ff9800' }}
+                sx={{ mb: 1.5, fontWeight: 'bold', color: COLORS.warningMain }}
               >
                 Deposit Metrics
               </Typography>
@@ -114,7 +121,7 @@ export function FinanceStatsDashboard({
                 value={`$${formatCurrency(stats.currentDeposit)}`}
                 isBold
               />
-              <Divider sx={{ my: 1, borderColor: 'rgba(255,255,255,0.1)' }} />
+              <Divider sx={{ my: 1, borderColor: COLORS.whiteAlpha10 }} />
               <StatRow
                 label="Growth MTD ($)"
                 value={`${stats.monthDepositGrowthUsd >= 0 ? '+' : ''}$${formatCurrency(

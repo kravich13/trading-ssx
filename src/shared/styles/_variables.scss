@@ -1,0 +1,49 @@
+// Backgrounds
+$bg-default: #0a1929;
+$bg-paper: #132f4c;
+$bg-dark-secondary: #0d1e31;
+$bg-dark-active: #173a5e;
+$bg-overlay: rgba(10, 25, 41, 0.8);
+
+// Primary & UI Colors
+$primary-main: #2196f3;
+$success-main: #4caf50;
+$success-dark: #2e7d32;
+$warning-main: #ff9800;
+$warning-dark: #ed6c02;
+$error-main: #f44336;
+$error-dark: #d32f2f;
+$error-alt: #e63946;
+
+// Borders
+$border-primary: #1e4976;
+$border-light: rgba(255, 255, 255, 0.1);
+
+// Text & Neutrals
+$text-primary: #ffffff;
+$text-secondary: #b2bac2;
+$text-muted: #9e9e9e;
+$text-disabled: #e0e0e0;
+$gray-666: #666666;
+$gray-ddd: #dddddd;
+$white: #ffffff;
+$black: #000000;
+
+// Transparencies
+$white-alpha-02: rgba(255, 255, 255, 0.02);
+$white-alpha-03: rgba(255, 255, 255, 0.03);
+$white-alpha-05: rgba(255, 255, 255, 0.05);
+$white-alpha-10: rgba(255, 255, 255, 0.1);
+$white-alpha-20: rgba(255, 255, 255, 0.2);
+
+$black-alpha-20: rgba(0, 0, 0, 0.2);
+$black-alpha-30: rgba(0, 0, 0, 0.3);
+$black-alpha-50: rgba(0, 0, 0, 0.5);
+$black-alpha-60: rgba(0, 0, 0, 0.6);
+$black-alpha-80: rgba(0, 0, 0, 0.8);
+
+// Chart Specific
+$chart-equity: #4caf50;
+$chart-ema-14: #ff9800;
+$chart-ema-50: #2196f3;
+$chart-ema-200: #d32f2f;

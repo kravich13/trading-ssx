@@ -1,3 +1,5 @@
+@import '../src/shared/styles/variables';
+
 html {
   overflow-y: scroll;
   scrollbar-gutter: stable;
@@ -10,23 +12,23 @@ html {
 }
 
 ::-webkit-scrollbar-track {
-  background: #0d1e31;
+  background: $bg-dark-secondary;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1e4976;
+  background: $border-primary;
   border-radius: 10px;
-  border: 2px solid #0d1e31;
+  border: 2px solid $bg-dark-secondary;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #2196f3;
+  background: $primary-main;
 }
 
 // Firefox support
 * {
   scrollbar-width: thin;
-  scrollbar-color: #1e4976 #0d1e31;
+  scrollbar-color: $border-primary $bg-dark-secondary;
 }
 
 .container {
@@ -51,21 +53,20 @@ body {
     Helvetica,
     Arial,
     sans-serif;
-  background-color: #0a1929;
-  background-image:
-    linear-gradient(rgba(10, 25, 41, 0.8), rgba(10, 25, 41, 0.8)), url('/images/bg.jpg');
+  background-color: $bg-default;
+  background-image: linear-gradient($bg-overlay, $bg-overlay), url('/images/bg.jpg');
   background-attachment: fixed;
   background-size: cover;
   background-position: center 25%;
-  color: #fff;
+  color: $white;
 }
 
 .navbar {
-  background: rgba(0, 0, 0, 0.6);
+  background: $black-alpha-60;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid $white-alpha-10;
+  box-shadow: 0 4px 10px $black-alpha-30;
   padding: 15px 0;
   margin-bottom: 30px;
   position: sticky;
@@ -82,7 +83,7 @@ body {
     font-weight: bold;
     font-size: 1.2rem;
     text-decoration: none;
-    color: #fff;
+    color: $white;
   }
 
   .links {
@@ -91,12 +92,12 @@ body {
 
     a {
       text-decoration: none;
-      color: #e0e0e0;
+      color: $text-disabled;
       font-weight: 500;
       transition: color 0.2s ease;
 
       &:hover {
-        color: #fff;
+        color: $white;
       }
     }
   }
@@ -122,8 +123,8 @@ body {
     position: sticky !important;
     top: 61px !important; // Stick exactly under the navbar
     z-index: 100 !important;
-    background-color: #132f4c !important;
-    border-bottom: 2px solid #1e4976 !important;
+    background-color: $bg-paper !important;
+    border-bottom: 2px solid $border-primary !important;
   }
 }
 
@@ -141,9 +142,9 @@ body {
 }
 
 .card {
-  background: #132f4c;
+  background: $bg-paper;
   border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 20px $black-alpha-50;
   padding: 20px;
   margin-bottom: 20px;
 }
@@ -156,13 +157,13 @@ table {
   td {
     text-align: left;
     padding: 12px;
-    border-bottom: 1px solid #1e4976;
+    border-bottom: 1px solid $border-primary;
   }
 
   th {
     font-weight: 600;
-    color: #b2bac2;
-    background: #173a5e;
+    color: $text-secondary;
+    background: $bg-dark-active;
   }
 }
 
@@ -179,13 +180,13 @@ table {
   }
 
   &.btn-primary {
-    background: #2196f3;
-    color: #fff;
+    background: $primary-main;
+    color: $white;
   }
 
   &.btn-danger {
-    background: #f44336;
-    color: #fff;
+    background: $error-main;
+    color: $white;
   }
 }
 
@@ -201,15 +202,15 @@ table {
   input {
     width: 100%;
     padding: 8px;
-    border: 1px solid #1e4976;
-    background: #0a1929;
-    color: #fff;
+    border: 1px solid $border-primary;
+    background: $bg-default;
+    color: $white;
     border-radius: 4px;
     box-sizing: border-box;
 
     &:focus {
       outline: none;
-      border-color: #2196f3;
+      border-color: $primary-main;
     }
   }
 }

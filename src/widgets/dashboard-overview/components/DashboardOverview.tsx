@@ -1,7 +1,8 @@
-import { getInvestors, getTotalStats, getGlobalActionsLog } from '@/entities/investor';
+import { getGlobalActionsLog, getInvestors, getTotalStats } from '@/entities/investor';
+import { COLORS } from '@/shared/consts';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import HistoryIcon from '@mui/icons-material/History';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import {
   Box,
   Card,
@@ -157,7 +158,7 @@ export async function DashboardOverview() {
                       <Link
                         href={`/investors/${investor.id}`}
                         style={{
-                          color: investor.is_active ? '#2196f3' : '#9e9e9e',
+                          color: investor.is_active ? COLORS.primaryMain : COLORS.textMuted,
                           textDecoration: 'none',
                           fontWeight: 'medium',
                         }}

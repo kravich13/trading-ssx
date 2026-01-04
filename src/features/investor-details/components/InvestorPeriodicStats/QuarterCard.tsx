@@ -1,6 +1,7 @@
 'use client';
 
-import { QuarterStat, MonthStat } from '@/entities/investor';
+import { MonthStat, QuarterStat } from '@/entities/investor';
+import { COLORS } from '@/shared/consts';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import { Box, Card, CardContent, Collapse, Divider, Typography } from '@mui/material';
@@ -43,13 +44,13 @@ export const QuarterCard = memo(({ quarter }: QuarterCardProps) => {
     <Card
       variant="outlined"
       sx={{
-        bgcolor: 'rgba(255, 255, 255, 0.02)',
-        borderColor: 'rgba(255, 255, 255, 0.1)',
+        bgcolor: COLORS.whiteAlpha02,
+        borderColor: COLORS.whiteAlpha10,
         cursor: 'pointer',
         transition: 'all 0.2s ease-in-out',
         '&:hover': {
-          bgcolor: 'rgba(255, 255, 255, 0.05)',
-          borderColor: 'rgba(255, 255, 255, 0.2)',
+          bgcolor: COLORS.whiteAlpha05,
+          borderColor: COLORS.whiteAlpha20,
         },
       }}
       onClick={() => setOpen(!open)}
@@ -79,7 +80,7 @@ export const QuarterCard = memo(({ quarter }: QuarterCardProps) => {
 
         <Collapse in={open} timeout="auto" unmountOnExit>
           <Box sx={{ mt: 2 }}>
-            <Divider sx={{ mb: 1.5, borderColor: 'rgba(255, 255, 255, 0.05)' }} />
+            <Divider sx={{ mb: 1.5, borderColor: COLORS.whiteAlpha05 }} />
             {quarter.months.map(renderMonth)}
           </Box>
         </Collapse>

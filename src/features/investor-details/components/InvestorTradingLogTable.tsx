@@ -3,6 +3,7 @@
 import { LedgerEntry } from '@/entities/investor/types';
 import { deleteTrade, updateTrade } from '@/entities/trade/api';
 import { LedgerType, TradeStatus, TradeType } from '@/shared/enum';
+import { COLORS } from '@/shared/consts';
 import { ConfirmModal } from '@/shared/ui/modals';
 import { normalizeDate } from '@/shared/utils/date.util';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -154,8 +155,8 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
                   '& .MuiSelect-select': {
                     WebkitTextFillColor:
                       row.status === TradeStatus.IN_PROGRESS
-                        ? '#ed6c02' // warning.main equivalent
-                        : '#2e7d32', // success.main equivalent
+                        ? COLORS.warningDark
+                        : COLORS.successDark,
                   },
                 },
               }}
