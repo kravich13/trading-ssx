@@ -34,6 +34,7 @@ export function ScrollToTop() {
   return (
     <Zoom in={visible}>
       <Fab
+        className="mui-fixed"
         onClick={scrollToTop}
         color="primary"
         size="large"

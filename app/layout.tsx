@@ -27,7 +27,7 @@ export default function RootLayout({
     <html lang="en" className={roboto.variable}>
       <body>
         <MUIProvider>
-          <nav className="navbar">
+          <nav className="navbar mui-fixed">
             <div className="container">
               <Link href="/" className="logo">
                 Trading SSX
