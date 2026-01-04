@@ -93,10 +93,13 @@ export const Client = memo(({ stats }: ClientProps) => {
                 >
                   {currentYearData.usd >= 0 ? '+' : ''}$
                   {Math.round(currentYearData.usd).toLocaleString()}
+                  <Box component="span" sx={{ fontSize: '1rem', ml: 1, opacity: 0.8 }}>
+                    ({currentYearData.percent >= 0 ? '+' : ''}
+                    {currentYearData.percent.toFixed(2)}% on dep.)
+                  </Box>
                 </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 'medium', opacity: 0.8 }}>
-                  Total Annual Growth ({currentYearData.percent >= 0 ? '+' : ''}
-                  {currentYearData.percent.toFixed(2)}%)
+                <Typography variant="body2" sx={{ fontWeight: 'medium', opacity: 0.8, mt: 0.5 }}>
+                  Total Annual Growth
                 </Typography>
               </Box>
             </Box>

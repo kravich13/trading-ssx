@@ -205,6 +205,12 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
               minimumFractionDigits: 0,
               maximumFractionDigits: 0,
             })}
+            {row.deposit_before > 0 && (
+              <Box component="span" sx={{ fontSize: '0.7rem', ml: 0.5, opacity: 0.8 }}>
+                ({row.change_amount >= 0 ? '+' : ''}
+                {((row.change_amount / row.deposit_before) * 100).toFixed(2)}% on dep.)
+              </Box>
+            )}
           </TableCell>
           <TableCell align="right" sx={{ fontWeight: 'bold' }}>
             ${formatCurrency(row.capital_after)}

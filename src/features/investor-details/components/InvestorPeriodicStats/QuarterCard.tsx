@@ -27,13 +27,10 @@ export const QuarterCard = memo(({ quarter }: QuarterCardProps) => {
         <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
           <Typography variant="body2" sx={{ color: mColor, fontWeight: 'medium' }}>
             {month.usd >= 0 ? '+' : ''}${Math.round(month.usd).toLocaleString()}
-          </Typography>
-          <Typography
-            variant="caption"
-            sx={{ color: mColor, opacity: 0.7, minWidth: '50px', textAlign: 'right' }}
-          >
-            {month.percent >= 0 ? '+' : ''}
-            {month.percent.toFixed(2)}%
+            <Box component="span" sx={{ fontSize: '0.7rem', ml: 0.5, opacity: 0.7 }}>
+              ({month.percent >= 0 ? '+' : ''}
+              {month.percent.toFixed(2)}% on dep.)
+            </Box>
           </Typography>
         </Box>
       </Box>
@@ -64,10 +61,10 @@ export const QuarterCard = memo(({ quarter }: QuarterCardProps) => {
             <Box sx={{ textAlign: 'right' }}>
               <Typography variant="body2" sx={{ color, fontWeight: 'bold' }}>
                 {quarter.usd >= 0 ? '+' : ''}${Math.round(quarter.usd).toLocaleString()}
-              </Typography>
-              <Typography variant="caption" sx={{ display: 'block', color, opacity: 0.8 }}>
-                {quarter.percent >= 0 ? '+' : ''}
-                {quarter.percent.toFixed(2)}%
+                <Box component="span" sx={{ fontSize: '0.75rem', ml: 0.5, opacity: 0.8 }}>
+                  ({quarter.percent >= 0 ? '+' : ''}
+                  {quarter.percent.toFixed(2)}% on dep.)
+                </Box>
               </Typography>
             </Box>
             {open ? (

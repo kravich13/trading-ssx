@@ -45,6 +45,20 @@ const parseDate = (dateStr: string | null | undefined): DateTime | null => {
   return dt.isValid ? dt : null;
 };
 
+interface MonthStatInternal extends MonthStat {
+  startDep?: number;
+}
+
+interface QuarterStatInternal extends Omit<QuarterStat, 'months'> {
+  startDep?: number;
+  months: MonthStatInternal[];
+}
+
+interface YearStatInternal extends Omit<YearStat, 'quarters'> {
+  startDep?: number;
+  quarters: QuarterStatInternal[];
+}
+
 export function calculatePeriodicStats(ledger: LedgerEntry[]): YearStat[] {
   const trades = ledger
     .filter((e) => e.type === 'TRADE' && e.closed_date)
@@ -56,14 +70,14 @@ export function calculatePeriodicStats(ledger: LedgerEntry[]): YearStat[] {
 
   if (trades.length === 0) return [];
 
-  const yearsMap = new Map<number, YearStat>();
+  const yearsMap = new Map<number, YearStatInternal>();
 
   trades.forEach((trade) => {
     const dt = parseDate(trade.closed_date);
     if (!dt) return;
 
     const year = dt.year;
-    const month = dt.month - 1; // 0-11
+    const month = dt.month - 1;
     const quarter = Math.ceil(dt.month / 3);
 
     if (!yearsMap.has(year)) {
@@ -109,17 +123,31 @@ export function calculatePeriodicStats(ledger: LedgerEntry[]): YearStat[] {
     quarterStat.usd += trade.change_amount;
     yearStat.usd += trade.change_amount;
 
-    const pl = trade.pl_percent || 0;
-    monthStat.percent += pl;
-    quarterStat.percent += pl;
-    yearStat.percent += pl;
+    if (monthStat.startDep === undefined) monthStat.startDep = trade.deposit_before;
+    if (quarterStat.startDep === undefined) quarterStat.startDep = trade.deposit_before;
+    if (yearStat.startDep === undefined) yearStat.startDep = trade.deposit_before;
 
     monthStat.isProfit = monthStat.usd >= 0;
     quarterStat.isProfit = quarterStat.usd >= 0;
     yearStat.isProfit = yearStat.usd >= 0;
   });
 
-  return Array.from(yearsMap.values()).sort((a, b) => b.year - a.year);
+  yearsMap.forEach((yearStat) => {
+    const yStart = yearStat.startDep || 1;
+    yearStat.percent = (yearStat.usd / yStart) * 100;
+
+    yearStat.quarters.forEach((qStat) => {
+      const qStart = qStat.startDep || 1;
+      qStat.percent = (qStat.usd / qStart) * 100;
+
+      qStat.months.forEach((mStat) => {
+        const mStart = mStat.startDep || 1;
+        mStat.percent = (mStat.usd / mStart) * 100;
+      });
+    });
+  });
+
+  return Array.from(yearsMap.values()).sort((a, b) => b.year - a.year) as YearStat[];
 }
 
 export function calculateFinanceStats(ledger: LedgerEntry[]): FinanceStats {
