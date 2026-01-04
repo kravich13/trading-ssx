@@ -41,6 +41,7 @@ export const GlobalActionsTable = memo(({ actions }: GlobalActionsTableProps) =>
   const [selectedRowNumber, setSelectedRowNumber] = useState<number | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editAmount, setEditAmount] = useState<string>('');
+  const [editDepositAmount, setEditDepositAmount] = useState<string>('');
   const [editDate, setEditDate] = useState<string>('');
 
   const formatCurrency = useCallback(
@@ -73,9 +74,11 @@ export const GlobalActionsTable = memo(({ actions }: GlobalActionsTableProps) =>
 
   const handleEditClick = useCallback(
     (entry: LedgerEntry & { investor_name: string }, rowNumber: number) => {
+      const isInitial = entry.capital_before === 0 && entry.deposit_before === 0;
       setSelectedEntry(entry);
       setSelectedRowNumber(rowNumber);
-      setEditAmount(entry.change_amount.toString());
+      setEditAmount(isInitial ? entry.capital_after.toString() : entry.change_amount.toString());
+      setEditDepositAmount(isInitial ? entry.deposit_after.toString() : '');
       setEditDate(normalizeDate(entry.created_at));
       setEditModalOpen(true);
     },
@@ -84,16 +87,18 @@ export const GlobalActionsTable = memo(({ actions }: GlobalActionsTableProps) =>
 
   const handleConfirmEdit = useCallback(async () => {
     if (selectedEntry && editAmount !== '') {
+      const isInitial = selectedEntry.capital_before === 0 && selectedEntry.deposit_before === 0;
       await updateLedgerEntry({
         id: selectedEntry.id,
         investorId: selectedEntry.investor_id,
         amount: parseFloat(editAmount),
+        depositAmount: isInitial ? parseFloat(editDepositAmount) : undefined,
         createdAt: editDate + ' 00:00:00',
       });
       setEditModalOpen(false);
       setSelectedEntry(null);
     }
-  }, [selectedEntry, editAmount, editDate]);
+  }, [selectedEntry, editAmount, editDepositAmount, editDate]);
 
   return (
     <>
@@ -238,7 +243,13 @@ export const GlobalActionsTable = memo(({ actions }: GlobalActionsTableProps) =>
         <DialogContent>
           <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
-              label="Change Amount"
+              label={
+                selectedEntry &&
+                selectedEntry.capital_before === 0 &&
+                selectedEntry.deposit_before === 0
+                  ? 'Initial Capital'
+                  : 'Change Amount'
+              }
               type="number"
               fullWidth
               value={editAmount}
@@ -247,6 +258,19 @@ export const GlobalActionsTable = memo(({ actions }: GlobalActionsTableProps) =>
               size="small"
               autoFocus
             />
+            {selectedEntry &&
+              selectedEntry.capital_before === 0 &&
+              selectedEntry.deposit_before === 0 && (
+                <TextField
+                  label="Initial Deposit"
+                  type="number"
+                  fullWidth
+                  value={editDepositAmount}
+                  onChange={(e) => setEditDepositAmount(e.target.value)}
+                  variant="outlined"
+                  size="small"
+                />
+              )}
             <TextField
               label="Date"
               type="date"

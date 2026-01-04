@@ -211,31 +211,86 @@ export async function updateLedgerEntry({
   id,
   investorId,
   amount,
+  depositAmount,
   createdAt,
 }: {
   id: number;
   investorId: number;
   amount: number;
+  depositAmount?: number;
   createdAt: string;
 }) {
-  const entry = db.prepare('SELECT * FROM ledger WHERE id = ?').get(id) as LedgerEntry;
-  if (!entry) return;
+  const transaction = db.transaction(() => {
+    const entry = db.prepare('SELECT * FROM ledger WHERE id = ?').get(id) as LedgerEntry;
+    if (!entry) return;
 
-  const diff = amount - entry.change_amount;
+    const isInitial = entry.capital_before === 0 && entry.deposit_before === 0;
+    const effectiveDepositAmount = depositAmount !== undefined ? depositAmount : amount;
 
-  if (entry.type === LedgerType.CAPITAL_CHANGE) {
-    db.prepare(
-      'UPDATE ledger SET change_amount = ?, capital_after = capital_after + ?, created_at = ? WHERE id = ?'
-    ).run(amount, diff, createdAt, id);
-  } else if (entry.type === LedgerType.DEPOSIT_CHANGE) {
-    db.prepare(
-      'UPDATE ledger SET change_amount = ?, deposit_after = deposit_after + ?, created_at = ? WHERE id = ?'
-    ).run(amount, diff, createdAt, id);
-  } else if (entry.type === LedgerType.BOTH_CHANGE) {
-    db.prepare(
-      'UPDATE ledger SET change_amount = ?, capital_after = capital_after + ?, deposit_after = deposit_after + ?, created_at = ? WHERE id = ?'
-    ).run(amount, diff, diff, createdAt, id);
-  }
+    const capitalDiff = isInitial ? amount - entry.capital_after : amount - entry.change_amount;
+    const depositDiff = isInitial
+      ? effectiveDepositAmount - entry.deposit_after
+      : entry.type === LedgerType.BOTH_CHANGE || entry.type === LedgerType.DEPOSIT_CHANGE
+        ? (depositAmount !== undefined ? depositAmount : amount) -
+          (entry.type === LedgerType.DEPOSIT_CHANGE ? entry.change_amount : entry.change_amount)
+        : 0;
+
+    // Special case for BOTH_CHANGE or initial where we might want different diffs
+    // But for now let's stick to the simplest logic:
+    // If it's initial, we just set the new values and update all subsequent
+    if (isInitial) {
+      db.prepare(
+        'UPDATE ledger SET capital_after = ?, deposit_after = ?, created_at = ? WHERE id = ?'
+      ).run(amount, effectiveDepositAmount, createdAt, id);
+
+      const diffCap = amount - entry.capital_after;
+      const diffDep = effectiveDepositAmount - entry.deposit_after;
+
+      if (diffCap !== 0 || diffDep !== 0) {
+        db.prepare(
+          `
+          UPDATE ledger 
+          SET 
+            capital_before = capital_before + ?, 
+            capital_after = capital_after + ?,
+            deposit_before = deposit_before + ?,
+            deposit_after = deposit_after + ?
+          WHERE investor_id = ? AND id > ?
+        `
+        ).run(diffCap, diffCap, diffDep, diffDep, investorId, id);
+      }
+    } else {
+      const diff = amount - entry.change_amount;
+
+      if (entry.type === LedgerType.CAPITAL_CHANGE) {
+        db.prepare(
+          'UPDATE ledger SET change_amount = ?, capital_after = capital_after + ?, created_at = ? WHERE id = ?'
+        ).run(amount, diff, createdAt, id);
+
+        db.prepare(
+          'UPDATE ledger SET capital_before = capital_before + ?, capital_after = capital_after + ? WHERE investor_id = ? AND id > ?'
+        ).run(diff, diff, investorId, id);
+      } else if (entry.type === LedgerType.DEPOSIT_CHANGE) {
+        db.prepare(
+          'UPDATE ledger SET change_amount = ?, deposit_after = deposit_after + ?, created_at = ? WHERE id = ?'
+        ).run(amount, diff, createdAt, id);
+
+        db.prepare(
+          'UPDATE ledger SET deposit_before = deposit_before + ?, deposit_after = deposit_after + ? WHERE investor_id = ? AND id > ?'
+        ).run(diff, diff, investorId, id);
+      } else if (entry.type === LedgerType.BOTH_CHANGE) {
+        db.prepare(
+          'UPDATE ledger SET change_amount = ?, capital_after = capital_after + ?, deposit_after = deposit_after + ?, created_at = ? WHERE id = ?'
+        ).run(amount, diff, diff, createdAt, id);
+
+        db.prepare(
+          'UPDATE ledger SET capital_before = capital_before + ?, capital_after = capital_after + ?, deposit_before = deposit_before + ?, deposit_after = deposit_after + ? WHERE investor_id = ? AND id > ?'
+        ).run(diff, diff, diff, diff, investorId, id);
+      }
+    }
+  });
+
+  transaction();
 
   revalidatePath('/');
   revalidatePath('/investors');
