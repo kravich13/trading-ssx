@@ -223,7 +223,18 @@ export const InvestorActionsTable = memo(({ ledger, investorId }: InvestorAction
         confirmText="Delete"
       />
 
-      <Dialog open={editModalOpen} onClose={() => setEditModalOpen(false)}>
+      <Dialog
+        open={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        slotProps={{
+          paper: {
+            sx: {
+              width: '100%',
+              maxWidth: '360px',
+            },
+          },
+        }}
+      >
         <DialogTitle>Edit Action (№ {selectedRowNumber})</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>

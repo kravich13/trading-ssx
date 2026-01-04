@@ -236,7 +236,18 @@ export const GlobalActionsTable = memo(({ actions }: GlobalActionsTableProps) =>
         confirmText="Delete"
       />
 
-      <Dialog open={editModalOpen} onClose={() => setEditModalOpen(false)}>
+      <Dialog
+        open={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        slotProps={{
+          paper: {
+            sx: {
+              width: '100%',
+              maxWidth: '360px',
+            },
+          },
+        }}
+      >
         <DialogTitle>
           Edit Action (№ {selectedRowNumber} - {selectedEntry?.investor_name})
         </DialogTitle>
