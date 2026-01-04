@@ -1,21 +1,16 @@
 'use client';
 
 import { deleteLedgerEntry, updateLedgerEntry } from '@/entities/investor/api';
-import { LedgerEntry } from '@/entities/investor/types';
-import { LedgerType } from '@/shared/enum';
+import { LedgerEntryWithInvestor } from '@/entities/investor/types';
 import { ConfirmModal } from '@/shared/ui/modals';
 import { normalizeDate } from '@/shared/utils/date.util';
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
 import {
   Box,
   Button,
-  Chip,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  IconButton,
   Paper,
   Table,
   TableBody,
@@ -26,18 +21,16 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import Link from 'next/link';
 import { memo, useCallback, useState } from 'react';
+import { GlobalActionRow } from './GlobalActionRow';
 
 interface GlobalActionsTableProps {
-  actions: (LedgerEntry & { investor_name: string })[];
+  actions: LedgerEntryWithInvestor[];
 }
 
 export const GlobalActionsTable = memo(({ actions }: GlobalActionsTableProps) => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [selectedEntry, setSelectedEntry] = useState<
-    (LedgerEntry & { investor_name: string }) | null
-  >(null);
+  const [selectedEntry, setSelectedEntry] = useState<LedgerEntryWithInvestor | null>(null);
   const [selectedRowNumber, setSelectedRowNumber] = useState<number | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editAmount, setEditAmount] = useState('');
@@ -55,14 +48,11 @@ export const GlobalActionsTable = memo(({ actions }: GlobalActionsTableProps) =>
     []
   );
 
-  const handleDeleteClick = useCallback(
-    (entry: LedgerEntry & { investor_name: string }, rowNumber: number) => {
-      setSelectedEntry(entry);
-      setSelectedRowNumber(rowNumber);
-      setDeleteModalOpen(true);
-    },
-    []
-  );
+  const handleDeleteClick = useCallback((entry: LedgerEntryWithInvestor, rowNumber: number) => {
+    setSelectedEntry(entry);
+    setSelectedRowNumber(rowNumber);
+    setDeleteModalOpen(true);
+  }, []);
 
   const handleConfirmDelete = useCallback(async () => {
     if (selectedEntry) {
@@ -72,18 +62,15 @@ export const GlobalActionsTable = memo(({ actions }: GlobalActionsTableProps) =>
     }
   }, [selectedEntry]);
 
-  const handleEditClick = useCallback(
-    (entry: LedgerEntry & { investor_name: string }, rowNumber: number) => {
-      const isInitial = entry.capital_before === 0 && entry.deposit_before === 0;
-      setSelectedEntry(entry);
-      setSelectedRowNumber(rowNumber);
-      setEditAmount(isInitial ? entry.capital_after.toString() : entry.change_amount.toString());
-      setEditDepositAmount(isInitial ? entry.deposit_after.toString() : '');
-      setEditDate(normalizeDate(entry.created_at));
-      setEditModalOpen(true);
-    },
-    []
-  );
+  const handleEditClick = useCallback((entry: LedgerEntryWithInvestor, rowNumber: number) => {
+    const isInitial = entry.capital_before === 0 && entry.deposit_before === 0;
+    setSelectedEntry(entry);
+    setSelectedRowNumber(rowNumber);
+    setEditAmount(isInitial ? entry.capital_after.toString() : entry.change_amount.toString());
+    setEditDepositAmount(isInitial ? entry.deposit_after.toString() : '');
+    setEditDate(normalizeDate(entry.created_at));
+    setEditModalOpen(true);
+  }, []);
 
   const handleConfirmEdit = useCallback(async () => {
     if (selectedEntry && editAmount !== '') {
@@ -101,87 +88,21 @@ export const GlobalActionsTable = memo(({ actions }: GlobalActionsTableProps) =>
   }, [selectedEntry, editAmount, editDepositAmount, editDate]);
 
   const renderActionRow = useCallback(
-    (row: LedgerEntry & { investor_name: string }, index: number) => {
-      const color = row.change_amount > 0 ? 'success.main' : 'error.main';
+    (row: LedgerEntryWithInvestor, index: number) => {
       const isInitial = row.capital_before === 0 && row.deposit_before === 0;
-
-      let chipLabel = row.type.replace('_CHANGE', '');
-      let chipColor: 'primary' | 'secondary' | 'warning' | 'info' | 'default' = 'secondary';
-
-      if (isInitial) {
-        chipLabel = 'INITIAL';
-        chipColor = 'primary';
-      } else if (row.type === LedgerType.DEPOSIT_CHANGE) {
-        chipLabel = `DEPOSIT ${row.change_amount > 0 ? 'IN' : 'OUT'}`;
-        chipColor = 'warning';
-      } else if (row.type === LedgerType.CAPITAL_CHANGE) {
-        chipLabel = `CAPITAL ${row.change_amount > 0 ? 'ADD' : 'SUB'}`;
-        chipColor = 'secondary';
-      } else if (row.type === LedgerType.BOTH_CHANGE) {
-        chipLabel = `BOTH ${row.change_amount > 0 ? 'ADD' : 'SUB'}`;
-        chipColor = 'info';
-      }
-
-      const rowNumber = actions.length - index;
+      const canDelete =
+        !isInitial || actions.filter((a) => a.investor_id === row.investor_id).length === 1;
 
       return (
-        <TableRow key={row.id} hover>
-          <TableCell>{rowNumber}</TableCell>
-          <TableCell align="right" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
-            {row.created_at ? row.created_at.split(' ')[0] : '-'}
-          </TableCell>
-          <TableCell sx={{ fontWeight: 'medium' }}>
-            <Link
-              href={`/investors/${row.investor_id}`}
-              style={{
-                color: '#2196f3',
-                textDecoration: 'none',
-              }}
-            >
-              {row.investor_name}
-            </Link>
-          </TableCell>
-          <TableCell>
-            <Chip
-              label={chipLabel}
-              size="small"
-              color={chipColor}
-              variant="outlined"
-              sx={{ fontSize: '0.7rem', fontWeight: 'bold' }}
-            />
-          </TableCell>
-          <TableCell align="right" sx={{ color, fontWeight: 'medium' }}>
-            {row.change_amount > 0 ? '+' : ''}
-            {formatCurrency(row.change_amount)}
-          </TableCell>
-          <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-            {formatCurrency(row.capital_after)}
-          </TableCell>
-          <TableCell align="right">{formatCurrency(row.deposit_after)}</TableCell>
-          <TableCell align="left">
-            <Box sx={{ display: 'flex', justifyContent: 'flex-start', gap: 0.5 }}>
-              <IconButton
-                size="small"
-                color="primary"
-                onClick={() => handleEditClick(row, rowNumber)}
-                title="Edit"
-              >
-                <EditIcon fontSize="small" />
-              </IconButton>
-              {(!isInitial ||
-                actions.filter((a) => a.investor_id === row.investor_id).length === 1) && (
-                <IconButton
-                  size="small"
-                  color="error"
-                  onClick={() => handleDeleteClick(row, rowNumber)}
-                  title="Delete"
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
-              )}
-            </Box>
-          </TableCell>
-        </TableRow>
+        <GlobalActionRow
+          key={row.id}
+          row={row}
+          rowNumber={actions.length - index}
+          formatCurrency={formatCurrency}
+          onEdit={handleEditClick}
+          onDelete={handleDeleteClick}
+          canDelete={canDelete}
+        />
       );
     },
     [actions, formatCurrency, handleEditClick, handleDeleteClick]

@@ -25,3 +25,7 @@ export type LedgerEntry = {
   closed_date: string | null;
   created_at: string;
 };
+
+export interface LedgerEntryWithInvestor extends LedgerEntry {
+  investor_name: string;
+}
