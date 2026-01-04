@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@/shared/api';
-import { LedgerType, TradeStatus } from '@/shared/enum';
+import { LedgerType, TradeStatus, TradeType } from '@/shared/enum';
 import { revalidatePath } from 'next/cache';
 import { Investor, LedgerEntry } from '../types';
 
@@ -13,6 +13,7 @@ export async function getInvestors(): Promise<Investor[]> {
       i.id,
       i.name,
       i.is_active,
+      i.type,
       COALESCE(l.capital_after, 0) as current_capital,
       COALESCE(l.deposit_after, 0) as current_deposit
     FROM investors i
@@ -34,6 +35,7 @@ export async function getInvestorById(id: number): Promise<Investor | undefined>
       i.id,
       i.name,
       i.is_active,
+      i.type,
       COALESCE(l.capital_after, 0) as current_capital,
       COALESCE(l.deposit_after, 0) as current_deposit
     FROM investors i
@@ -63,18 +65,18 @@ export async function getTotalStats(): Promise<{ total_capital: number; total_de
 
 export async function getInvestorLedger(
   id: number
-): Promise<(LedgerEntry & { status?: TradeStatus })[]> {
+): Promise<(LedgerEntry & { status?: TradeStatus; trade_type?: TradeType })[]> {
   const ledger = db
     .prepare(
       `
-    SELECT l.*, t.status 
+    SELECT l.*, t.status, t.type as trade_type
     FROM ledger l
     LEFT JOIN trades t ON l.trade_id = t.id
     WHERE l.investor_id = ? 
     ORDER BY l.id DESC
   `
     )
-    .all(id) as (LedgerEntry & { status?: TradeStatus })[];
+    .all(id) as (LedgerEntry & { status?: TradeStatus; trade_type?: TradeType })[];
   return ledger;
 }
 
@@ -93,21 +95,26 @@ export async function getGlobalActionsLog(): Promise<(LedgerEntry & { investor_n
   return ledger;
 }
 
-export async function addInvestor(name: string, initialCapital: number, initialDeposit: number) {
-  const insertInvestor = db.prepare('INSERT INTO investors (name) VALUES (?)');
+export async function addInvestor(
+  name: string,
+  initialCapital: number,
+  initialDeposit: number,
+  type: TradeType = TradeType.GLOBAL
+) {
+  const insertInvestor = db.prepare('INSERT INTO investors (name, type) VALUES (?, ?)');
   const insertLedger = db.prepare(`
     INSERT INTO ledger (
       investor_id, type, capital_before, deposit_before, capital_after, deposit_after
     ) VALUES (?, '${LedgerType.CAPITAL_CHANGE}', 0, 0, ?, ?)
   `);
 
-  const transaction = db.transaction((name: string, cap: number, dep: number) => {
-    const info = insertInvestor.run(name);
+  const transaction = db.transaction((name: string, cap: number, dep: number, t: TradeType) => {
+    const info = insertInvestor.run(name, t);
     const investorId = info.lastInsertRowid;
     insertLedger.run(investorId, cap, dep);
   });
 
-  transaction(name, initialCapital, initialDeposit);
+  transaction(name, initialCapital, initialDeposit, type);
   revalidatePath('/');
   revalidatePath('/investors');
 }

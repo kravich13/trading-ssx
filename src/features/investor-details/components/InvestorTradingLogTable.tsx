@@ -2,7 +2,7 @@
 
 import { LedgerEntry } from '@/entities/investor/types';
 import { deleteTrade, updateTrade } from '@/entities/trade/api';
-import { LedgerType, TradeStatus } from '@/shared/enum';
+import { LedgerType, TradeStatus, TradeType } from '@/shared/enum';
 import { ConfirmModal } from '@/shared/ui/modals';
 import { normalizeDate } from '@/shared/utils/date.util';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -10,6 +10,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import {
   Box,
   Button,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -28,7 +29,7 @@ import {
 } from '@mui/material';
 import { memo, useCallback, useState } from 'react';
 
-type LedgerWithStatus = LedgerEntry & { status?: TradeStatus };
+type LedgerWithStatus = LedgerEntry & { status?: TradeStatus; trade_type?: TradeType };
 
 interface InvestorTradingLogTableProps {
   ledger: LedgerWithStatus[];
@@ -96,6 +97,7 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
               <TableCell align="right" sx={{ fontWeight: 'bold', width: '120px' }}>
                 Closed Date
               </TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Type</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Ticker</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
               <TableCell align="right" sx={{ fontWeight: 'bold' }}>
@@ -132,6 +134,17 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
                   <TableCell>{tradesOnlyLedger.length - index}</TableCell>
                   <TableCell align="right" sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
                     {row.closed_date || '-'}
+                  </TableCell>
+                  <TableCell>
+                    {row.trade_type && (
+                      <Chip
+                        label={row.trade_type === TradeType.GLOBAL ? 'Global' : 'Private'}
+                        size="small"
+                        variant="outlined"
+                        color={row.trade_type === TradeType.GLOBAL ? 'primary' : 'secondary'}
+                        sx={{ fontSize: '0.65rem', height: 20, fontWeight: 'bold' }}
+                      />
+                    )}
                   </TableCell>
                   <TableCell>{row.ticker || '-'}</TableCell>
                   <TableCell>

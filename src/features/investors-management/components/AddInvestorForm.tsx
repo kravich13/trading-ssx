@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, memo, useCallback } from 'react';
-import { Box, Button, TextField } from '@mui/material';
+import { Box, Button, MenuItem, TextField } from '@mui/material';
 import { addInvestorAction } from '../api';
+import { TradeType } from '@/shared/enum';
 
 export const AddInvestorForm = memo(() => {
   const [name, setName] = useState('');
   const [capital, setCapital] = useState('');
   const [deposit, setDeposit] = useState('');
+  const [type, setType] = useState(TradeType.GLOBAL);
 
   const isFormValid =
     name.trim() !== '' &&
@@ -40,6 +42,7 @@ export const AddInvestorForm = memo(() => {
     setName('');
     setCapital('');
     setDeposit('');
+    setType(TradeType.GLOBAL);
   }, []);
 
   return (
@@ -64,6 +67,19 @@ export const AddInvestorForm = memo(() => {
           },
         }}
       />
+      <TextField
+        select
+        name="type"
+        label="Account Type"
+        value={type}
+        onChange={(e) => setType(e.target.value as TradeType)}
+        fullWidth
+        size="small"
+        required
+      >
+        <MenuItem value={TradeType.GLOBAL}>GLOBAL (Shared)</MenuItem>
+        <MenuItem value={TradeType.PRIVATE}>PRIVATE (Personal)</MenuItem>
+      </TextField>
       <TextField
         name="capital"
         label="Initial Capital ($)"

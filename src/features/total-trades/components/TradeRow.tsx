@@ -1,10 +1,10 @@
 'use client';
 
 import { Trade } from '@/entities/trade/types';
-import { TradeStatus } from '@/shared/enum';
+import { TradeStatus, TradeType } from '@/shared/enum';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
-import { Box, IconButton, MenuItem, Select, TableCell, TableRow } from '@mui/material';
+import { Box, Chip, IconButton, MenuItem, Select, TableCell, TableRow } from '@mui/material';
 import { memo } from 'react';
 
 interface TradeRowProps {
@@ -34,6 +34,15 @@ export const TradeRow: React.FC<TradeRowProps> = memo(
         <TableCell>{trade.id}</TableCell>
         <TableCell align="right" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
           {trade.closed_date || '-'}
+        </TableCell>
+        <TableCell>
+          <Chip
+            label={trade.type === TradeType.GLOBAL ? 'Global' : 'Private'}
+            size="small"
+            variant="outlined"
+            color={trade.type === TradeType.GLOBAL ? 'primary' : 'secondary'}
+            sx={{ fontSize: '0.65rem', height: 20, fontWeight: 'bold' }}
+          />
         </TableCell>
         <TableCell sx={{ fontWeight: 'medium' }}>{trade.ticker}</TableCell>
         <TableCell>

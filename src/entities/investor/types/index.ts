@@ -1,9 +1,10 @@
-import { LedgerType } from '@/shared/enum';
+import { LedgerType, TradeType } from '@/shared/enum';
 
 export type Investor = {
   id: number;
   name: string;
   is_active: boolean;
+  type: TradeType;
   current_capital: number;
   current_deposit: number;
 };

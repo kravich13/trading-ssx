@@ -71,6 +71,7 @@ export const TotalTradesTable = memo(({ trades }: TotalTradesTableProps) => {
               <TableCell align="right" sx={{ fontWeight: 'bold', width: '120px' }}>
                 Closed Date
               </TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Type</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Ticker</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
               <TableCell align="right" sx={{ fontWeight: 'bold' }}>

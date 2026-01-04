@@ -1,4 +1,5 @@
 import { getInvestors } from '@/entities/investor';
+import { TradeType } from '@/shared/enum';
 import HistoryIcon from '@mui/icons-material/History';
 import {
   Box,
@@ -57,6 +58,7 @@ export async function ManageInvestors() {
               <TableHead>
                 <TableRow sx={{ backgroundColor: 'action.hover' }}>
                   <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Type</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 'bold' }}>
                     Current Capital
                   </TableCell>
@@ -105,6 +107,15 @@ export async function ManageInvestors() {
                             />
                           )}
                         </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={investor.type === TradeType.GLOBAL ? 'Global' : 'Private'}
+                          size="small"
+                          variant="outlined"
+                          color={investor.type === TradeType.GLOBAL ? 'primary' : 'secondary'}
+                          sx={{ fontSize: '0.65rem', height: 20, fontWeight: 'bold' }}
+                        />
                       </TableCell>
                       <TableCell align="right">
                         $
