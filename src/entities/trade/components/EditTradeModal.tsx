@@ -1,6 +1,11 @@
 'use client';
 
-import { memo, useCallback, useMemo, useState } from 'react';
+import { updateTrade } from '@/entities/trade/api';
+import { Trade } from '@/entities/trade/types';
+import { TradeStatus } from '@/shared/enum';
+import { normalizeDate } from '@/shared/utils/date.util';
+import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
 import {
   Box,
   Button,
@@ -12,20 +17,17 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
-import AddIcon from '@mui/icons-material/Add';
-import { Trade } from '@/entities/trade/types';
-import { updateTrade } from '@/entities/trade/api';
-import { TradeStatus } from '@/shared/enum';
-import { normalizeDate } from '@/shared/utils/date.util';
+import { memo, useCallback, useMemo, useState } from 'react';
 
 interface EditTradeModalProps {
   open: boolean;
-  onClose: () => void;
   trade: Trade | null;
+  onClose: () => void;
+  onSuccess?: () => void;
 }
 
-export const EditTradeModal = memo(({ open, onClose, trade }: EditTradeModalProps) => {
+export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTradeModalProps) => {
+  const [loading, setLoading] = useState(false);
   const [editDate, setEditDate] = useState<string>(() => {
     return trade ? normalizeDate(trade.closed_date) : '';
   });
@@ -69,11 +71,19 @@ export const EditTradeModal = memo(({ open, onClose, trade }: EditTradeModalProp
 
   const handleConfirmEdit = async () => {
     if (trade) {
-      const profitsToSave = editProfits.map((p) =>
-        typeof p === 'string' ? parseFloat(p) || 0 : p
-      );
-      await updateTrade(trade.id, editDate, trade.status || TradeStatus.CLOSED, profitsToSave);
-      onClose();
+      setLoading(true);
+      try {
+        const profitsToSave = editProfits.map((p) =>
+          typeof p === 'string' ? parseFloat(p) || 0 : p
+        );
+        await updateTrade(trade.id, editDate, trade.status || TradeStatus.CLOSED, profitsToSave);
+        onSuccess?.();
+        onClose();
+      } catch (error) {
+        console.error('Failed to update trade:', error);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -98,6 +108,7 @@ export const EditTradeModal = memo(({ open, onClose, trade }: EditTradeModalProp
             onChange={(e) => setEditDate(e.target.value)}
             variant="outlined"
             size="small"
+            disabled={loading}
             slotProps={{
               inputLabel: {
                 shrink: true,
@@ -120,13 +131,19 @@ export const EditTradeModal = memo(({ open, onClose, trade }: EditTradeModalProp
                     value={profit}
                     onChange={(e) => handleProfitChange(index, e.target.value)}
                     onKeyDown={handleIntegerKeyDown}
+                    disabled={loading}
                     slotProps={{
                       htmlInput: {
                         step: '1',
                       },
                     }}
                   />
-                  <IconButton size="small" color="error" onClick={() => handleRemoveProfit(index)}>
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={() => handleRemoveProfit(index)}
+                    disabled={loading}
+                  >
                     <DeleteIcon fontSize="small" />
                   </IconButton>
                 </Box>
@@ -136,6 +153,7 @@ export const EditTradeModal = memo(({ open, onClose, trade }: EditTradeModalProp
                 size="small"
                 variant="outlined"
                 onClick={handleAddProfit}
+                disabled={loading}
                 sx={{ alignSelf: 'flex-start', mt: 1 }}
               >
                 Add Part
@@ -161,11 +179,11 @@ export const EditTradeModal = memo(({ open, onClose, trade }: EditTradeModalProp
         </Box>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button onClick={onClose} color="inherit">
+        <Button onClick={onClose} color="inherit" disabled={loading}>
           Cancel
         </Button>
-        <Button onClick={handleConfirmEdit} variant="contained" color="primary">
-          Save
+        <Button onClick={handleConfirmEdit} variant="contained" color="primary" disabled={loading}>
+          {loading ? 'Saving...' : 'Save'}
         </Button>
       </DialogActions>
     </Dialog>

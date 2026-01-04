@@ -1,12 +1,38 @@
-import { getAllTrades } from '@/entities/trade';
-import { TradeStatsDashboard } from '@/widgets/trade-stats';
+'use client';
+
+import { AddTradeModal, getAllTrades } from '@/entities/trade';
+import { Trade } from '@/entities/trade/types';
 import { EquityChart } from '@/widgets/equity-chart';
 import { GaltonBoard } from '@/widgets/galton-board';
-import { Box, Typography } from '@mui/material';
+import { TradeStatsDashboard } from '@/widgets/trade-stats';
+import AddIcon from '@mui/icons-material/Add';
+import { Box, Button, Typography } from '@mui/material';
+import { useCallback, useEffect, useState } from 'react';
 import { TotalTradesTable } from './TotalTradesTable';
 
-export async function TotalTrades() {
-  const trades = await getAllTrades();
+export function TotalTrades() {
+  const [trades, setTrades] = useState<Trade[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const fetchData = useCallback(async () => {
+    const data = await getAllTrades();
+    setTrades(data);
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const load = async () => {
+      const data = await getAllTrades();
+      if (mounted) setTrades(data);
+    };
+
+    load();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const tradeLikeData = trades.map((t) => {
     let change_amount = t.total_pl_usd;
@@ -37,15 +63,24 @@ export async function TotalTrades() {
 
   return (
     <Box sx={{ py: 4 }}>
-      <Typography
-        variant="h4"
-        component="h1"
-        gutterBottom
-        fontWeight="bold"
-        sx={{ mb: 4, fontSize: { xs: '1.8rem', sm: '2.125rem' } }}
-      >
-        Total Trades Log
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <Typography
+          variant="h4"
+          component="h1"
+          fontWeight="bold"
+          sx={{ fontSize: { xs: '1.8rem', sm: '2.125rem' } }}
+        >
+          Total Trades Log
+        </Typography>
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<AddIcon />}
+          onClick={() => setIsModalOpen(true)}
+        >
+          Add Trade
+        </Button>
+      </Box>
 
       <TradeStatsDashboard trades={tradeLikeData} />
 
@@ -57,7 +92,13 @@ export async function TotalTrades() {
 
       <GaltonBoard trades={tradeLikeData} />
 
-      <TotalTradesTable trades={trades} />
+      <TotalTradesTable trades={trades} onRefresh={fetchData} />
+
+      <AddTradeModal
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={fetchData}
+      />
     </Box>
   );
 }

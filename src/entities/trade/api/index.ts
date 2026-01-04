@@ -37,6 +37,110 @@ export async function getAllTrades(): Promise<Trade[]> {
   }));
 }
 
+export async function getLatestCapital(): Promise<number> {
+  const result = db
+    .prepare(
+      `
+    SELECT COALESCE(SUM(capital_after), 0) as total_capital
+    FROM (
+      SELECT capital_after
+      FROM ledger
+      WHERE id IN (
+        SELECT MAX(id)
+        FROM ledger
+        GROUP BY investor_id
+      )
+    )
+  `
+    )
+    .get() as { total_capital: number };
+
+  return result?.total_capital || 0;
+}
+
+export async function addTrade(
+  ticker: string,
+  plPercent: number,
+  status: TradeStatus,
+  risk: number | null,
+  profits: number[]
+) {
+  const transaction = db.transaction(() => {
+    const totalPlUsd = profits.reduce((sum, p) => sum + p, 0);
+
+    const info = db
+      .prepare(
+        'INSERT INTO trades (ticker, pl_percent, status, default_risk_percent, profits_json, closed_date) VALUES (?, ?, ?, ?, ?, ?)'
+      )
+      .run(
+        ticker,
+        plPercent,
+        status,
+        risk,
+        JSON.stringify(profits),
+        status === TradeStatus.CLOSED ? new Date().toISOString().split('T')[0] : null
+      );
+
+    const tradeId = info.lastInsertRowid as number;
+
+    if (totalPlUsd !== 0) {
+      const investors = db.prepare('SELECT id FROM investors WHERE is_active = 1').all() as {
+        id: number;
+      }[];
+
+      const activeStates = investors
+        .map((inv) => ({
+          id: inv.id,
+          last: db
+            .prepare(
+              'SELECT capital_after, deposit_after FROM ledger WHERE investor_id = ? ORDER BY id DESC LIMIT 1'
+            )
+            .get(inv.id) as { capital_after: number; deposit_after: number } | undefined,
+        }))
+        .filter(
+          (s): s is { id: number; last: { capital_after: number; deposit_after: number } } =>
+            !!s.last && s.last.capital_after > 0
+        );
+
+      const totalCapitalBefore = activeStates.reduce((sum, s) => sum + s.last.capital_after, 0);
+
+      if (totalCapitalBefore > 0) {
+        for (const s of activeStates) {
+          const share = s.last.capital_after / totalCapitalBefore;
+          const investorPlUsd = totalPlUsd * share;
+
+          db.prepare(
+            `
+            INSERT INTO ledger (
+              investor_id, trade_id, type, ticker, pl_percent, change_amount, 
+              capital_before, capital_after, deposit_before, deposit_after, closed_date, default_risk_percent
+            ) VALUES (?, ?, 'TRADE', ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `
+          ).run(
+            s.id,
+            tradeId,
+            ticker,
+            plPercent,
+            investorPlUsd,
+            s.last.capital_after,
+            s.last.capital_after + investorPlUsd,
+            s.last.deposit_after,
+            s.last.deposit_after + investorPlUsd,
+            status === TradeStatus.CLOSED ? new Date().toISOString().split('T')[0] : null,
+            risk
+          );
+        }
+      }
+    }
+  });
+
+  transaction();
+
+  revalidatePath('/');
+  revalidatePath('/trades');
+  revalidatePath('/investors');
+}
+
 export async function updateTrade(
   id: number,
   closedDate: string,
