@@ -1,4 +1,4 @@
-import { TradeStatus } from '@/shared/enum';
+import { TradeStatus, TradeType } from '@/shared/enum';
 
 export type Trade = {
   id: number;
@@ -10,6 +10,8 @@ export type Trade = {
   total_capital_after: number;
   total_deposit_after: number;
   status: TradeStatus;
+  type: TradeType;
+  investor_id: number | null;
   created_at: string;
   profits: number[];
 };

@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@/shared/api';
-import { TradeStatus } from '@/shared/enum';
+import { TradeStatus, TradeType } from '@/shared/enum';
 import { revalidatePath } from 'next/cache';
 import { Trade } from '../types';
 
@@ -9,10 +9,8 @@ interface TradeRowRaw extends Omit<Trade, 'profits'> {
   profits_json: string | null;
 }
 
-export async function getAllTrades(): Promise<Trade[]> {
-  const trades = db
-    .prepare(
-      `
+export async function getAllTrades(type?: TradeType): Promise<Trade[]> {
+  const query = `
     SELECT 
       t.*,
       COALESCE(SUM(l.change_amount), 0) as total_pl_usd,
@@ -25,11 +23,12 @@ export async function getAllTrades(): Promise<Trade[]> {
       FROM ledger
       GROUP BY trade_id
     ) l_all ON l_all.trade_id = t.id
+    ${type ? 'WHERE t.type = ?' : ''}
     GROUP BY t.id
     ORDER BY t.id DESC
-  `
-    )
-    .all() as TradeRowRaw[];
+  `;
+
+  const trades = (type ? db.prepare(query).all(type) : db.prepare(query).all()) as TradeRowRaw[];
 
   return trades.map((t) => ({
     ...t,
@@ -63,14 +62,16 @@ export async function addTrade(
   plPercent: number,
   status: TradeStatus,
   risk: number | null,
-  profits: number[]
+  profits: number[],
+  type: TradeType = TradeType.GLOBAL,
+  investorId: number | null = null
 ) {
   const transaction = db.transaction(() => {
     const totalPlUsd = profits.reduce((sum, p) => sum + p, 0);
 
     const info = db
       .prepare(
-        'INSERT INTO trades (ticker, pl_percent, status, default_risk_percent, profits_json, closed_date) VALUES (?, ?, ?, ?, ?, ?)'
+        'INSERT INTO trades (ticker, pl_percent, status, default_risk_percent, profits_json, closed_date, type, investor_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
       )
       .run(
         ticker,
@@ -78,35 +79,54 @@ export async function addTrade(
         status,
         risk,
         JSON.stringify(profits),
-        status === TradeStatus.CLOSED ? new Date().toISOString().split('T')[0] : null
+        status === TradeStatus.CLOSED ? new Date().toISOString().split('T')[0] : null,
+        type,
+        investorId
       );
 
     const tradeId = info.lastInsertRowid as number;
 
     if (totalPlUsd !== 0) {
-      const investors = db.prepare('SELECT id FROM investors WHERE is_active = 1').all() as {
+      let activeStates: {
         id: number;
-      }[];
+        last: { capital_after: number; deposit_after: number };
+      }[] = [];
 
-      const activeStates = investors
-        .map((inv) => ({
-          id: inv.id,
-          last: db
-            .prepare(
-              'SELECT capital_after, deposit_after FROM ledger WHERE investor_id = ? ORDER BY id DESC LIMIT 1'
-            )
-            .get(inv.id) as { capital_after: number; deposit_after: number } | undefined,
-        }))
-        .filter(
-          (s): s is { id: number; last: { capital_after: number; deposit_after: number } } =>
-            !!s.last && s.last.capital_after > 0
-        );
+      if (type === TradeType.PRIVATE && investorId) {
+        const last = db
+          .prepare(
+            'SELECT capital_after, deposit_after FROM ledger WHERE investor_id = ? ORDER BY id DESC LIMIT 1'
+          )
+          .get(investorId) as { capital_after: number; deposit_after: number } | undefined;
+
+        if (last) {
+          activeStates = [{ id: investorId, last }];
+        }
+      } else {
+        const investors = db.prepare('SELECT id FROM investors WHERE is_active = 1').all() as {
+          id: number;
+        }[];
+
+        activeStates = investors
+          .map((inv) => ({
+            id: inv.id,
+            last: db
+              .prepare(
+                'SELECT capital_after, deposit_after FROM ledger WHERE investor_id = ? ORDER BY id DESC LIMIT 1'
+              )
+              .get(inv.id) as { capital_after: number; deposit_after: number } | undefined,
+          }))
+          .filter(
+            (s): s is { id: number; last: { capital_after: number; deposit_after: number } } =>
+              !!s.last && s.last.capital_after > 0
+          );
+      }
 
       const totalCapitalBefore = activeStates.reduce((sum, s) => sum + s.last.capital_after, 0);
 
       if (totalCapitalBefore > 0) {
         for (const s of activeStates) {
-          const share = s.last.capital_after / totalCapitalBefore;
+          const share = type === TradeType.PRIVATE ? 1 : s.last.capital_after / totalCapitalBefore;
           const investorPlUsd = totalPlUsd * share;
 
           db.prepare(

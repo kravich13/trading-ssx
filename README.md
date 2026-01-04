@@ -96,6 +96,12 @@ When taking a trade with **1% risk** on capital ($100), you use the **$3,500** a
   - [x] Screen to add a new trade with all Excel parameters (Ticker, PL%, PL$, Closed Date, Default Risk%)
   - [x] Show total capital of all copy-traders when adding a trade
   - [x] Automated calculation of trade impact on each investor's balance
+|- [x] **7. Private & Personal Trades**
+  - [x] **Database Expansion**: Add `type` (GLOBAL/PRIVATE) and `investor_id` to `trades` table to support non-shared trading activity
+  - [x] **Smart Distribution Logic**: Update `addTrade` to skip proportional sharing for Private trades, applying results only to the specific account
+  - [x] **Enhanced Trade Entry**: Update `AddTradeModal` with a toggle to choose between Global (all participants) and Private (single account) trades
+  - [x] **Filtered Analytics**: Update the Global Equity Chart to display only GLOBAL trades for a "clean" project-wide performance view
+  - [x] **Investor Dashboards**: Show both Global and Personal trades in individual investor views, but only Global trades in the shared public logs
 
 ## Technologies
 

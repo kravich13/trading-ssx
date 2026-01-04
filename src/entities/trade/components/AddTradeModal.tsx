@@ -1,7 +1,9 @@
 'use client';
 
+import { getInvestors } from '@/entities/investor/api';
+import { Investor } from '@/entities/investor/types';
 import { addTrade } from '@/entities/trade/api';
-import { TradeStatus } from '@/shared/enum';
+import { TradeStatus, TradeType } from '@/shared/enum';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import {
@@ -16,7 +18,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { TradePositionCalculator } from './TradePositionCalculator';
 
 interface AddTradeModalProps {
@@ -28,16 +30,45 @@ interface AddTradeModalProps {
 export const AddTradeModal = memo(({ open, onClose, onSuccess }: AddTradeModalProps) => {
   const [ticker, setTicker] = useState('');
   const [status, setStatus] = useState<TradeStatus>(TradeStatus.IN_PROGRESS);
+  const [tradeType, setTradeType] = useState<TradeType>(TradeType.GLOBAL);
+  const [investorId, setInvestorId] = useState<string>('');
+  const [investors, setInvestors] = useState<Investor[]>([]);
   const [plPercent, setPlPercent] = useState('0');
   const [risk, setRisk] = useState('1');
   const [profits, setProfits] = useState<(number | string)[]>(['']);
   const [loading, setLoading] = useState(false);
 
-  const handleProfitChange = (index: number, value: string) => {
-    const newProfits = [...profits];
-    newProfits[index] = value;
-    setProfits(newProfits);
-  };
+  useEffect(() => {
+    const fetchInvestors = async () => {
+      if (open) {
+        try {
+          const data = await getInvestors();
+
+          setInvestors(data);
+
+          const me = data.find((inv) => inv.name === 'Me');
+
+          if (me) {
+            setInvestorId(me.id.toString());
+          } else if (data.length > 0) {
+            setInvestorId(data[0].id.toString());
+          }
+        } catch (error) {
+          console.error('Failed to fetch investors:', error);
+        }
+      }
+    };
+
+    fetchInvestors();
+  }, [open]);
+
+  const handleProfitChange = useCallback((index: number, value: string) => {
+    setProfits((prev) => {
+      const newProfits = [...prev];
+      newProfits[index] = value;
+      return newProfits;
+    });
+  }, []);
 
   const handleIntegerKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === '.' || e.key === ',') {
@@ -45,14 +76,13 @@ export const AddTradeModal = memo(({ open, onClose, onSuccess }: AddTradeModalPr
     }
   }, []);
 
-  const handleAddProfit = () => {
-    setProfits([...profits, '']);
-  };
+  const handleAddProfit = useCallback(() => {
+    setProfits((prev) => [...prev, '']);
+  }, []);
 
-  const handleRemoveProfit = (index: number) => {
-    const newProfits = profits.filter((_, i) => i !== index);
-    setProfits(newProfits);
-  };
+  const handleRemoveProfit = useCallback((index: number) => {
+    setProfits((prev) => prev.filter((_, i) => i !== index));
+  }, []);
 
   const totalProfit = useMemo(() => {
     return profits.reduce<number>((sum, p) => {
@@ -61,7 +91,7 @@ export const AddTradeModal = memo(({ open, onClose, onSuccess }: AddTradeModalPr
     }, 0);
   }, [profits]);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!ticker) return;
 
     setLoading(true);
@@ -77,11 +107,14 @@ export const AddTradeModal = memo(({ open, onClose, onSuccess }: AddTradeModalPr
         status === TradeStatus.CLOSED ? parseFloat(plPercent) || 0 : 0,
         status,
         parseFloat(risk) || null,
-        profitsToSave
+        profitsToSave,
+        tradeType,
+        tradeType === TradeType.PRIVATE ? parseInt(investorId) : null
       );
 
       setTicker('');
       setStatus(TradeStatus.IN_PROGRESS);
+      setTradeType(TradeType.GLOBAL);
       setPlPercent('0');
       setRisk('1');
       setProfits(['']);
@@ -92,13 +125,16 @@ export const AddTradeModal = memo(({ open, onClose, onSuccess }: AddTradeModalPr
     } finally {
       setLoading(false);
     }
-  };
+  }, [ticker, status, profits, plPercent, risk, tradeType, investorId, onSuccess, onClose]);
 
-  const formatCurrency = (value: number) =>
-    value.toLocaleString(undefined, {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    });
+  const formatCurrency = useCallback(
+    (value: number) =>
+      value.toLocaleString(undefined, {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }),
+    []
+  );
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
@@ -117,18 +153,60 @@ export const AddTradeModal = memo(({ open, onClose, onSuccess }: AddTradeModalPr
             disabled={loading}
           />
 
-          <TextField
-            select
-            label="Status"
-            value={status}
-            onChange={(e) => setStatus(e.target.value as TradeStatus)}
-            fullWidth
-            size="small"
-            disabled={loading}
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <TextField
+              select
+              label="Trade Type"
+              value={tradeType}
+              onChange={(e) => setTradeType(e.target.value as TradeType)}
+              fullWidth
+              size="small"
+              disabled={loading}
+            >
+              <MenuItem value={TradeType.GLOBAL}>GLOBAL</MenuItem>
+              <MenuItem value={TradeType.PRIVATE}>PRIVATE</MenuItem>
+            </TextField>
+
+            <TextField
+              select
+              label="Status"
+              value={status}
+              onChange={(e) => setStatus(e.target.value as TradeStatus)}
+              fullWidth
+              size="small"
+              disabled={loading}
+            >
+              <MenuItem value={TradeStatus.IN_PROGRESS}>IN PROGRESS</MenuItem>
+              <MenuItem value={TradeStatus.CLOSED}>CLOSED</MenuItem>
+            </TextField>
+          </Box>
+
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateRows: tradeType === TradeType.PRIVATE ? '1fr' : '0fr',
+              transition: 'grid-template-rows 0.3s ease-out',
+            }}
           >
-            <MenuItem value={TradeStatus.IN_PROGRESS}>IN PROGRESS</MenuItem>
-            <MenuItem value={TradeStatus.CLOSED}>CLOSED</MenuItem>
-          </TextField>
+            <Box sx={{ overflow: 'hidden' }}>
+              <TextField
+                select
+                label="Investor"
+                value={investorId}
+                onChange={(e) => setInvestorId(e.target.value)}
+                fullWidth
+                size="small"
+                disabled={loading}
+                sx={{ mb: 0.5 }}
+              >
+                {investors.map((inv) => (
+                  <MenuItem key={inv.id} value={inv.id.toString()}>
+                    {inv.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Box>
+          </Box>
 
           <Box
             sx={{
