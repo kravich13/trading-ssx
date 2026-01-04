@@ -68,12 +68,6 @@ export const GlobalActionRow = memo(
         <TableCell align="right" sx={{ color, fontWeight: 'medium' }}>
           {row.change_amount > 0 ? '+' : ''}
           {formatCurrency(row.change_amount)}
-          {row.deposit_before > 0 && (
-            <Box component="span" sx={{ fontSize: '0.7rem', ml: 0.5, opacity: 0.8 }}>
-              ({row.change_amount >= 0 ? '+' : ''}
-              {((row.change_amount / row.deposit_before) * 100).toFixed(2)}% on dep.)
-            </Box>
-          )}
         </TableCell>
         <TableCell align="right" sx={{ fontWeight: 'bold' }}>
           {formatCurrency(row.capital_after)}
