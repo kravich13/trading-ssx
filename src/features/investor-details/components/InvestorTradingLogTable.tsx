@@ -27,7 +27,7 @@ import {
   TableRow,
   TextField,
 } from '@mui/material';
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 
 type LedgerWithStatus = LedgerEntry & { status?: TradeStatus; trade_type?: TradeType };
 
@@ -41,13 +41,24 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editDate, setEditDate] = useState('');
 
-  const tradesOnlyLedger = ledger.filter((row) => row.type === LedgerType.TRADE);
+  const tradesOnlyLedger = useMemo(
+    () => ledger.filter((row) => row.type === LedgerType.TRADE),
+    [ledger]
+  );
 
-  const formatCurrency = (value: number) =>
-    value.toLocaleString(undefined, {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    });
+  const hasPrivateTrades = useMemo(
+    () => tradesOnlyLedger.some((t) => t.trade_type === TradeType.PRIVATE),
+    [tradesOnlyLedger]
+  );
+
+  const formatCurrency = useCallback(
+    (value: number) =>
+      value.toLocaleString(undefined, {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }),
+    []
+  );
 
   const handleDeleteClick = useCallback((trade: LedgerWithStatus) => {
     setSelectedTrade(trade);
@@ -115,9 +126,11 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
               <TableCell align="right" sx={{ fontWeight: 'bold' }}>
                 Risk%
               </TableCell>
-              <TableCell align="left" sx={{ fontWeight: 'bold', width: '100px' }}>
-                Actions
-              </TableCell>
+              {hasPrivateTrades && (
+                <TableCell align="left" sx={{ fontWeight: 'bold', width: '100px' }}>
+                  Actions
+                </TableCell>
+              )}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -128,6 +141,8 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
                   : row.change_amount < 0
                     ? 'error.main'
                     : 'inherit';
+
+              const isPrivate = row.trade_type === TradeType.PRIVATE;
 
               return (
                 <TableRow key={row.id} hover>
@@ -158,6 +173,7 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
                         )
                       }
                       size="small"
+                      disabled={!isPrivate}
                       sx={{
                         fontSize: '0.65rem',
                         fontWeight: 'bold',
@@ -177,6 +193,14 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
                               ? 'warning.main'
                               : 'success.main',
                           opacity: 0.5,
+                        },
+                        '&.Mui-disabled': {
+                          '& .MuiSelect-select': {
+                            WebkitTextFillColor:
+                              row.status === TradeStatus.IN_PROGRESS
+                                ? '#ed6c02' // warning.main equivalent
+                                : '#2e7d32', // success.main equivalent
+                          },
                         },
                       }}
                     >
@@ -207,26 +231,30 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
                       ? `${row.default_risk_percent.toFixed(2)}%`
                       : '-'}
                   </TableCell>
-                  <TableCell align="left">
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-start', gap: 0.5 }}>
-                      <IconButton
-                        size="small"
-                        color="primary"
-                        onClick={() => handleEditClick(row)}
-                        title="Edit"
-                      >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onClick={() => handleDeleteClick(row)}
-                        title="Delete"
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Box>
-                  </TableCell>
+                  {hasPrivateTrades && (
+                    <TableCell align="left">
+                      {isPrivate && (
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-start', gap: 0.5 }}>
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => handleEditClick(row)}
+                            title="Edit"
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => handleDeleteClick(row)}
+                            title="Delete"
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      )}
+                    </TableCell>
+                  )}
                 </TableRow>
               );
             })}
