@@ -33,11 +33,13 @@ export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTra
 
   const [editProfits, setEditProfits] = useState(() => getInitialTradeProfits(trade));
 
-  const handleProfitChange = (index: number, value: string) => {
-    const newProfits = [...editProfits];
-    newProfits[index] = value;
-    setEditProfits(newProfits);
-  };
+  const handleProfitChange = useCallback((index: number, value: string) => {
+    setEditProfits((prev) => {
+      const newProfits = [...prev];
+      newProfits[index] = value;
+      return newProfits;
+    });
+  }, []);
 
   const handleIntegerKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === '.' || e.key === ',') {
@@ -45,14 +47,13 @@ export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTra
     }
   }, []);
 
-  const handleAddProfit = () => {
-    setEditProfits([...editProfits, '']);
-  };
+  const handleAddProfit = useCallback(() => {
+    setEditProfits((prev) => [...prev, '']);
+  }, []);
 
-  const handleRemoveProfit = (index: number) => {
-    const newProfits = editProfits.filter((_, i) => i !== index);
-    setEditProfits(newProfits);
-  };
+  const handleRemoveProfit = useCallback((index: number) => {
+    setEditProfits((prev) => prev.filter((_, i) => i !== index));
+  }, []);
 
   const totalEditProfit = useMemo(() => {
     return editProfits.reduce<number>((sum, p) => {
@@ -84,11 +85,45 @@ export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTra
     }
   }, [trade, editProfits, editDate, onSuccess, onClose]);
 
-  const formatCurrency = (value: number) =>
-    value.toLocaleString(undefined, {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    });
+  const formatCurrency = useCallback(
+    (value: number) =>
+      value.toLocaleString(undefined, {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }),
+    []
+  );
+
+  const renderProfitInput = useCallback(
+    (profit: string | number, index: number) => (
+      <Box key={index} sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+        <TextField
+          label={`Part ${index + 1}`}
+          type="number"
+          size="small"
+          fullWidth
+          value={profit}
+          onChange={(e) => handleProfitChange(index, e.target.value)}
+          onKeyDown={handleIntegerKeyDown}
+          disabled={loading}
+          slotProps={{
+            htmlInput: {
+              step: '1',
+            },
+          }}
+        />
+        <IconButton
+          size="small"
+          color="error"
+          onClick={() => handleRemoveProfit(index)}
+          disabled={loading}
+        >
+          <DeleteIcon fontSize="small" />
+        </IconButton>
+      </Box>
+    ),
+    [handleProfitChange, handleIntegerKeyDown, handleRemoveProfit, loading]
+  );
 
   if (!trade) return null;
 
@@ -118,33 +153,7 @@ export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTra
               Profits Log (Excel-like)
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              {editProfits.map((profit, index) => (
-                <Box key={index} sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                  <TextField
-                    label={`Part ${index + 1}`}
-                    type="number"
-                    size="small"
-                    fullWidth
-                    value={profit}
-                    onChange={(e) => handleProfitChange(index, e.target.value)}
-                    onKeyDown={handleIntegerKeyDown}
-                    disabled={loading}
-                    slotProps={{
-                      htmlInput: {
-                        step: '1',
-                      },
-                    }}
-                  />
-                  <IconButton
-                    size="small"
-                    color="error"
-                    onClick={() => handleRemoveProfit(index)}
-                    disabled={loading}
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </Box>
-              ))}
+              {editProfits.map(renderProfitInput)}
               <Button
                 startIcon={<AddIcon />}
                 size="small"

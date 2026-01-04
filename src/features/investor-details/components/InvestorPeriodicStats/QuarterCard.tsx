@@ -1,10 +1,10 @@
 'use client';
 
-import { QuarterStat } from '@/entities/investor';
+import { QuarterStat, MonthStat } from '@/entities/investor';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import { Box, Card, CardContent, Collapse, Divider, Typography } from '@mui/material';
-import { memo, useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 
 interface QuarterCardProps {
   quarter: QuarterStat;
@@ -15,6 +15,29 @@ export const QuarterCard = memo(({ quarter }: QuarterCardProps) => {
 
   const color =
     quarter.usd > 0 ? 'success.main' : quarter.usd < 0 ? 'error.main' : 'text.secondary';
+
+  const renderMonth = useCallback((month: MonthStat) => {
+    const mColor = month.usd > 0 ? 'success.main' : month.usd < 0 ? 'error.main' : 'text.secondary';
+    return (
+      <Box key={month.label} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
+        <Typography variant="body2" color="text.secondary">
+          {month.label}
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+          <Typography variant="body2" sx={{ color: mColor, fontWeight: 'medium' }}>
+            {month.usd >= 0 ? '+' : ''}${Math.round(month.usd).toLocaleString()}
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ color: mColor, opacity: 0.7, minWidth: '50px', textAlign: 'right' }}
+          >
+            {month.percent >= 0 ? '+' : ''}
+            {month.percent.toFixed(2)}%
+          </Typography>
+        </Box>
+      </Box>
+    );
+  }, []);
 
   return (
     <Card
@@ -57,32 +80,7 @@ export const QuarterCard = memo(({ quarter }: QuarterCardProps) => {
         <Collapse in={open} timeout="auto" unmountOnExit>
           <Box sx={{ mt: 2 }}>
             <Divider sx={{ mb: 1.5, borderColor: 'rgba(255, 255, 255, 0.05)' }} />
-            {quarter.months.map((month) => {
-              const mColor =
-                month.usd > 0 ? 'success.main' : month.usd < 0 ? 'error.main' : 'text.secondary';
-              return (
-                <Box
-                  key={month.label}
-                  sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}
-                >
-                  <Typography variant="body2" color="text.secondary">
-                    {month.label}
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
-                    <Typography variant="body2" sx={{ color: mColor, fontWeight: 'medium' }}>
-                      {month.usd >= 0 ? '+' : ''}${Math.round(month.usd).toLocaleString()}
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      sx={{ color: mColor, opacity: 0.7, minWidth: '50px', textAlign: 'right' }}
-                    >
-                      {month.percent >= 0 ? '+' : ''}
-                      {month.percent.toFixed(2)}%
-                    </Typography>
-                  </Box>
-                </Box>
-              );
-            })}
+            {quarter.months.map(renderMonth)}
           </Box>
         </Collapse>
       </CardContent>

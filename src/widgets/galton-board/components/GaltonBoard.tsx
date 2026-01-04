@@ -2,55 +2,70 @@
 
 import { TradeLike } from '@/entities/trade';
 import { Box, Card, CardContent, Typography, useTheme } from '@mui/material';
+import { memo, useCallback, useMemo } from 'react';
 import {
-  BarChart,
   Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
 } from 'recharts';
 
 interface GaltonBoardProps {
   trades: TradeLike[];
 }
 
-export function GaltonBoard({ trades }: GaltonBoardProps) {
+export const GaltonBoard = memo(({ trades }: GaltonBoardProps) => {
   const theme = useTheme();
 
-  const validTrades = trades.filter((t) => t.pl_percent !== null);
+  const data = useMemo(() => {
+    const validTrades = trades.filter((t) => t.pl_percent !== null);
 
-  if (validTrades.length === 0) return null;
+    if (validTrades.length === 0) return [];
 
-  const plValues = validTrades.map((t) => t.pl_percent || 0);
-  const minPl = Math.min(...plValues);
-  const maxPl = Math.max(...plValues);
+    const plValues = validTrades.map((t) => t.pl_percent || 0);
+    const minPl = Math.min(...plValues);
+    const maxPl = Math.max(...plValues);
 
-  const startBin = Math.min(-5, Math.floor(minPl));
-  const endBin = Math.max(5, Math.ceil(maxPl));
+    const startBin = Math.min(-5, Math.floor(minPl));
+    const endBin = Math.max(5, Math.ceil(maxPl));
 
-  const bins: { [key: number]: number } = {};
-  for (let i = startBin; i <= endBin; i++) {
-    bins[i] = 0;
-  }
-
-  validTrades.forEach((t) => {
-    const pl = t.pl_percent || 0;
-    const bin = Math.round(pl);
-    if (bins[bin] !== undefined) {
-      bins[bin]++;
+    const bins: { [key: number]: number } = {};
+    for (let i = startBin; i <= endBin; i++) {
+      bins[i] = 0;
     }
-  });
 
-  const data = Object.keys(bins)
-    .map((key) => ({
-      bin: Number(key),
-      count: bins[Number(key)],
-      label: `${key}%`,
-    }))
-    .sort((a, b) => a.bin - b.bin);
+    validTrades.forEach((t) => {
+      const pl = t.pl_percent || 0;
+      const bin = Math.round(pl);
+      if (bins[bin] !== undefined) {
+        bins[bin]++;
+      }
+    });
+
+    return Object.keys(bins)
+      .map((key) => ({
+        bin: Number(key),
+        count: bins[Number(key)],
+        label: `${key}%`,
+      }))
+      .sort((a, b) => a.bin - b.bin);
+  }, [trades]);
+
+  const renderCell = useCallback(
+    (entry: { bin: number }, index: number) => (
+      <Cell
+        key={`cell-${index}`}
+        fill={entry.bin > 0 ? '#4caf50' : entry.bin < 0 ? '#f44336' : '#9e9e9e'}
+      />
+    ),
+    []
+  );
+
+  if (data.length === 0) return null;
 
   return (
     <Card elevation={1} sx={{ bgcolor: 'background.paper', border: '1px solid #1e4976', mb: 4 }}>
@@ -110,12 +125,7 @@ export function GaltonBoard({ trades }: GaltonBoardProps) {
                 cursor={{ fill: 'rgba(255,255,255,0.05)' }}
               />
               <Bar dataKey="count" name="Trades">
-                {data.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={entry.bin > 0 ? '#4caf50' : entry.bin < 0 ? '#f44336' : '#9e9e9e'}
-                  />
-                ))}
+                {data.map(renderCell)}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -123,4 +133,6 @@ export function GaltonBoard({ trades }: GaltonBoardProps) {
       </CardContent>
     </Card>
   );
-}
+});
+
+GaltonBoard.displayName = 'GaltonBoard';

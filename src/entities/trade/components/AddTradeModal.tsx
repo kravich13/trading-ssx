@@ -84,6 +84,48 @@ export const AddTradeModal = memo(({ open, onClose, onSuccess }: AddTradeModalPr
     setProfits((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
+  const renderInvestorOption = useCallback(
+    (inv: Investor) => (
+      <MenuItem key={inv.id} value={inv.id.toString()}>
+        {inv.name}
+      </MenuItem>
+    ),
+    []
+  );
+
+  const renderProfitInput = useCallback(
+    (profit: string | number, index: number) => (
+      <Box key={index} sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+        <TextField
+          label={`Part ${index + 1}`}
+          type="number"
+          size="small"
+          fullWidth
+          value={profit}
+          onChange={(e) => handleProfitChange(index, e.target.value)}
+          onKeyDown={handleIntegerKeyDown}
+          disabled={loading}
+          slotProps={{
+            htmlInput: {
+              step: '1',
+            },
+          }}
+        />
+        {profits.length > 1 && (
+          <IconButton
+            size="small"
+            color="error"
+            onClick={() => handleRemoveProfit(index)}
+            disabled={loading}
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        )}
+      </Box>
+    ),
+    [handleProfitChange, handleIntegerKeyDown, handleRemoveProfit, loading, profits.length]
+  );
+
   const totalProfit = useMemo(() => {
     return profits.reduce<number>((sum, p) => {
       const val = typeof p === 'string' ? parseFloat(p) || 0 : p;
@@ -199,11 +241,7 @@ export const AddTradeModal = memo(({ open, onClose, onSuccess }: AddTradeModalPr
                 disabled={loading}
                 sx={{ mb: 0.5 }}
               >
-                {investors.map((inv) => (
-                  <MenuItem key={inv.id} value={inv.id.toString()}>
-                    {inv.name}
-                  </MenuItem>
-                ))}
+                {investors.map(renderInvestorOption)}
               </TextField>
             </Box>
           </Box>
@@ -265,35 +303,7 @@ export const AddTradeModal = memo(({ open, onClose, onSuccess }: AddTradeModalPr
                   Profits Log (Excel-like)
                 </Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  {profits.map((profit, index) => (
-                    <Box key={index} sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                      <TextField
-                        label={`Part ${index + 1}`}
-                        type="number"
-                        size="small"
-                        fullWidth
-                        value={profit}
-                        onChange={(e) => handleProfitChange(index, e.target.value)}
-                        onKeyDown={handleIntegerKeyDown}
-                        disabled={loading}
-                        slotProps={{
-                          htmlInput: {
-                            step: '1',
-                          },
-                        }}
-                      />
-                      {profits.length > 1 && (
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() => handleRemoveProfit(index)}
-                          disabled={loading}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      )}
-                    </Box>
-                  ))}
+                  {profits.map(renderProfitInput)}
                   <Button
                     startIcon={<AddIcon />}
                     size="small"

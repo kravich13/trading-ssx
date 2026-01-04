@@ -98,6 +98,130 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
     []
   );
 
+  const renderRow = useCallback(
+    (row: LedgerWithStatus, index: number) => {
+      const plColor =
+        row.change_amount > 0 ? 'success.main' : row.change_amount < 0 ? 'error.main' : 'inherit';
+
+      const isPrivate = row.trade_type === TradeType.PRIVATE;
+
+      return (
+        <TableRow key={row.id} hover>
+          <TableCell>{tradesOnlyLedger.length - index}</TableCell>
+          <TableCell align="right" sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
+            {row.closed_date || '-'}
+          </TableCell>
+          <TableCell>
+            {row.trade_type && (
+              <Chip
+                label={row.trade_type === TradeType.GLOBAL ? 'Global' : 'Private'}
+                size="small"
+                variant="outlined"
+                color={row.trade_type === TradeType.GLOBAL ? 'primary' : 'secondary'}
+                sx={{ fontSize: '0.65rem', height: 20, fontWeight: 'bold' }}
+              />
+            )}
+          </TableCell>
+          <TableCell>{row.ticker || '-'}</TableCell>
+          <TableCell>
+            <Select
+              value={row.status || TradeStatus.CLOSED}
+              onChange={(e) =>
+                handleStatusChange(
+                  row.trade_id || row.id,
+                  row.closed_date || '',
+                  e.target.value as TradeStatus
+                )
+              }
+              size="small"
+              disabled={!isPrivate}
+              sx={{
+                fontSize: '0.65rem',
+                fontWeight: 'bold',
+                height: 24,
+                '& .MuiSelect-select': {
+                  py: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  color: row.status === TradeStatus.IN_PROGRESS ? 'warning.main' : 'success.main',
+                },
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor:
+                    row.status === TradeStatus.IN_PROGRESS ? 'warning.main' : 'success.main',
+                  opacity: 0.5,
+                },
+                '&.Mui-disabled': {
+                  '& .MuiSelect-select': {
+                    WebkitTextFillColor:
+                      row.status === TradeStatus.IN_PROGRESS
+                        ? '#ed6c02' // warning.main equivalent
+                        : '#2e7d32', // success.main equivalent
+                  },
+                },
+              }}
+            >
+              <MenuItem value={TradeStatus.IN_PROGRESS} sx={{ fontSize: '0.75rem' }}>
+                IN PROGRESS
+              </MenuItem>
+              <MenuItem value={TradeStatus.CLOSED} sx={{ fontSize: '0.75rem' }}>
+                CLOSED
+              </MenuItem>
+            </Select>
+          </TableCell>
+          <TableCell align="right" sx={{ color: plColor }}>
+            {row.pl_percent !== null ? `${row.pl_percent.toFixed(2)}%` : '-'}
+          </TableCell>
+          <TableCell align="right" sx={{ color: plColor }}>
+            $
+            {row.change_amount.toLocaleString(undefined, {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            })}
+          </TableCell>
+          <TableCell align="right" sx={{ fontWeight: 'bold' }}>
+            ${formatCurrency(row.capital_after)}
+          </TableCell>
+          <TableCell align="right">${formatCurrency(row.deposit_after)}</TableCell>
+          <TableCell align="right">
+            {row.default_risk_percent !== null ? `${row.default_risk_percent.toFixed(2)}%` : '-'}
+          </TableCell>
+          {hasPrivateTrades && (
+            <TableCell align="left">
+              {isPrivate && (
+                <Box sx={{ display: 'flex', justifyContent: 'flex-start', gap: 0.5 }}>
+                  <IconButton
+                    size="small"
+                    color="primary"
+                    onClick={() => handleEditClick(row)}
+                    title="Edit"
+                  >
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={() => handleDeleteClick(row)}
+                    title="Delete"
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </Box>
+              )}
+            </TableCell>
+          )}
+        </TableRow>
+      );
+    },
+    [
+      tradesOnlyLedger.length,
+      formatCurrency,
+      hasPrivateTrades,
+      handleEditClick,
+      handleDeleteClick,
+      handleStatusChange,
+    ]
+  );
+
   return (
     <>
       <TableContainer component={Paper} elevation={2} sx={{ mb: 4 }}>
@@ -133,132 +257,7 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
               )}
             </TableRow>
           </TableHead>
-          <TableBody>
-            {tradesOnlyLedger.map((row, index) => {
-              const plColor =
-                row.change_amount > 0
-                  ? 'success.main'
-                  : row.change_amount < 0
-                    ? 'error.main'
-                    : 'inherit';
-
-              const isPrivate = row.trade_type === TradeType.PRIVATE;
-
-              return (
-                <TableRow key={row.id} hover>
-                  <TableCell>{tradesOnlyLedger.length - index}</TableCell>
-                  <TableCell align="right" sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
-                    {row.closed_date || '-'}
-                  </TableCell>
-                  <TableCell>
-                    {row.trade_type && (
-                      <Chip
-                        label={row.trade_type === TradeType.GLOBAL ? 'Global' : 'Private'}
-                        size="small"
-                        variant="outlined"
-                        color={row.trade_type === TradeType.GLOBAL ? 'primary' : 'secondary'}
-                        sx={{ fontSize: '0.65rem', height: 20, fontWeight: 'bold' }}
-                      />
-                    )}
-                  </TableCell>
-                  <TableCell>{row.ticker || '-'}</TableCell>
-                  <TableCell>
-                    <Select
-                      value={row.status || TradeStatus.CLOSED}
-                      onChange={(e) =>
-                        handleStatusChange(
-                          row.trade_id || row.id,
-                          row.closed_date || '',
-                          e.target.value as TradeStatus
-                        )
-                      }
-                      size="small"
-                      disabled={!isPrivate}
-                      sx={{
-                        fontSize: '0.65rem',
-                        fontWeight: 'bold',
-                        height: 24,
-                        '& .MuiSelect-select': {
-                          py: 0,
-                          display: 'flex',
-                          alignItems: 'center',
-                          color:
-                            row.status === TradeStatus.IN_PROGRESS
-                              ? 'warning.main'
-                              : 'success.main',
-                        },
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor:
-                            row.status === TradeStatus.IN_PROGRESS
-                              ? 'warning.main'
-                              : 'success.main',
-                          opacity: 0.5,
-                        },
-                        '&.Mui-disabled': {
-                          '& .MuiSelect-select': {
-                            WebkitTextFillColor:
-                              row.status === TradeStatus.IN_PROGRESS
-                                ? '#ed6c02' // warning.main equivalent
-                                : '#2e7d32', // success.main equivalent
-                          },
-                        },
-                      }}
-                    >
-                      <MenuItem value={TradeStatus.IN_PROGRESS} sx={{ fontSize: '0.75rem' }}>
-                        IN PROGRESS
-                      </MenuItem>
-                      <MenuItem value={TradeStatus.CLOSED} sx={{ fontSize: '0.75rem' }}>
-                        CLOSED
-                      </MenuItem>
-                    </Select>
-                  </TableCell>
-                  <TableCell align="right" sx={{ color: plColor }}>
-                    {row.pl_percent !== null ? `${row.pl_percent.toFixed(2)}%` : '-'}
-                  </TableCell>
-                  <TableCell align="right" sx={{ color: plColor }}>
-                    $
-                    {row.change_amount.toLocaleString(undefined, {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    })}
-                  </TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                    ${formatCurrency(row.capital_after)}
-                  </TableCell>
-                  <TableCell align="right">${formatCurrency(row.deposit_after)}</TableCell>
-                  <TableCell align="right">
-                    {row.default_risk_percent !== null
-                      ? `${row.default_risk_percent.toFixed(2)}%`
-                      : '-'}
-                  </TableCell>
-                  {hasPrivateTrades && (
-                    <TableCell align="left">
-                      {isPrivate && (
-                        <Box sx={{ display: 'flex', justifyContent: 'flex-start', gap: 0.5 }}>
-                          <IconButton
-                            size="small"
-                            color="primary"
-                            onClick={() => handleEditClick(row)}
-                            title="Edit"
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => handleDeleteClick(row)}
-                            title="Delete"
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Box>
-                      )}
-                    </TableCell>
-                  )}
-                </TableRow>
-              );
-            })}
-          </TableBody>
+          <TableBody>{tradesOnlyLedger.map(renderRow)}</TableBody>
         </Table>
       </TableContainer>
 

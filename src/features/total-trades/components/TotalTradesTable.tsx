@@ -61,6 +61,20 @@ export const TotalTradesTable = memo(({ trades }: TotalTradesTableProps) => {
     []
   );
 
+  const renderTradeRow = useCallback(
+    (trade: Trade) => (
+      <TradeRow
+        key={trade.id}
+        trade={trade}
+        formatCurrency={formatCurrency}
+        onEdit={handleEditClick}
+        onDelete={handleDeleteClick}
+        onStatusChange={handleStatusChange}
+      />
+    ),
+    [formatCurrency, handleEditClick, handleDeleteClick, handleStatusChange]
+  );
+
   return (
     <>
       <TableContainer component={Paper} elevation={2}>
@@ -104,16 +118,7 @@ export const TotalTradesTable = memo(({ trades }: TotalTradesTableProps) => {
                 </TableCell>
               </TableRow>
             ) : (
-              trades.map((trade) => (
-                <TradeRow
-                  key={trade.id}
-                  trade={trade}
-                  formatCurrency={formatCurrency}
-                  onEdit={handleEditClick}
-                  onDelete={handleDeleteClick}
-                  onStatusChange={handleStatusChange}
-                />
-              ))
+              trades.map(renderTradeRow)
             )}
           </TableBody>
         </Table>

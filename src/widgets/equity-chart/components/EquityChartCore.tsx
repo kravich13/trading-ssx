@@ -2,7 +2,7 @@
 
 import { CHART_COLORS } from '@/shared/consts';
 import { Box, Typography, useTheme } from '@mui/material';
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import {
   Area,
   AreaChart,
@@ -38,12 +38,33 @@ export const EquityChartCore = memo(
   ({ data, view, mode, showEmas, initialReferenceValue }: EquityChartCoreProps) => {
     const theme = useTheme();
 
+    const emaLegendItems = useMemo(
+      () => [
+        { label: 'EMA 14', color: CHART_COLORS.EMA_14 },
+        { label: 'EMA 50', color: CHART_COLORS.EMA_50 },
+        { label: 'EMA 200', color: CHART_COLORS.EMA_200 },
+      ],
+      []
+    );
+
     const formatValue = useCallback(
       (val: number) => {
         if (mode === 'percent') return `${val.toFixed(1)}%`;
         return `$${Math.round(val).toLocaleString()}`;
       },
       [mode]
+    );
+
+    const renderEmaLegend = useCallback(
+      (item: { label: string; color: string }) => (
+        <Box key={item.label} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: item.color }} />
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            {item.label}
+          </Typography>
+        </Box>
+      ),
+      []
     );
 
     return (
@@ -191,18 +212,7 @@ export const EquityChartCore = memo(
 
         {showEmas && (
           <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3, mt: 2 }}>
-            {[
-              { label: 'EMA 14', color: CHART_COLORS.EMA_14 },
-              { label: 'EMA 50', color: CHART_COLORS.EMA_50 },
-              { label: 'EMA 200', color: CHART_COLORS.EMA_200 },
-            ].map((item) => (
-              <Box key={item.label} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: item.color }} />
-                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                  {item.label}
-                </Typography>
-              </Box>
-            ))}
+            {emaLegendItems.map(renderEmaLegend)}
           </Box>
         )}
       </>

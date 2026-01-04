@@ -1,8 +1,8 @@
 'use client';
 
-import { YearStat } from '@/entities/investor';
+import { YearStat, QuarterStat } from '@/entities/investor';
 import { Box, Card, CardContent, Grid, Tab, Tabs, Typography } from '@mui/material';
-import { memo, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 import { QuarterCard } from './QuarterCard';
 
 interface ClientProps {
@@ -21,6 +21,20 @@ export const Client = memo(({ stats }: ClientProps) => {
       return () => clearTimeout(timer);
     }
   }, [stats]);
+
+  const renderTab = useCallback(
+    (yearStat: YearStat) => <Tab key={yearStat.year} label={yearStat.year} />,
+    []
+  );
+
+  const renderQuarter = useCallback(
+    (q: QuarterStat) => (
+      <Grid size={{ xs: 12, sm: 6 }} key={q.label}>
+        <QuarterCard quarter={q} />
+      </Grid>
+    ),
+    []
+  );
 
   if (stats.length === 0) return null;
 
@@ -42,9 +56,7 @@ export const Client = memo(({ stats }: ClientProps) => {
             },
           }}
         >
-          {stats.map((yearStat) => (
-            <Tab key={yearStat.year} label={yearStat.year} />
-          ))}
+          {stats.map(renderTab)}
         </Tabs>
       </Box>
 
@@ -86,11 +98,7 @@ export const Client = memo(({ stats }: ClientProps) => {
             </Box>
 
             <Grid container spacing={3}>
-              {currentYearData.quarters.map((q) => (
-                <Grid size={{ xs: 12, sm: 6 }} key={q.label}>
-                  <QuarterCard quarter={q} />
-                </Grid>
-              ))}
+              {currentYearData.quarters.map(renderQuarter)}
             </Grid>
           </>
         )}
