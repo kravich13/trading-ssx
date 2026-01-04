@@ -1,8 +1,9 @@
-import type { Metadata } from 'next';
-import Link from 'next/link';
-import { Roboto } from 'next/font/google';
-import { MUIProvider } from './_providers';
 import { ScrollToTop } from '@/shared/ui';
+import type { Metadata } from 'next';
+import { Roboto } from 'next/font/google';
+import Link from 'next/link';
+import NextTopLoader from 'nextjs-toploader';
+import { MUIProvider } from './_providers';
 
 import './globals.scss';
 
@@ -34,6 +35,17 @@ export default function RootLayout({
   return (
     <html lang="en" className={roboto.variable}>
       <body>
+        <NextTopLoader
+          color="#2196f3"
+          initialPosition={0.08}
+          crawlSpeed={200}
+          height={3}
+          crawl={true}
+          showSpinner={false}
+          easing="ease"
+          speed={200}
+          shadow="0 0 10px #2196f3,0 0 5px #2196f3"
+        />
         <MUIProvider>
           <nav className="navbar mui-fixed">
             <div className="container">
