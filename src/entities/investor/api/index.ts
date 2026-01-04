@@ -113,13 +113,15 @@ export async function addInvestor({
     ) VALUES (?, '${LedgerType.CAPITAL_CHANGE}', 0, 0, ?, ?)
   `);
 
-  const transaction = db.transaction((n: string, cap: number, dep: number, t: TradeType) => {
-    const info = insertInvestor.run(n, t);
-    const investorId = info.lastInsertRowid;
-    insertLedger.run(investorId, cap, dep);
-  });
+  const transaction = db.transaction(
+    ({ n, cap, dep, t }: { n: string; cap: number; dep: number; t: TradeType }) => {
+      const info = insertInvestor.run(n, t);
+      const investorId = info.lastInsertRowid;
+      insertLedger.run(investorId, cap, dep);
+    }
+  );
 
-  transaction(name, initialCapital, initialDeposit, type);
+  transaction({ n: name, cap: initialCapital, dep: initialDeposit, t: type });
   revalidatePath('/');
   revalidatePath('/investors');
 }

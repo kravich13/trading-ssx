@@ -39,7 +39,7 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedTrade, setSelectedTrade] = useState<LedgerWithStatus | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editDate, setEditDate] = useState<string>('');
+  const [editDate, setEditDate] = useState('');
 
   const tradesOnlyLedger = ledger.filter((row) => row.type === LedgerType.TRADE);
 

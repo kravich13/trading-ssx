@@ -4,11 +4,15 @@ import { updateInvestorBalance } from '@/entities/investor';
 import { redirect } from 'next/navigation';
 import { LedgerType } from '@/shared/enum';
 
-export async function updateBalanceAction(
-  id: number,
-  formData: FormData,
-  shouldRedirect: boolean = true
-) {
+export async function updateBalanceAction({
+  id,
+  formData,
+  shouldRedirect = true,
+}: {
+  id: number;
+  formData: FormData;
+  shouldRedirect?: boolean;
+}) {
   const type = formData.get('type') as
     | LedgerType.CAPITAL_CHANGE
     | LedgerType.DEPOSIT_CHANGE

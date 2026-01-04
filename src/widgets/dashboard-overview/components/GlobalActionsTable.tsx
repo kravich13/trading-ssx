@@ -40,9 +40,9 @@ export const GlobalActionsTable = memo(({ actions }: GlobalActionsTableProps) =>
   >(null);
   const [selectedRowNumber, setSelectedRowNumber] = useState<number | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editAmount, setEditAmount] = useState<string>('');
-  const [editDepositAmount, setEditDepositAmount] = useState<string>('');
-  const [editDate, setEditDate] = useState<string>('');
+  const [editAmount, setEditAmount] = useState('');
+  const [editDepositAmount, setEditDepositAmount] = useState('');
+  const [editDate, setEditDate] = useState('');
 
   const formatCurrency = useCallback(
     (value: number) =>

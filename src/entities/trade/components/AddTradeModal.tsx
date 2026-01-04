@@ -29,9 +29,9 @@ interface AddTradeModalProps {
 
 export const AddTradeModal = memo(({ open, onClose, onSuccess }: AddTradeModalProps) => {
   const [ticker, setTicker] = useState('');
-  const [status, setStatus] = useState<TradeStatus>(TradeStatus.IN_PROGRESS);
-  const [tradeType, setTradeType] = useState<TradeType>(TradeType.GLOBAL);
-  const [investorId, setInvestorId] = useState<string>('');
+  const [status, setStatus] = useState(TradeStatus.IN_PROGRESS);
+  const [tradeType, setTradeType] = useState(TradeType.GLOBAL);
+  const [investorId, setInvestorId] = useState('');
   const [investors, setInvestors] = useState<Investor[]>([]);
   const [plPercent, setPlPercent] = useState('0');
   const [risk, setRisk] = useState('1');

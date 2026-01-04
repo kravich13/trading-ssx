@@ -42,7 +42,7 @@ export const UpdateInvestorBalanceModal = memo(
 
     const handleFormAction = useCallback(
       async (formData: FormData) => {
-        await updateBalanceAction(investor.id, formData, false);
+        await updateBalanceAction({ id: investor.id, formData, shouldRedirect: false });
         setAmount('');
         onClose();
       },
