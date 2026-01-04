@@ -102,15 +102,15 @@ export const AddTradeModal = memo(({ open, onClose, onSuccess }: AddTradeModalPr
           ? profits.map((p) => (typeof p === 'string' ? parseFloat(p) || 0 : p))
           : [];
 
-      await addTrade(
-        ticker.toUpperCase(),
-        status === TradeStatus.CLOSED ? parseFloat(plPercent) || 0 : 0,
+      await addTrade({
+        ticker: ticker.toUpperCase(),
+        plPercent: status === TradeStatus.CLOSED ? parseFloat(plPercent) || 0 : 0,
         status,
-        parseFloat(risk) || null,
-        profitsToSave,
-        tradeType,
-        tradeType === TradeType.PRIVATE ? parseInt(investorId) : null
-      );
+        risk: parseFloat(risk) || null,
+        profits: profitsToSave,
+        type: tradeType,
+        investorId: tradeType === TradeType.PRIVATE ? parseInt(investorId) : null,
+      });
 
       setTicker('');
       setStatus(TradeStatus.IN_PROGRESS);

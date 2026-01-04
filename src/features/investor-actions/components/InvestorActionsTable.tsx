@@ -85,12 +85,12 @@ export const InvestorActionsTable = memo(({ ledger, investorId }: InvestorAction
 
   const handleConfirmEdit = useCallback(async () => {
     if (selectedEntry && editAmount !== '') {
-      await updateLedgerEntry(
-        selectedEntry.id,
+      await updateLedgerEntry({
+        id: selectedEntry.id,
         investorId,
-        parseFloat(editAmount),
-        editDate + ' 00:00:00'
-      );
+        amount: parseFloat(editAmount),
+        createdAt: editDate + ' 00:00:00',
+      });
       setEditModalOpen(false);
       setSelectedEntry(null);
     }

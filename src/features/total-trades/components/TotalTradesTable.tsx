@@ -56,7 +56,7 @@ export const TotalTradesTable = memo(({ trades }: TotalTradesTableProps) => {
 
   const handleStatusChange = useCallback(
     async (tradeId: number, closedDate: string, newStatus: TradeStatus) => {
-      await updateTrade(tradeId, closedDate, newStatus);
+      await updateTrade({ id: tradeId, closedDate, status: newStatus });
     },
     []
   );

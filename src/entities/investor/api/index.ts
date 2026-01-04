@@ -95,12 +95,17 @@ export async function getGlobalActionsLog(): Promise<(LedgerEntry & { investor_n
   return ledger;
 }
 
-export async function addInvestor(
-  name: string,
-  initialCapital: number,
-  initialDeposit: number,
-  type: TradeType = TradeType.GLOBAL
-) {
+export async function addInvestor({
+  name,
+  initialCapital,
+  initialDeposit,
+  type = TradeType.GLOBAL,
+}: {
+  name: string;
+  initialCapital: number;
+  initialDeposit: number;
+  type?: TradeType;
+}) {
   const insertInvestor = db.prepare('INSERT INTO investors (name, type) VALUES (?, ?)');
   const insertLedger = db.prepare(`
     INSERT INTO ledger (
@@ -108,8 +113,8 @@ export async function addInvestor(
     ) VALUES (?, '${LedgerType.CAPITAL_CHANGE}', 0, 0, ?, ?)
   `);
 
-  const transaction = db.transaction((name: string, cap: number, dep: number, t: TradeType) => {
-    const info = insertInvestor.run(name, t);
+  const transaction = db.transaction((n: string, cap: number, dep: number, t: TradeType) => {
+    const info = insertInvestor.run(n, t);
     const investorId = info.lastInsertRowid;
     insertLedger.run(investorId, cap, dep);
   });
@@ -132,11 +137,15 @@ export async function toggleInvestorStatus(id: number, isActive: boolean) {
   revalidatePath(`/investors/${id}`);
 }
 
-export async function updateInvestorBalance(
-  id: number,
-  amount: number,
-  type: LedgerType.CAPITAL_CHANGE | LedgerType.DEPOSIT_CHANGE | LedgerType.BOTH_CHANGE
-) {
+export async function updateInvestorBalance({
+  id,
+  amount,
+  type,
+}: {
+  id: number;
+  amount: number;
+  type: LedgerType.CAPITAL_CHANGE | LedgerType.DEPOSIT_CHANGE | LedgerType.BOTH_CHANGE;
+}) {
   const lastLedger = db
     .prepare(
       'SELECT capital_after, deposit_after FROM ledger WHERE investor_id = ? ORDER BY id DESC LIMIT 1'
@@ -198,12 +207,17 @@ export async function deleteLedgerEntry(id: number, investorId: number) {
   revalidatePath(`/investors/${investorId}`);
 }
 
-export async function updateLedgerEntry(
-  id: number,
-  investorId: number,
-  amount: number,
-  createdAt: string
-) {
+export async function updateLedgerEntry({
+  id,
+  investorId,
+  amount,
+  createdAt,
+}: {
+  id: number;
+  investorId: number;
+  amount: number;
+  createdAt: string;
+}) {
   const entry = db.prepare('SELECT * FROM ledger WHERE id = ?').get(id) as LedgerEntry;
   if (!entry) return;
 

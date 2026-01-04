@@ -57,15 +57,23 @@ export async function getLatestCapital(): Promise<number> {
   return result?.total_capital || 0;
 }
 
-export async function addTrade(
-  ticker: string,
-  plPercent: number,
-  status: TradeStatus,
-  risk: number | null,
-  profits: number[],
-  type: TradeType = TradeType.GLOBAL,
-  investorId: number | null = null
-) {
+export async function addTrade({
+  ticker,
+  plPercent,
+  status,
+  risk,
+  profits,
+  type = TradeType.GLOBAL,
+  investorId = null,
+}: {
+  ticker: string;
+  plPercent: number;
+  status: TradeStatus;
+  risk: number | null;
+  profits: number[];
+  type?: TradeType;
+  investorId?: number | null;
+}) {
   const transaction = db.transaction(() => {
     const totalPlUsd = profits.reduce((sum, p) => sum + p, 0);
 
@@ -161,12 +169,17 @@ export async function addTrade(
   revalidatePath('/investors');
 }
 
-export async function updateTrade(
-  id: number,
-  closedDate: string,
-  status: TradeStatus,
-  profits?: number[]
-) {
+export async function updateTrade({
+  id,
+  closedDate,
+  status,
+  profits,
+}: {
+  id: number;
+  closedDate: string;
+  status: TradeStatus;
+  profits?: number[];
+}) {
   const transaction = db.transaction(() => {
     // 1. Update trade record
     if (profits !== undefined) {

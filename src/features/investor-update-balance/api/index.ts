@@ -23,7 +23,7 @@ export async function updateBalanceAction(
     throw new Error('Only integer values are allowed');
   }
 
-  await updateInvestorBalance(id, amount, type);
+  await updateInvestorBalance({ id, amount, type });
 
   if (shouldRedirect) {
     redirect('/investors');

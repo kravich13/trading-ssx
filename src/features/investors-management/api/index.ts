@@ -30,7 +30,7 @@ export async function addInvestorAction(formData: FormData) {
     throw new Error('Only integer values are allowed for capital and deposit');
   }
 
-  await addInvestor(name, capital, deposit, type);
+  await addInvestor({ name, initialCapital: capital, initialDeposit: deposit, type });
 }
 
 export async function toggleInvestorStatusAction(id: number, isActive: boolean) {

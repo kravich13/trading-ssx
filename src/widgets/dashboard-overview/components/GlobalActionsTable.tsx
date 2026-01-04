@@ -84,12 +84,12 @@ export const GlobalActionsTable = memo(({ actions }: GlobalActionsTableProps) =>
 
   const handleConfirmEdit = useCallback(async () => {
     if (selectedEntry && editAmount !== '') {
-      await updateLedgerEntry(
-        selectedEntry.id,
-        selectedEntry.investor_id,
-        parseFloat(editAmount),
-        editDate + ' 00:00:00'
-      );
+      await updateLedgerEntry({
+        id: selectedEntry.id,
+        investorId: selectedEntry.investor_id,
+        amount: parseFloat(editAmount),
+        createdAt: editDate + ' 00:00:00',
+      });
       setEditModalOpen(false);
       setSelectedEntry(null);
     }

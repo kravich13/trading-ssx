@@ -70,11 +70,11 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
 
   const handleConfirmEdit = useCallback(async () => {
     if (selectedTrade) {
-      await updateTrade(
-        selectedTrade.trade_id || selectedTrade.id,
-        editDate,
-        selectedTrade.status || TradeStatus.CLOSED
-      );
+      await updateTrade({
+        id: selectedTrade.trade_id || selectedTrade.id,
+        closedDate: editDate,
+        status: selectedTrade.status || TradeStatus.CLOSED,
+      });
       setEditModalOpen(false);
       setSelectedTrade(null);
     }
@@ -82,7 +82,7 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
 
   const handleStatusChange = useCallback(
     async (tradeId: number, closedDate: string, newStatus: TradeStatus) => {
-      await updateTrade(tradeId, closedDate, newStatus);
+      await updateTrade({ id: tradeId, closedDate, status: newStatus });
     },
     []
   );

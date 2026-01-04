@@ -69,14 +69,19 @@ export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTra
     }, 0);
   }, [editProfits]);
 
-  const handleConfirmEdit = async () => {
+  const handleConfirmEdit = useCallback(async () => {
     if (trade) {
       setLoading(true);
       try {
         const profitsToSave = editProfits.map((p) =>
           typeof p === 'string' ? parseFloat(p) || 0 : p
         );
-        await updateTrade(trade.id, editDate, trade.status || TradeStatus.CLOSED, profitsToSave);
+        await updateTrade({
+          id: trade.id,
+          closedDate: editDate,
+          status: trade.status || TradeStatus.CLOSED,
+          profits: profitsToSave,
+        });
         onSuccess?.();
         onClose();
       } catch (error) {
@@ -85,7 +90,7 @@ export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTra
         setLoading(false);
       }
     }
-  };
+  }, [trade, editProfits, editDate, onSuccess, onClose]);
 
   const formatCurrency = (value: number) =>
     value.toLocaleString(undefined, {
