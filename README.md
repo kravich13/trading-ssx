@@ -77,7 +77,7 @@ When taking a trade with **1% risk** on capital ($100), you use the **$3,500** a
 - [x] **3. Main Dashboard**
   - [x] Header with Total Capital and Total Deposit (sum of all investors)
   - [x] Table of all investors with their current Capital and Deposit
-- [ ] **4. Trading Logs**
+- [x] **4. Trading Logs**
   - [x] Investor Detail View: List of all trades + capital changes (as shown in Excel)
   - [x] Total Trades View: Global log of all trading activity across the project
   - [x] Statistics Dashboard (above Total Trades):
@@ -86,16 +86,16 @@ When taking a trade with **1% risk** on capital ($100), you use the **$3,500** a
     - Averages (USD and % of depo for both P and L)
     - Streaks & Extremes (Max Profit/Loss, Max Win/Loss series)
     - Accuracy (Win Rate %)
-  - [ ] Visual Analytics (on Total Trades screen):
+  - [x] Visual Analytics (on Total Trades screen):
     - **Equity Curve Chart**: Capital growth based strictly on trade results (ignoring manual capital changes)
     - **Galton Board (Histogram)**: Dynamic distribution of trade returns (PL%)
-- [ ] **5. Core Logic Implementation**
-  - [ ] Calculation of position sizes based on total capital
-  - [ ] Row-by-row balance updates (changes only affect future rows)
-- [ ] **6. Trade Entry**
-  - [ ] Screen to add a new trade with all Excel parameters (Ticker, PL%, PL$, Closed Date, Default Risk%)
-  - [ ] Show total capital of all copy-traders when adding a trade
-  - [ ] Automated calculation of trade impact on each investor's balance
+- [x] **5. Core Logic Implementation**
+  - [x] Calculation of position sizes based on total capital
+  - [x] Row-by-row balance updates (changes only affect future rows)
+- [x] **6. Trade Entry**
+  - [x] Screen to add a new trade with all Excel parameters (Ticker, PL%, PL$, Closed Date, Default Risk%)
+  - [x] Show total capital of all copy-traders when adding a trade
+  - [x] Automated calculation of trade impact on each investor's balance
 
 ## Technologies
 
