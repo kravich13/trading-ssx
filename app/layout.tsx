@@ -47,7 +47,7 @@ export default function RootLayout({
           shadow="0 0 10px #2196f3,0 0 5px #2196f3"
         />
         <MUIProvider>
-          <nav className="navbar mui-fixed">
+          <nav className="navbar">
             <div className="container">
               <Link href="/" className="logo">
                 Trading SSX

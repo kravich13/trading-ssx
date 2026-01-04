@@ -1,5 +1,6 @@
 html {
-  // scrollbar-gutter: stable;
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
 }
 
 /* Custom Scrollbar Styling */
@@ -40,6 +41,7 @@ main.container {
 
 body {
   margin: 0;
+  padding-right: 0 !important;
   font-family:
     var(--font-roboto),
     Roboto,
