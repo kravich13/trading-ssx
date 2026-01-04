@@ -5,6 +5,7 @@ import { Trade } from '@/entities/trade/types';
 import { getInitialTradeProfits } from '@/entities/trade/utils';
 import { COLORS } from '@/shared/consts';
 import { TradeStatus } from '@/shared/enum';
+import { useNotification } from '@/shared/lib/hooks';
 import { normalizeDate } from '@/shared/utils/date.util';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -29,6 +30,7 @@ interface EditTradeModalProps {
 }
 
 export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTradeModalProps) => {
+  const { showNotification } = useNotification();
   const [loading, setLoading] = useState(false);
   const [editDate, setEditDate] = useState(() => (trade ? normalizeDate(trade.closed_date) : ''));
   const [editRisk, setEditRisk] = useState(() =>
@@ -82,15 +84,17 @@ export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTra
           risk: editRisk !== '' ? parseFloat(editRisk) : null,
         });
 
+        showNotification('Trade updated successfully');
         onSuccess?.();
         onClose();
       } catch (error) {
         console.error('Failed to update trade:', error);
+        showNotification('Failed to update trade', 'error');
       } finally {
         setLoading(false);
       }
     }
-  }, [trade, editProfits, editDate, editRisk, onSuccess, onClose]);
+  }, [trade, editProfits, editDate, editRisk, onSuccess, onClose, showNotification]);
 
   const formatCurrency = useCallback(
     (value: number) =>

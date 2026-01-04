@@ -4,8 +4,8 @@ import { EditTradeModal } from '@/entities/trade';
 import { deleteTrade, updateTrade } from '@/entities/trade/api';
 import { Trade } from '@/entities/trade/types';
 import { TradeStatus } from '@/shared/enum';
+import { useNotification } from '@/shared/lib/hooks';
 import { ConfirmModal } from '@/shared/ui/modals';
-import { useRouter } from 'next/navigation';
 import {
   Paper,
   Table,
@@ -16,6 +16,7 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
+import { useRouter } from 'next/navigation';
 import { memo, useCallback, useState } from 'react';
 import { TradeRow } from './TradeRow';
 
@@ -24,6 +25,7 @@ interface TotalTradesTableProps {
 }
 
 export const TotalTradesTable = memo(({ trades }: TotalTradesTableProps) => {
+  const { showNotification } = useNotification();
   const router = useRouter();
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
@@ -45,11 +47,17 @@ export const TotalTradesTable = memo(({ trades }: TotalTradesTableProps) => {
 
   const handleConfirmDelete = useCallback(async () => {
     if (selectedTrade) {
-      await deleteTrade(selectedTrade.id);
-      setDeleteModalOpen(false);
-      setSelectedTrade(null);
+      try {
+        await deleteTrade(selectedTrade.id);
+        showNotification('Trade deleted successfully');
+        setDeleteModalOpen(false);
+        setSelectedTrade(null);
+      } catch (error) {
+        console.error('Failed to delete trade:', error);
+        showNotification('Failed to delete trade', 'error');
+      }
     }
-  }, [selectedTrade]);
+  }, [selectedTrade, showNotification]);
 
   const handleEditClick = useCallback((trade: Trade) => {
     setSelectedTrade(trade);
@@ -58,9 +66,15 @@ export const TotalTradesTable = memo(({ trades }: TotalTradesTableProps) => {
 
   const handleStatusChange = useCallback(
     async (tradeId: number, closedDate: string, newStatus: TradeStatus) => {
-      await updateTrade({ id: tradeId, closedDate, status: newStatus });
+      try {
+        await updateTrade({ id: tradeId, closedDate, status: newStatus });
+        showNotification('Status updated');
+      } catch (error) {
+        console.error('Failed to update status:', error);
+        showNotification('Failed to update status', 'error');
+      }
     },
-    []
+    [showNotification]
   );
 
   const renderTradeRow = useCallback(

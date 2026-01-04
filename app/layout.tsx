@@ -5,6 +5,7 @@ import { Roboto } from 'next/font/google';
 import Link from 'next/link';
 import NextTopLoader from 'nextjs-toploader';
 import { MUIProvider } from './_providers';
+import { NotificationProvider } from '@/shared/lib/notifications';
 
 import './globals.scss';
 
@@ -48,19 +49,21 @@ export default function RootLayout({
           shadow={`0 0 10px ${COLORS.primaryMain}, 0 0 5px ${COLORS.primaryMain}`}
         />
         <MUIProvider>
-          <nav className="navbar">
-            <div className="container">
-              <Link href="/" className="logo">
-                Trading SSX
-              </Link>
-              <div className="links">
-                <Link href="/total">Total Trades</Link>
-                <Link href="/investors">Management</Link>
+          <NotificationProvider>
+            <nav className="navbar">
+              <div className="container">
+                <Link href="/" className="logo">
+                  Trading SSX
+                </Link>
+                <div className="links">
+                  <Link href="/total">Total Trades</Link>
+                  <Link href="/investors">Management</Link>
+                </div>
               </div>
-            </div>
-          </nav>
-          <main className="container">{children}</main>
-          <ScrollToTop />
+            </nav>
+            <main className="container">{children}</main>
+            <ScrollToTop />
+          </NotificationProvider>
         </MUIProvider>
       </body>
     </html>

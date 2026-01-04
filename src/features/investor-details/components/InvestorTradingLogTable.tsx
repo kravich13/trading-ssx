@@ -2,13 +2,13 @@
 
 import { LedgerEntry } from '@/entities/investor/types';
 import { deleteTrade, updateTrade } from '@/entities/trade/api';
-import { LedgerType, TradeStatus, TradeType } from '@/shared/enum';
 import { COLORS } from '@/shared/consts';
+import { LedgerType, TradeStatus, TradeType } from '@/shared/enum';
+import { useNotification } from '@/shared/lib/hooks';
 import { ConfirmModal } from '@/shared/ui/modals';
 import { formatDate, normalizeDate } from '@/shared/utils/date.util';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
-import { useRouter } from 'next/navigation';
 import {
   Box,
   Button,
@@ -29,6 +29,7 @@ import {
   TableRow,
   TextField,
 } from '@mui/material';
+import { useRouter } from 'next/navigation';
 import { memo, useCallback, useMemo, useState } from 'react';
 
 type LedgerWithStatus = LedgerEntry & { status?: TradeStatus; trade_type?: TradeType };
@@ -38,6 +39,7 @@ interface InvestorTradingLogTableProps {
 }
 
 export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTableProps) => {
+  const { showNotification } = useNotification();
   const router = useRouter();
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -72,11 +74,17 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
 
   const handleConfirmDelete = useCallback(async () => {
     if (selectedTrade) {
-      await deleteTrade(selectedTrade.trade_id || selectedTrade.id);
-      setDeleteModalOpen(false);
-      setSelectedTrade(null);
+      try {
+        await deleteTrade(selectedTrade.trade_id || selectedTrade.id);
+        showNotification('Trade deleted successfully');
+        setDeleteModalOpen(false);
+        setSelectedTrade(null);
+      } catch (error) {
+        console.error('Failed to delete trade:', error);
+        showNotification('Failed to delete trade', 'error');
+      }
     }
-  }, [selectedTrade]);
+  }, [selectedTrade, showNotification]);
 
   const handleEditClick = useCallback((trade: LedgerWithStatus) => {
     setSelectedTrade(trade);
@@ -87,23 +95,35 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
 
   const handleConfirmEdit = useCallback(async () => {
     if (selectedTrade) {
-      await updateTrade({
-        id: selectedTrade.trade_id || selectedTrade.id,
-        closedDate: editDate,
-        status: selectedTrade.status || TradeStatus.CLOSED,
-        risk: editRisk !== '' ? parseFloat(editRisk) : null,
-      });
-      router.refresh();
-      setEditModalOpen(false);
-      setSelectedTrade(null);
+      try {
+        await updateTrade({
+          id: selectedTrade.trade_id || selectedTrade.id,
+          closedDate: editDate,
+          status: selectedTrade.status || TradeStatus.CLOSED,
+          risk: editRisk !== '' ? parseFloat(editRisk) : null,
+        });
+        router.refresh();
+        showNotification('Trade updated successfully');
+        setEditModalOpen(false);
+        setSelectedTrade(null);
+      } catch (error) {
+        console.error('Failed to update trade:', error);
+        showNotification('Failed to update trade', 'error');
+      }
     }
-  }, [selectedTrade, editDate, editRisk, router]);
+  }, [selectedTrade, editDate, editRisk, router, showNotification]);
 
   const handleStatusChange = useCallback(
     async (tradeId: number, closedDate: string, newStatus: TradeStatus) => {
-      await updateTrade({ id: tradeId, closedDate, status: newStatus });
+      try {
+        await updateTrade({ id: tradeId, closedDate, status: newStatus });
+        showNotification('Status updated');
+      } catch (error) {
+        console.error('Failed to update status:', error);
+        showNotification('Failed to update status', 'error');
+      }
     },
-    []
+    [showNotification]
   );
 
   const renderRow = useCallback(

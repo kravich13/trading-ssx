@@ -3,8 +3,9 @@
 import { getInvestors } from '@/entities/investor/api';
 import { Investor } from '@/entities/investor/types';
 import { addTrade } from '@/entities/trade/api';
-import { TradeStatus, TradeType } from '@/shared/enum';
 import { COLORS } from '@/shared/consts';
+import { TradeStatus, TradeType } from '@/shared/enum';
+import { useNotification } from '@/shared/lib/hooks';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import {
@@ -29,6 +30,7 @@ interface AddTradeModalProps {
 }
 
 export const AddTradeModal = memo(({ open, onClose, onSuccess }: AddTradeModalProps) => {
+  const { showNotification } = useNotification();
   const [ticker, setTicker] = useState('');
   const [status, setStatus] = useState(TradeStatus.IN_PROGRESS);
   const [tradeType, setTradeType] = useState(TradeType.GLOBAL);
@@ -161,14 +163,27 @@ export const AddTradeModal = memo(({ open, onClose, onSuccess }: AddTradeModalPr
       setPlPercent('0');
       setRisk('1');
       setProfits(['']);
+      showNotification('Trade added successfully');
       onSuccess?.();
       onClose();
     } catch (error) {
       console.error('Failed to add trade:', error);
+      showNotification('Failed to add trade', 'error');
     } finally {
       setLoading(false);
     }
-  }, [ticker, status, profits, plPercent, risk, tradeType, investorId, onSuccess, onClose]);
+  }, [
+    ticker,
+    status,
+    profits,
+    plPercent,
+    risk,
+    tradeType,
+    investorId,
+    onSuccess,
+    onClose,
+    showNotification,
+  ]);
 
   const formatCurrency = useCallback(
     (value: number) =>
