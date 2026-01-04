@@ -5,6 +5,7 @@ import { deleteTrade, updateTrade } from '@/entities/trade/api';
 import { Trade } from '@/entities/trade/types';
 import { TradeStatus } from '@/shared/enum';
 import { ConfirmModal } from '@/shared/ui/modals';
+import { useRouter } from 'next/navigation';
 import {
   Paper,
   Table,
@@ -23,6 +24,7 @@ interface TotalTradesTableProps {
 }
 
 export const TotalTradesTable = memo(({ trades }: TotalTradesTableProps) => {
+  const router = useRouter();
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -139,6 +141,7 @@ export const TotalTradesTable = memo(({ trades }: TotalTradesTableProps) => {
         open={editModalOpen}
         onClose={() => setEditModalOpen(false)}
         trade={selectedTrade}
+        onSuccess={() => router.refresh()}
       />
     </>
   );

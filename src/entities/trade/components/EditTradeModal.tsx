@@ -3,8 +3,8 @@
 import { updateTrade } from '@/entities/trade/api';
 import { Trade } from '@/entities/trade/types';
 import { getInitialTradeProfits } from '@/entities/trade/utils';
-import { TradeStatus } from '@/shared/enum';
 import { COLORS } from '@/shared/consts';
+import { TradeStatus } from '@/shared/enum';
 import { normalizeDate } from '@/shared/utils/date.util';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -32,7 +32,7 @@ export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTra
   const [loading, setLoading] = useState(false);
   const [editDate, setEditDate] = useState(() => (trade ? normalizeDate(trade.closed_date) : ''));
   const [editRisk, setEditRisk] = useState(() =>
-    trade?.default_risk_percent ? trade.default_risk_percent.toString() : ''
+    trade?.default_risk_percent != null ? trade.default_risk_percent.toString() : ''
   );
 
   const [editProfits, setEditProfits] = useState(() => getInitialTradeProfits(trade));
@@ -73,6 +73,7 @@ export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTra
         const profitsToSave = editProfits.map((p) =>
           typeof p === 'string' ? parseFloat(p) || 0 : p
         );
+
         await updateTrade({
           id: trade.id,
           closedDate: editDate,
@@ -80,6 +81,7 @@ export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTra
           profits: profitsToSave,
           risk: editRisk !== '' ? parseFloat(editRisk) : null,
         });
+
         onSuccess?.();
         onClose();
       } catch (error) {
@@ -88,7 +90,7 @@ export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTra
         setLoading(false);
       }
     }
-  }, [trade, editProfits, editDate, onSuccess, onClose]);
+  }, [trade, editProfits, editDate, editRisk, onSuccess, onClose]);
 
   const formatCurrency = useCallback(
     (value: number) =>

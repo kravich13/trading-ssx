@@ -167,6 +167,7 @@ export async function addTrade({
   revalidatePath('/');
   revalidatePath('/trades');
   revalidatePath('/investors');
+  revalidatePath('/total');
 }
 
 export async function updateTrade({
@@ -322,6 +323,7 @@ export async function updateTrade({
   revalidatePath('/');
   revalidatePath('/trades');
   revalidatePath('/investors');
+  revalidatePath('/total');
 }
 
 function recalculateInvestorBalances(investorId: number) {
@@ -377,4 +379,6 @@ export async function deleteTrade(id: number) {
   transaction();
   revalidatePath('/');
   revalidatePath('/trades');
+  revalidatePath('/investors');
+  revalidatePath('/total');
 }

@@ -8,6 +8,7 @@ import { ConfirmModal } from '@/shared/ui/modals';
 import { formatDate, normalizeDate } from '@/shared/utils/date.util';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
+import { useRouter } from 'next/navigation';
 import {
   Box,
   Button,
@@ -37,6 +38,8 @@ interface InvestorTradingLogTableProps {
 }
 
 export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTableProps) => {
+  const router = useRouter();
+
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedTrade, setSelectedTrade] = useState<LedgerWithStatus | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -78,7 +81,7 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
   const handleEditClick = useCallback((trade: LedgerWithStatus) => {
     setSelectedTrade(trade);
     setEditDate(normalizeDate(trade.closed_date));
-    setEditRisk(trade.default_risk_percent ? trade.default_risk_percent.toString() : '');
+    setEditRisk(trade.default_risk_percent != null ? trade.default_risk_percent.toString() : '');
     setEditModalOpen(true);
   }, []);
 
@@ -90,10 +93,11 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
         status: selectedTrade.status || TradeStatus.CLOSED,
         risk: editRisk !== '' ? parseFloat(editRisk) : null,
       });
+      router.refresh();
       setEditModalOpen(false);
       setSelectedTrade(null);
     }
-  }, [selectedTrade, editDate, editRisk]);
+  }, [selectedTrade, editDate, editRisk, router]);
 
   const handleStatusChange = useCallback(
     async (tradeId: number, closedDate: string, newStatus: TradeStatus) => {
