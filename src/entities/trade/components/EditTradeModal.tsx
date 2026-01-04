@@ -31,6 +31,9 @@ interface EditTradeModalProps {
 export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTradeModalProps) => {
   const [loading, setLoading] = useState(false);
   const [editDate, setEditDate] = useState(() => (trade ? normalizeDate(trade.closed_date) : ''));
+  const [editRisk, setEditRisk] = useState(() =>
+    trade?.default_risk_percent ? trade.default_risk_percent.toString() : ''
+  );
 
   const [editProfits, setEditProfits] = useState(() => getInitialTradeProfits(trade));
 
@@ -75,6 +78,7 @@ export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTra
           closedDate: editDate,
           status: trade.status || TradeStatus.CLOSED,
           profits: profitsToSave,
+          risk: editRisk !== '' ? parseFloat(editRisk) : null,
         });
         onSuccess?.();
         onClose();
@@ -147,6 +151,17 @@ export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTra
                 shrink: true,
               },
             }}
+          />
+
+          <TextField
+            label="Risk % (on capital)"
+            type="number"
+            fullWidth
+            value={editRisk}
+            onChange={(e) => setEditRisk(e.target.value)}
+            variant="outlined"
+            size="small"
+            disabled={loading}
           />
 
           <Box>

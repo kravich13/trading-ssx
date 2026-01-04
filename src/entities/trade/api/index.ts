@@ -174,30 +174,44 @@ export async function updateTrade({
   closedDate,
   status,
   profits,
+  risk,
 }: {
   id: number;
   closedDate: string;
   status: TradeStatus;
   profits?: number[];
+  risk?: number | null;
 }) {
   const transaction = db.transaction(() => {
-    // 1. Update trade record
+    const updates: string[] = ['closed_date = ?', 'status = ?'];
+    const params: (string | number | null)[] = [closedDate, status];
+
     if (profits !== undefined) {
-      db.prepare(
-        'UPDATE trades SET closed_date = ?, status = ?, profits_json = ? WHERE id = ?'
-      ).run(closedDate, status, JSON.stringify(profits), id);
-    } else {
-      db.prepare('UPDATE trades SET closed_date = ?, status = ? WHERE id = ?').run(
-        closedDate,
-        status,
-        id
-      );
+      updates.push('profits_json = ?');
+      params.push(JSON.stringify(profits));
     }
 
-    // 2. Update ledger entries date
-    db.prepare('UPDATE ledger SET closed_date = ? WHERE trade_id = ?').run(closedDate, id);
+    if (risk !== undefined) {
+      updates.push('default_risk_percent = ?');
+      params.push(risk);
+    }
 
-    // 3. If profits changed, update ledger change_amounts and recalculate balances
+    params.push(id);
+    db.prepare(`UPDATE trades SET ${updates.join(', ')} WHERE id = ?`).run(...params);
+
+    const ledgerUpdates: string[] = ['closed_date = ?'];
+    const ledgerParams: (string | number | null)[] = [closedDate];
+
+    if (risk !== undefined) {
+      ledgerUpdates.push('default_risk_percent = ?');
+      ledgerParams.push(risk);
+    }
+
+    ledgerParams.push(id);
+    db.prepare(`UPDATE ledger SET ${ledgerUpdates.join(', ')} WHERE trade_id = ?`).run(
+      ...ledgerParams
+    );
+
     if (profits !== undefined) {
       const newTotalPlUsd = profits.reduce((sum, p) => sum + p, 0);
 

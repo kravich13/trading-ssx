@@ -41,6 +41,7 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
   const [selectedTrade, setSelectedTrade] = useState<LedgerWithStatus | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editDate, setEditDate] = useState('');
+  const [editRisk, setEditRisk] = useState('');
 
   const tradesOnlyLedger = useMemo(
     () => ledger.filter((row) => row.type === LedgerType.TRADE),
@@ -77,6 +78,7 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
   const handleEditClick = useCallback((trade: LedgerWithStatus) => {
     setSelectedTrade(trade);
     setEditDate(normalizeDate(trade.closed_date));
+    setEditRisk(trade.default_risk_percent ? trade.default_risk_percent.toString() : '');
     setEditModalOpen(true);
   }, []);
 
@@ -86,11 +88,12 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
         id: selectedTrade.trade_id || selectedTrade.id,
         closedDate: editDate,
         status: selectedTrade.status || TradeStatus.CLOSED,
+        risk: editRisk !== '' ? parseFloat(editRisk) : null,
       });
       setEditModalOpen(false);
       setSelectedTrade(null);
     }
-  }, [selectedTrade, editDate]);
+  }, [selectedTrade, editDate, editRisk]);
 
   const handleStatusChange = useCallback(
     async (tradeId: number, closedDate: string, newStatus: TradeStatus) => {
@@ -291,6 +294,16 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
                   shrink: true,
                 },
               }}
+            />
+
+            <TextField
+              label="Risk % (on capital)"
+              type="number"
+              fullWidth
+              value={editRisk}
+              onChange={(e) => setEditRisk(e.target.value)}
+              variant="outlined"
+              size="small"
             />
           </Box>
         </DialogContent>
