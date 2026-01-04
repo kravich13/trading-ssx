@@ -10,7 +10,8 @@
     "tsc": "tsc",
     "prettier": "prettier --config ./.prettierrc --check \"app/**/*.{ts,tsx,scss}\" ",
     "prettier:fix": "yarn prettier --write",
-    "prepare": "husky"
+    "prepare": "husky",
+    "db:migrate": "tsx src/shared/lib/db/migration-runner.ts"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",
@@ -40,6 +41,7 @@
     "lint-staged": "^16.2.7",
     "prettier": "^3.7.4",
     "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   },
   "packageManager": "yarn@4.12.0"
