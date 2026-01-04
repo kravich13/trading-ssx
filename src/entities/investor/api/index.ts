@@ -364,3 +364,18 @@ export async function getGlobalFinanceStats(): Promise<FinanceStats> {
     quarterDepositGrowthPercent,
   };
 }
+
+export async function getGlobalLedger(): Promise<LedgerEntry[]> {
+  const ledger = db
+    .prepare(
+      `
+    SELECT l.*
+    FROM ledger l
+    JOIN investors i ON l.investor_id = i.id
+    WHERE i.type = 'GLOBAL'
+    ORDER BY l.id DESC
+  `
+    )
+    .all() as LedgerEntry[];
+  return ledger;
+}

@@ -29,9 +29,19 @@ export const normalizeDate = (dateStr: string | null | undefined): string => {
   return dateStr.split(/[ T]/)[0];
 };
 
-export const formatDate = (dateStr: string | null | undefined, format = 'yyyy-MM-dd'): string => {
+export const formatDate = (dateStr: string | null | undefined, format = 'dd.MM.yyyy'): string => {
   if (!dateStr) return '-';
 
-  const dt = DateTime.fromISO(dateStr.replace(' ', 'T'));
-  return dt.isValid ? dt.toFormat(format) : dateStr;
+  // Try common formats
+  const formats = ['yyyy-MM-dd HH:mm:ss', 'yyyy-MM-dd', 'dd.MM.yyyy HH:mm:ss', 'dd.MM.yyyy'];
+
+  for (const f of formats) {
+    const dt = DateTime.fromFormat(dateStr, f);
+    if (dt.isValid) return dt.toFormat(format);
+  }
+
+  const isoDt = DateTime.fromISO(dateStr.replace(' ', 'T'));
+  if (isoDt.isValid) return isoDt.toFormat(format);
+
+  return dateStr;
 };

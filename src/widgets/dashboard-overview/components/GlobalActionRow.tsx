@@ -1,6 +1,7 @@
 import { LedgerEntryWithInvestor } from '@/entities/investor/types';
-import { LedgerType } from '@/shared/enum';
 import { COLORS } from '@/shared/consts';
+import { LedgerType } from '@/shared/enum';
+import { formatDate } from '@/shared/utils/date.util';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import { Box, Chip, IconButton, TableCell, TableRow } from '@mui/material';
@@ -42,7 +43,7 @@ export const GlobalActionRow = memo(
       <TableRow hover>
         <TableCell>{rowNumber}</TableCell>
         <TableCell align="right" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
-          {row.created_at ? row.created_at.split(' ')[0] : '-'}
+          {formatDate(row.created_at)}
         </TableCell>
         <TableCell sx={{ fontWeight: 'medium' }}>
           <Link

@@ -5,7 +5,7 @@ import { deleteTrade, updateTrade } from '@/entities/trade/api';
 import { LedgerType, TradeStatus, TradeType } from '@/shared/enum';
 import { COLORS } from '@/shared/consts';
 import { ConfirmModal } from '@/shared/ui/modals';
-import { normalizeDate } from '@/shared/utils/date.util';
+import { formatDate, normalizeDate } from '@/shared/utils/date.util';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import {
@@ -110,7 +110,7 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
         <TableRow key={row.id} hover>
           <TableCell>{tradesOnlyLedger.length - index}</TableCell>
           <TableCell align="right" sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
-            {row.closed_date || '-'}
+            {formatDate(row.closed_date)}
           </TableCell>
           <TableCell>
             {row.trade_type && (

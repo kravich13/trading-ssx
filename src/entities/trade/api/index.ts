@@ -202,7 +202,7 @@ export async function updateTrade({
       const newTotalPlUsd = profits.reduce((sum, p) => sum + p, 0);
 
       const ledgerEntries = db
-        .prepare('SELECT * FROM ledger WHERE trade_id = ? AND type = "TRADE"')
+        .prepare("SELECT * FROM ledger WHERE trade_id = ? AND type = 'TRADE'")
         .all(id) as {
         id: number;
         investor_id: number;

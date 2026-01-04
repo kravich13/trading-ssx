@@ -47,10 +47,10 @@ const parseDate = (dateStr: string | null | undefined): DateTime | null => {
 
 export function calculatePeriodicStats(ledger: LedgerEntry[]): YearStat[] {
   const trades = ledger
-    .filter((e) => e.type === 'TRADE')
+    .filter((e) => e.type === 'TRADE' && e.closed_date)
     .sort((a, b) => {
-      const dtA = parseDate(a.closed_date || a.created_at);
-      const dtB = parseDate(b.closed_date || b.created_at);
+      const dtA = parseDate(a.closed_date);
+      const dtB = parseDate(b.closed_date);
       return (dtA?.toMillis() || 0) - (dtB?.toMillis() || 0);
     });
 
@@ -59,7 +59,7 @@ export function calculatePeriodicStats(ledger: LedgerEntry[]): YearStat[] {
   const yearsMap = new Map<number, YearStat>();
 
   trades.forEach((trade) => {
-    const dt = parseDate(trade.closed_date || trade.created_at);
+    const dt = parseDate(trade.closed_date);
     if (!dt) return;
 
     const year = dt.year;

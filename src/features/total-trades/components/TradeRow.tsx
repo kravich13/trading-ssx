@@ -2,6 +2,7 @@
 
 import { Trade } from '@/entities/trade/types';
 import { TradeStatus, TradeType } from '@/shared/enum';
+import { formatDate } from '@/shared/utils/date.util';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import { Box, Chip, IconButton, MenuItem, Select, TableCell, TableRow } from '@mui/material';
@@ -33,7 +34,7 @@ export const TradeRow: React.FC<TradeRowProps> = memo(
       <TableRow hover>
         <TableCell>{trade.id}</TableCell>
         <TableCell align="right" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
-          {trade.closed_date || '-'}
+          {formatDate(trade.closed_date)}
         </TableCell>
         <TableCell>
           <Chip

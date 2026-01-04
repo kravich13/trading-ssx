@@ -1,6 +1,7 @@
 import { getGlobalFinanceStats } from '@/entities/investor';
 import { getAllTrades } from '@/entities/trade';
-import { TradeType } from '@/shared/enum';
+import { InvestorPeriodicStats } from '@/features/investor-details';
+import { LedgerType, TradeType } from '@/shared/enum';
 import { EquityChart } from '@/widgets/equity-chart';
 import { GaltonBoard } from '@/widgets/galton-board';
 import { FinanceStatsDashboard, TradeStatsDashboard } from '@/widgets/trade-stats';
@@ -17,6 +18,23 @@ export async function TotalTrades() {
 
   const { tradeLikeData, initialTotalDeposit, initialTotalCapital } =
     processTotalTradesData(trades);
+
+  const globalTradeLedger = trades.map((t) => ({
+    id: t.id,
+    investor_id: 0,
+    trade_id: t.id,
+    type: LedgerType.TRADE,
+    change_amount: t.total_pl_usd,
+    capital_before: 0,
+    capital_after: 0,
+    deposit_before: 0,
+    deposit_after: 0,
+    ticker: t.ticker,
+    pl_percent: t.pl_percent,
+    default_risk_percent: t.default_risk_percent,
+    closed_date: t.closed_date,
+    created_at: t.created_at,
+  }));
 
   return (
     <Box sx={{ py: 4 }}>
@@ -44,6 +62,8 @@ export async function TotalTrades() {
       />
 
       <GaltonBoard trades={tradeLikeData} />
+
+      <InvestorPeriodicStats ledger={globalTradeLedger} />
 
       <TotalTradesTable trades={trades} />
     </Box>
