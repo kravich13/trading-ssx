@@ -297,38 +297,59 @@ export async function getGlobalFinanceStats(): Promise<FinanceStats> {
 
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const startOfQuarter = new Date(
+    now.getFullYear(),
+    Math.floor(now.getMonth() / 3) * 3,
+    1
+  ).toISOString();
 
-  const base = db
-    .prepare(
-      `
-    SELECT 
-      SUM(capital_after) as total_capital,
-      SUM(deposit_after) as total_deposit
-    FROM (
-      SELECT capital_after, deposit_after
-      FROM ledger
-      WHERE id IN (
-        SELECT MAX(l2.id)
-        FROM ledger l2
-        JOIN investors i ON l2.investor_id = i.id
-        WHERE i.is_active = 1 AND i.type = 'GLOBAL' AND l2.created_at < ?
-        GROUP BY l2.investor_id
+  const getBaseStats = (date: string) => {
+    return db
+      .prepare(
+        `
+      SELECT 
+        SUM(capital_after) as total_capital,
+        SUM(deposit_after) as total_deposit
+      FROM (
+        SELECT capital_after, deposit_after
+        FROM ledger
+        WHERE id IN (
+          SELECT MAX(l2.id)
+          FROM ledger l2
+          JOIN investors i ON l2.investor_id = i.id
+          WHERE i.is_active = 1 AND i.type = 'GLOBAL' AND l2.created_at < ?
+          GROUP BY l2.investor_id
+        )
       )
-    )
-  `
-    )
-    .get(startOfMonth) as { total_capital: number; total_deposit: number } | undefined;
+    `
+      )
+      .get(date) as { total_capital: number; total_deposit: number } | undefined;
+  };
 
-  const baseCapital = base?.total_capital || 0;
-  const baseDeposit = base?.total_deposit || 0;
+  const monthBase = getBaseStats(startOfMonth);
+  const quarterBase = getBaseStats(startOfQuarter);
 
-  const monthCapitalGrowthUsd = current.total_capital - baseCapital;
+  const monthBaseCapital = monthBase?.total_capital || 0;
+  const monthBaseDeposit = monthBase?.total_deposit || 0;
+
+  const quarterBaseCapital = quarterBase?.total_capital || 0;
+  const quarterBaseDeposit = quarterBase?.total_deposit || 0;
+
+  const monthCapitalGrowthUsd = current.total_capital - monthBaseCapital;
   const monthCapitalGrowthPercent =
-    baseCapital !== 0 ? (monthCapitalGrowthUsd / baseCapital) * 100 : 0;
+    monthBaseCapital !== 0 ? (monthCapitalGrowthUsd / monthBaseCapital) * 100 : 0;
 
-  const monthDepositGrowthUsd = current.total_deposit - baseDeposit;
+  const monthDepositGrowthUsd = current.total_deposit - monthBaseDeposit;
   const monthDepositGrowthPercent =
-    baseDeposit !== 0 ? (monthDepositGrowthUsd / baseDeposit) * 100 : 0;
+    monthBaseDeposit !== 0 ? (monthDepositGrowthUsd / monthBaseDeposit) * 100 : 0;
+
+  const quarterCapitalGrowthUsd = current.total_capital - quarterBaseCapital;
+  const quarterCapitalGrowthPercent =
+    quarterBaseCapital !== 0 ? (quarterCapitalGrowthUsd / quarterBaseCapital) * 100 : 0;
+
+  const quarterDepositGrowthUsd = current.total_deposit - quarterBaseDeposit;
+  const quarterDepositGrowthPercent =
+    quarterBaseDeposit !== 0 ? (quarterDepositGrowthUsd / quarterBaseDeposit) * 100 : 0;
 
   return {
     currentCapital: current.total_capital,
@@ -337,5 +358,9 @@ export async function getGlobalFinanceStats(): Promise<FinanceStats> {
     monthCapitalGrowthPercent,
     monthDepositGrowthUsd,
     monthDepositGrowthPercent,
+    quarterCapitalGrowthUsd,
+    quarterCapitalGrowthPercent,
+    quarterDepositGrowthUsd,
+    quarterDepositGrowthPercent,
   };
 }

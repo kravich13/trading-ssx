@@ -89,6 +89,13 @@ export function FinanceStatsDashboard({
                 color={getGrowthColor(stats.monthCapitalGrowthPercent)}
                 isBold
               />
+              <StatRow
+                label="Growth QTD (%)"
+                value={`${stats.quarterCapitalGrowthPercent >= 0 ? '+' : ''}${stats.quarterCapitalGrowthPercent.toFixed(
+                  2
+                )}%`}
+                color={getGrowthColor(stats.quarterCapitalGrowthPercent)}
+              />
             </CardContent>
           </Card>
         </Grid>
@@ -122,6 +129,13 @@ export function FinanceStatsDashboard({
                 )}%`}
                 color={getGrowthColor(stats.monthDepositGrowthPercent)}
                 isBold
+              />
+              <StatRow
+                label="Growth QTD (%)"
+                value={`${stats.quarterDepositGrowthPercent >= 0 ? '+' : ''}${stats.quarterDepositGrowthPercent.toFixed(
+                  2
+                )}%`}
+                color={getGrowthColor(stats.quarterDepositGrowthPercent)}
               />
             </CardContent>
           </Card>

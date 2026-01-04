@@ -7,6 +7,10 @@ export interface FinanceStats {
   monthCapitalGrowthPercent: number;
   monthDepositGrowthUsd: number;
   monthDepositGrowthPercent: number;
+  quarterCapitalGrowthUsd: number;
+  quarterCapitalGrowthPercent: number;
+  quarterDepositGrowthUsd: number;
+  quarterDepositGrowthPercent: number;
 }
 
 export function calculateFinanceStats(ledger: LedgerEntry[]): FinanceStats {
@@ -18,6 +22,10 @@ export function calculateFinanceStats(ledger: LedgerEntry[]): FinanceStats {
       monthCapitalGrowthPercent: 0,
       monthDepositGrowthUsd: 0,
       monthDepositGrowthPercent: 0,
+      quarterCapitalGrowthUsd: 0,
+      quarterCapitalGrowthPercent: 0,
+      quarterDepositGrowthUsd: 0,
+      quarterDepositGrowthPercent: 0,
     };
   }
 
@@ -27,28 +35,42 @@ export function calculateFinanceStats(ledger: LedgerEntry[]): FinanceStats {
 
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startOfQuarter = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
 
-  const prevMonthEntries = ledger.filter((e) => new Date(e.created_at) < startOfMonth);
-
-  let baseCapital = 0;
-  let baseDeposit = 0;
-
-  if (prevMonthEntries.length > 0) {
-    baseCapital = prevMonthEntries[0].capital_after;
-    baseDeposit = prevMonthEntries[0].deposit_after;
-  } else {
+  // Helper to get base values (last entry before specific date)
+  const getBaseValues = (date: Date) => {
+    const prevEntries = ledger.filter((e) => new Date(e.created_at) < date);
+    if (prevEntries.length > 0) {
+      return {
+        capital: prevEntries[0].capital_after,
+        deposit: prevEntries[0].deposit_after,
+      };
+    }
     const oldest = ledger[ledger.length - 1];
-    baseCapital = oldest.capital_before;
-    baseDeposit = oldest.deposit_before;
-  }
+    return {
+      capital: oldest.capital_before,
+      deposit: oldest.deposit_before,
+    };
+  };
 
-  const monthCapitalGrowthUsd = currentCapital - baseCapital;
+  const monthBase = getBaseValues(startOfMonth);
+  const quarterBase = getBaseValues(startOfQuarter);
+
+  const monthCapitalGrowthUsd = currentCapital - monthBase.capital;
   const monthCapitalGrowthPercent =
-    baseCapital !== 0 ? (monthCapitalGrowthUsd / baseCapital) * 100 : 0;
+    monthBase.capital !== 0 ? (monthCapitalGrowthUsd / monthBase.capital) * 100 : 0;
 
-  const monthDepositGrowthUsd = currentDeposit - baseDeposit;
+  const monthDepositGrowthUsd = currentDeposit - monthBase.deposit;
   const monthDepositGrowthPercent =
-    baseDeposit !== 0 ? (monthDepositGrowthUsd / baseDeposit) * 100 : 0;
+    monthBase.deposit !== 0 ? (monthDepositGrowthUsd / monthBase.deposit) * 100 : 0;
+
+  const quarterCapitalGrowthUsd = currentCapital - quarterBase.capital;
+  const quarterCapitalGrowthPercent =
+    quarterBase.capital !== 0 ? (quarterCapitalGrowthUsd / quarterBase.capital) * 100 : 0;
+
+  const quarterDepositGrowthUsd = currentDeposit - quarterBase.deposit;
+  const quarterDepositGrowthPercent =
+    quarterBase.deposit !== 0 ? (quarterDepositGrowthUsd / quarterBase.deposit) * 100 : 0;
 
   return {
     currentCapital,
@@ -57,5 +79,9 @@ export function calculateFinanceStats(ledger: LedgerEntry[]): FinanceStats {
     monthCapitalGrowthPercent,
     monthDepositGrowthUsd,
     monthDepositGrowthPercent,
+    quarterCapitalGrowthUsd,
+    quarterCapitalGrowthPercent,
+    quarterDepositGrowthUsd,
+    quarterDepositGrowthPercent,
   };
 }
