@@ -2,6 +2,7 @@
 
 import { updateTrade } from '@/entities/trade/api';
 import { Trade } from '@/entities/trade/types';
+import { getInitialTradeProfits } from '@/entities/trade/utils';
 import { TradeStatus } from '@/shared/enum';
 import { normalizeDate } from '@/shared/utils/date.util';
 import AddIcon from '@mui/icons-material/Add';
@@ -30,17 +31,7 @@ export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTra
   const [loading, setLoading] = useState(false);
   const [editDate, setEditDate] = useState(() => (trade ? normalizeDate(trade.closed_date) : ''));
 
-  const [editProfits, setEditProfits] = useState<(number | string)[]>(() => {
-    if (!trade) return [];
-
-    const initialProfits: (number | string)[] = trade.profits || [];
-
-    if (initialProfits.length === 0 && trade.total_pl_usd !== 0) {
-      return [trade.total_pl_usd];
-    }
-
-    return initialProfits;
-  });
+  const [editProfits, setEditProfits] = useState(() => getInitialTradeProfits(trade));
 
   const handleProfitChange = (index: number, value: string) => {
     const newProfits = [...editProfits];
