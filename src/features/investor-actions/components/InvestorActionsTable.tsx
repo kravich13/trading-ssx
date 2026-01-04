@@ -3,6 +3,7 @@
 import { deleteLedgerEntry, updateLedgerEntry } from '@/entities/investor/api';
 import { LedgerEntry } from '@/entities/investor/types';
 import { LedgerType } from '@/shared/enum';
+import { useNotification } from '@/shared/lib/hooks';
 import { ConfirmModal } from '@/shared/ui/modals';
 import { normalizeDate } from '@/shared/utils/date.util';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -26,6 +27,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import { useRouter } from 'next/navigation';
 import { memo, useCallback, useMemo, useState } from 'react';
 
 interface InvestorActionsTableProps {
@@ -34,6 +36,8 @@ interface InvestorActionsTableProps {
 }
 
 export const InvestorActionsTable = memo(({ ledger, investorId }: InvestorActionsTableProps) => {
+  const { showNotification } = useNotification();
+  const router = useRouter();
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<LedgerEntry | null>(null);
   const [selectedRowNumber, setSelectedRowNumber] = useState<number | null>(null);
@@ -70,11 +74,18 @@ export const InvestorActionsTable = memo(({ ledger, investorId }: InvestorAction
 
   const handleConfirmDelete = useCallback(async () => {
     if (selectedEntry) {
-      await deleteLedgerEntry(selectedEntry.id, investorId);
-      setDeleteModalOpen(false);
-      setSelectedEntry(null);
+      try {
+        await deleteLedgerEntry(selectedEntry.id, investorId);
+        router.refresh();
+        showNotification('Action deleted successfully');
+        setDeleteModalOpen(false);
+        setSelectedEntry(null);
+      } catch (error) {
+        console.error('Failed to delete entry:', error);
+        showNotification('Failed to delete entry', 'error');
+      }
     }
-  }, [selectedEntry, investorId]);
+  }, [selectedEntry, investorId, showNotification, router]);
 
   const handleEditClick = useCallback((entry: LedgerEntry, rowNumber: number) => {
     const isInitial = entry.capital_before === 0 && entry.deposit_before === 0;
@@ -88,18 +99,33 @@ export const InvestorActionsTable = memo(({ ledger, investorId }: InvestorAction
 
   const handleConfirmEdit = useCallback(async () => {
     if (selectedEntry && editAmount !== '') {
-      const isInitial = selectedEntry.capital_before === 0 && selectedEntry.deposit_before === 0;
-      await updateLedgerEntry({
-        id: selectedEntry.id,
-        investorId,
-        amount: parseFloat(editAmount),
-        depositAmount: isInitial ? parseFloat(editDepositAmount) : undefined,
-        createdAt: editDate + ' 00:00:00',
-      });
-      setEditModalOpen(false);
-      setSelectedEntry(null);
+      try {
+        const isInitial = selectedEntry.capital_before === 0 && selectedEntry.deposit_before === 0;
+        await updateLedgerEntry({
+          id: selectedEntry.id,
+          investorId,
+          amount: parseFloat(editAmount),
+          depositAmount: isInitial ? parseFloat(editDepositAmount) : undefined,
+          createdAt: editDate + ' 00:00:00',
+        });
+        router.refresh();
+        showNotification('Action updated successfully');
+        setEditModalOpen(false);
+        setSelectedEntry(null);
+      } catch (error) {
+        console.error('Failed to update entry:', error);
+        showNotification('Failed to update entry', 'error');
+      }
     }
-  }, [selectedEntry, editAmount, editDepositAmount, editDate, investorId]);
+  }, [
+    selectedEntry,
+    editAmount,
+    editDepositAmount,
+    editDate,
+    investorId,
+    showNotification,
+    router,
+  ]);
 
   const renderActionRow = useCallback(
     (row: LedgerEntry, index: number) => {

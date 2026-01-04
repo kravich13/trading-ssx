@@ -1,6 +1,8 @@
 'use client';
 
-import { useState, memo, useCallback } from 'react';
+import { Investor } from '@/entities/investor/types';
+import { LedgerType } from '@/shared/enum';
+import { useNotification } from '@/shared/lib/hooks';
 import {
   Box,
   Button,
@@ -15,9 +17,9 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { LedgerType } from '@/shared/enum';
+import { useRouter } from 'next/navigation';
+import { memo, useCallback, useState } from 'react';
 import { updateBalanceAction } from '../api';
-import { Investor } from '@/entities/investor/types';
 
 interface UpdateInvestorBalanceModalProps {
   open: boolean;
@@ -26,7 +28,10 @@ interface UpdateInvestorBalanceModalProps {
 }
 
 export const UpdateInvestorBalanceModal = memo(
-  ({ open, onClose, investor }: UpdateInvestorBalanceModalProps) => {
+  ({ open, investor, onClose }: UpdateInvestorBalanceModalProps) => {
+    const { showNotification } = useNotification();
+    const router = useRouter();
+
     const [amount, setAmount] = useState('');
     const [type, setType] = useState<
       LedgerType.CAPITAL_CHANGE | LedgerType.DEPOSIT_CHANGE | LedgerType.BOTH_CHANGE
@@ -42,11 +47,18 @@ export const UpdateInvestorBalanceModal = memo(
 
     const handleFormAction = useCallback(
       async (formData: FormData) => {
-        await updateBalanceAction({ id: investor.id, formData, shouldRedirect: false });
-        setAmount('');
-        onClose();
+        try {
+          await updateBalanceAction({ id: investor.id, formData, shouldRedirect: false });
+          router.refresh();
+          showNotification('Balance updated successfully');
+          setAmount('');
+          onClose();
+        } catch (error) {
+          console.error('Failed to update balance:', error);
+          showNotification('Failed to update balance', 'error');
+        }
       },
-      [investor.id, onClose]
+      [investor.id, onClose, router, showNotification]
     );
 
     return (
