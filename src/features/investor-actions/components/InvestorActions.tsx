@@ -1,33 +1,13 @@
-'use client';
-
 import { getInvestorById, getInvestorLedger } from '@/entities/investor';
-import { Investor, LedgerEntry } from '@/entities/investor/types';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import HistoryIcon from '@mui/icons-material/History';
-import AddIcon from '@mui/icons-material/Add';
 import { Box, Button, Typography } from '@mui/material';
 import Link from 'next/link';
+import { AddActionButton } from './AddActionButton';
 import { InvestorActionsTable } from './InvestorActionsTable';
-import { UpdateInvestorBalanceModal } from '@/features/investor-update-balance';
-import { useEffect, useState } from 'react';
 
-export function InvestorActions({ id }: { id: number }) {
-  const [investor, setInvestor] = useState<Investor | null>(null);
-  const [ledger, setLedger] = useState<LedgerEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  useEffect(() => {
-    async function fetchData() {
-      const [inv, led] = await Promise.all([getInvestorById(id), getInvestorLedger(id)]);
-      setInvestor(inv || null);
-      setLedger(led);
-      setLoading(false);
-    }
-    fetchData();
-  }, [id]);
-
-  if (loading) return null;
+export async function InvestorActions({ id }: { id: number }) {
+  const [investor, ledger] = await Promise.all([getInvestorById(id), getInvestorLedger(id)]);
 
   if (!investor) {
     return (
@@ -84,19 +64,8 @@ export function InvestorActions({ id }: { id: number }) {
             justifyContent: { xs: 'center', sm: 'flex-end' },
           }}
         >
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<AddIcon />}
-            onClick={() => setIsModalOpen(true)}
-            sx={{
-              flex: { xs: '1 1 100%', sm: 'none' },
-              minWidth: { xs: '100%', sm: '140px' },
-              whiteSpace: 'nowrap',
-            }}
-          >
-            Add Action
-          </Button>
+          <AddActionButton investor={investor} />
+
           <Link
             href={`/investors/${id}/trades`}
             passHref
@@ -123,12 +92,6 @@ export function InvestorActions({ id }: { id: number }) {
       </Typography>
 
       <InvestorActionsTable ledger={ledger} investorId={id} />
-
-      <UpdateInvestorBalanceModal
-        open={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        investor={investor}
-      />
     </Box>
   );
 }
