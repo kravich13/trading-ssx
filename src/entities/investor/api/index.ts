@@ -314,11 +314,11 @@ export async function getGlobalFinanceStats(): Promise<FinanceStats> {
         SELECT capital_after, deposit_after
         FROM ledger
         WHERE id IN (
-          SELECT MAX(l2.id)
-          FROM ledger l2
-          JOIN investors i ON l2.investor_id = i.id
-          WHERE i.is_active = 1 AND i.type = 'GLOBAL' AND l2.created_at < ?
-          GROUP BY l2.investor_id
+        SELECT MAX(l2.id)
+        FROM ledger l2
+        JOIN investors i ON l2.investor_id = i.id
+        WHERE i.is_active = 1 AND i.type = 'GLOBAL' AND COALESCE(l2.closed_date, l2.created_at) < ?
+        GROUP BY l2.investor_id
         )
       )
     `

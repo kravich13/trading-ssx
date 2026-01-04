@@ -2,10 +2,11 @@ import { getInvestorById, getInvestorLedger } from '@/entities/investor';
 import { LedgerType } from '@/shared/enum';
 import { EquityChart } from '@/widgets/equity-chart';
 import { GaltonBoard } from '@/widgets/galton-board';
-import { TradeStatsDashboard, FinanceStatsDashboard } from '@/widgets/trade-stats';
+import { FinanceStatsDashboard, TradeStatsDashboard } from '@/widgets/trade-stats';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { Box, Button, Typography } from '@mui/material';
 import Link from 'next/link';
+import { InvestorPeriodicStats } from './InvestorPeriodicStats';
 import { InvestorTradingLogTable } from './InvestorTradingLogTable';
 
 interface InvestorDetailsProps {
@@ -88,6 +89,8 @@ export async function InvestorDetails({ id }: InvestorDetailsProps) {
       />
 
       <GaltonBoard trades={tradesOnly} />
+
+      <InvestorPeriodicStats ledger={ledger} />
 
       <InvestorTradingLogTable ledger={ledger} />
     </Box>
