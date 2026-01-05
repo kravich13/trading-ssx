@@ -4,6 +4,7 @@ import { LedgerType, TradeType } from '@/shared/enum';
 import { Box, Typography } from '@mui/material';
 import { processTotalTradesData } from '../utils';
 import { AddTradeButton } from './AddTradeButton';
+import { ExportToExcelButton } from './ExportToExcelButton';
 import { TotalTradesTabs } from './TotalTradesTabs';
 
 export async function TotalTrades() {
@@ -88,7 +89,10 @@ export async function TotalTrades() {
         >
           Total Trades Log
         </Typography>
-        <AddTradeButton />
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <ExportToExcelButton trades={sortedTrades} />
+          <AddTradeButton />
+        </Box>
       </Box>
 
       <TotalTradesTabs
