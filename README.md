@@ -106,6 +106,11 @@ When taking a trade with **1% risk** on capital ($100), you use the **$3,500** a
   - [ ] **Global Export**: Add functionality to export all project data (trades, investors, ledger entries) to Excel for backup purposes
   - [ ] **Investor-Specific Export**: Add export button on each investor's trades page to download their trading log table as Excel file
   - [ ] **Backup Feature**: Implement comprehensive data export that includes all trades, investor balances, and transaction history for data duplication and backup
+- [ ] **9. Trade-Based Capital/Deposit Changes**
+  - [ ] **Refactor Change Logic**: Bind capital/deposit changes to trade number (trade_id) instead of date
+  - [ ] **Change Ordering**: Ensure capital/deposit changes are applied between trades (e.g., change after trade 35 affects trade 36 calculations)
+  - [ ] **Date as Display Only**: Keep date field for display purposes only, use trade sequence for actual calculation order
+  - [ ] **Global Investor Changes**: Track when capital/deposit changes occur between trades for global investors
 
 ## Technologies
 
