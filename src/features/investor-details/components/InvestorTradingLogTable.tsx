@@ -21,6 +21,7 @@ import {
   MenuItem,
   Paper,
   Select,
+  SelectChangeEvent,
   Table,
   TableBody,
   TableCell,
@@ -126,12 +127,25 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
     [showNotification]
   );
 
+  const handleCloseEditModal = useCallback(() => {
+    setEditModalOpen(false);
+  }, []);
+
   const renderRow = useCallback(
     (row: LedgerWithStatus, index: number) => {
       const plColor =
         row.change_amount > 0 ? 'success.main' : row.change_amount < 0 ? 'error.main' : 'inherit';
 
       const isPrivate = row.trade_type === TradeType.PRIVATE;
+
+      const handleEditClickWrapper = () => handleEditClick(row);
+      const handleDeleteClickWrapper = () => handleDeleteClick(row);
+      const handleStatusChangeWrapper = (e: SelectChangeEvent<TradeStatus>) =>
+        handleStatusChange(
+          row.trade_id || row.id,
+          row.closed_date || '',
+          e.target.value as TradeStatus
+        );
 
       return (
         <TableRow key={row.id} hover>
@@ -154,13 +168,7 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
           <TableCell>
             <Select
               value={row.status || TradeStatus.CLOSED}
-              onChange={(e) =>
-                handleStatusChange(
-                  row.trade_id || row.id,
-                  row.closed_date || '',
-                  e.target.value as TradeStatus
-                )
-              }
+              onChange={handleStatusChangeWrapper}
               size="small"
               disabled={!isPrivate}
               sx={{
@@ -226,7 +234,7 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
                   <IconButton
                     size="small"
                     color="primary"
-                    onClick={() => handleEditClick(row)}
+                    onClick={handleEditClickWrapper}
                     title="Edit"
                   >
                     <EditIcon fontSize="small" />
@@ -234,7 +242,7 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
                   <IconButton
                     size="small"
                     color="error"
-                    onClick={() => handleDeleteClick(row)}
+                    onClick={handleDeleteClickWrapper}
                     title="Delete"
                   >
                     <DeleteIcon fontSize="small" />
@@ -305,7 +313,16 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
         confirmText="Delete"
       />
 
-      <Dialog open={editModalOpen} onClose={() => setEditModalOpen(false)} fullWidth maxWidth="xs">
+      <Dialog
+        open={editModalOpen}
+        onClose={(event, reason) => {
+          if (reason !== 'backdropClick') {
+            setEditModalOpen(false);
+          }
+        }}
+        fullWidth
+        maxWidth="xs"
+      >
         <DialogTitle sx={{ fontWeight: 'bold' }}>
           Edit Trade № {selectedTrade?.trade_id || selectedTrade?.id}
         </DialogTitle>
@@ -338,7 +355,7 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
           </Box>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setEditModalOpen(false)} color="inherit">
+          <Button onClick={handleCloseEditModal} color="inherit">
             Cancel
           </Button>
           <Button onClick={handleConfirmEdit} variant="contained" color="primary">

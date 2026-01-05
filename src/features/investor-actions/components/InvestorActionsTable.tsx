@@ -127,10 +127,18 @@ export const InvestorActionsTable = memo(({ ledger, investorId }: InvestorAction
     router,
   ]);
 
+  const handleCloseEditModal = useCallback(() => {
+    setEditModalOpen(false);
+  }, []);
+
   const renderActionRow = useCallback(
     (row: LedgerEntry, index: number) => {
-      const color = row.change_amount > 0 ? 'success.main' : 'error.main';
       const isInitial = row.capital_before === 0 && row.deposit_before === 0;
+      const color = isInitial
+        ? 'text.primary'
+        : row.change_amount > 0
+          ? 'success.main'
+          : 'error.main';
 
       let chipLabel = row.type.replace('_CHANGE', '');
       let chipColor: 'primary' | 'secondary' | 'warning' | 'info' | 'default' = 'secondary';
@@ -151,6 +159,9 @@ export const InvestorActionsTable = memo(({ ledger, investorId }: InvestorAction
 
       const rowNumber = actionsOnly.length - index;
 
+      const handleEditClickWrapper = () => handleEditClick(row, rowNumber);
+      const handleDeleteClickWrapper = () => handleDeleteClick(row, rowNumber);
+
       return (
         <TableRow key={row.id} hover>
           <TableCell>{rowNumber}</TableCell>
@@ -167,8 +178,14 @@ export const InvestorActionsTable = memo(({ ledger, investorId }: InvestorAction
             />
           </TableCell>
           <TableCell align="right" sx={{ color, fontWeight: 'medium' }}>
-            {row.change_amount > 0 ? '+' : ''}
-            {formatCurrency(row.change_amount)}
+            {isInitial ? (
+              formatCurrency(row.capital_after)
+            ) : (
+              <>
+                {row.change_amount > 0 ? '+' : ''}
+                {formatCurrency(row.change_amount)}
+              </>
+            )}
           </TableCell>
           <TableCell align="right" sx={{ fontWeight: 'bold' }}>
             ${formatCurrency(row.capital_after)}
@@ -179,7 +196,7 @@ export const InvestorActionsTable = memo(({ ledger, investorId }: InvestorAction
               <IconButton
                 size="small"
                 color="primary"
-                onClick={() => handleEditClick(row, rowNumber)}
+                onClick={handleEditClickWrapper}
                 title="Edit"
               >
                 <EditIcon fontSize="small" />
@@ -188,7 +205,7 @@ export const InvestorActionsTable = memo(({ ledger, investorId }: InvestorAction
                 <IconButton
                   size="small"
                   color="error"
-                  onClick={() => handleDeleteClick(row, rowNumber)}
+                  onClick={handleDeleteClickWrapper}
                   title="Delete"
                 >
                   <DeleteIcon fontSize="small" />
@@ -255,7 +272,11 @@ export const InvestorActionsTable = memo(({ ledger, investorId }: InvestorAction
 
       <Dialog
         open={editModalOpen}
-        onClose={() => setEditModalOpen(false)}
+        onClose={(event, reason) => {
+          if (reason !== 'backdropClick') {
+            setEditModalOpen(false);
+          }
+        }}
         slotProps={{
           paper: {
             sx: {
@@ -314,7 +335,7 @@ export const InvestorActionsTable = memo(({ ledger, investorId }: InvestorAction
           </Box>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setEditModalOpen(false)} color="inherit">
+          <Button onClick={handleCloseEditModal} color="inherit">
             Cancel
           </Button>
           <Button onClick={handleConfirmEdit} variant="contained" color="primary">

@@ -12,7 +12,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { getLatestCapital } from '../api';
 
 interface TradePositionCalculatorProps {
@@ -49,9 +49,9 @@ export const TradePositionCalculator = memo(
 
     const isCapitalChanged = useMemo(() => capital !== defaultCapital, [capital, defaultCapital]);
 
-    const handleResetCapital = () => {
+    const handleResetCapital = useCallback(() => {
       setCapital(defaultCapital);
-    };
+    }, [defaultCapital]);
 
     const calculationResults = useMemo(() => {
       const cap = parseFloat(capital) || 0;

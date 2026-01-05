@@ -72,6 +72,10 @@ export const GlobalActionsTable = memo(({ actions }: GlobalActionsTableProps) =>
     setEditModalOpen(true);
   }, []);
 
+  const handleCloseEditModal = useCallback(() => {
+    setEditModalOpen(false);
+  }, []);
+
   const handleConfirmEdit = useCallback(async () => {
     if (selectedEntry && editAmount !== '') {
       const isInitial = selectedEntry.capital_before === 0 && selectedEntry.deposit_before === 0;
@@ -162,7 +166,11 @@ export const GlobalActionsTable = memo(({ actions }: GlobalActionsTableProps) =>
 
       <Dialog
         open={editModalOpen}
-        onClose={() => setEditModalOpen(false)}
+        onClose={(event, reason) => {
+          if (reason !== 'backdropClick') {
+            setEditModalOpen(false);
+          }
+        }}
         slotProps={{
           paper: {
             sx: {
@@ -223,7 +231,7 @@ export const GlobalActionsTable = memo(({ actions }: GlobalActionsTableProps) =>
           </Box>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setEditModalOpen(false)} color="inherit">
+          <Button onClick={handleCloseEditModal} color="inherit">
             Cancel
           </Button>
           <Button onClick={handleConfirmEdit} variant="contained" color="primary">

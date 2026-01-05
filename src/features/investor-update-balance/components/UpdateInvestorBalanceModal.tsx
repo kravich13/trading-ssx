@@ -61,8 +61,17 @@ export const UpdateInvestorBalanceModal = memo(
       [investor.id, onClose, router, showNotification]
     );
 
+    const handleDialogClose = useCallback(
+      (_event: object, reason?: string) => {
+        if (reason !== 'backdropClick') {
+          onClose();
+        }
+      },
+      [onClose]
+    );
+
     return (
-      <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
+      <Dialog open={open} onClose={handleDialogClose} fullWidth maxWidth="xs">
         <DialogTitle sx={{ fontWeight: 'bold' }}>Add Action</DialogTitle>
         <Box component="form" action={handleFormAction}>
           <DialogContent>

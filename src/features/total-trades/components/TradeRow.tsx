@@ -5,8 +5,17 @@ import { TradeStatus, TradeType } from '@/shared/enum';
 import { formatDate } from '@/shared/utils/date.util';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
-import { Box, Chip, IconButton, MenuItem, Select, TableCell, TableRow } from '@mui/material';
-import { memo } from 'react';
+import {
+  Box,
+  Chip,
+  IconButton,
+  MenuItem,
+  Select,
+  SelectChangeEvent,
+  TableCell,
+  TableRow,
+} from '@mui/material';
+import { memo, useCallback } from 'react';
 
 interface TradeRowProps {
   trade: Trade;
@@ -30,6 +39,21 @@ export const TradeRow: React.FC<TradeRowProps> = memo(
       plColor = 'error.main';
     }
 
+    const handleEditClick = useCallback(() => {
+      onEdit(trade);
+    }, [onEdit, trade]);
+
+    const handleDeleteClick = useCallback(() => {
+      onDelete(trade);
+    }, [onDelete, trade]);
+
+    const handleStatusChangeWrapper = useCallback(
+      (e: SelectChangeEvent<TradeStatus>) => {
+        onStatusChange(trade.id, trade.closed_date || '', e.target.value as TradeStatus);
+      },
+      [onStatusChange, trade]
+    );
+
     return (
       <TableRow hover>
         <TableCell>{trade.id}</TableCell>
@@ -49,9 +73,7 @@ export const TradeRow: React.FC<TradeRowProps> = memo(
         <TableCell>
           <Select
             value={trade.status || TradeStatus.CLOSED}
-            onChange={(e) =>
-              onStatusChange(trade.id, trade.closed_date || '', e.target.value as TradeStatus)
-            }
+            onChange={handleStatusChangeWrapper}
             size="small"
             sx={{
               fontSize: '0.65rem',
@@ -101,10 +123,10 @@ export const TradeRow: React.FC<TradeRowProps> = memo(
         </TableCell>
         <TableCell align="left">
           <Box sx={{ display: 'flex', justifyContent: 'flex-start', gap: 0.5 }}>
-            <IconButton size="small" color="primary" onClick={() => onEdit(trade)} title="Edit">
+            <IconButton size="small" color="primary" onClick={handleEditClick} title="Edit">
               <EditIcon fontSize="small" />
             </IconButton>
-            <IconButton size="small" color="error" onClick={() => onDelete(trade)} title="Delete">
+            <IconButton size="small" color="error" onClick={handleDeleteClick} title="Delete">
               <DeleteIcon fontSize="small" />
             </IconButton>
           </Box>

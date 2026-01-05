@@ -2,7 +2,7 @@
 
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import { Fab, Zoom } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export function ScrollToTop() {
   const [visible, setVisible] = useState(false);
@@ -20,7 +20,7 @@ export function ScrollToTop() {
     return () => window.removeEventListener('scroll', toggleVisibility);
   }, []);
 
-  const scrollToTop = () => {
+  const scrollToTop = useCallback(() => {
     const scrollStep = -window.scrollY / (300 / 15);
     const scrollInterval = setInterval(() => {
       if (window.scrollY !== 0) {
@@ -29,7 +29,7 @@ export function ScrollToTop() {
         clearInterval(scrollInterval);
       }
     }, 15);
-  };
+  }, []);
 
   return (
     <Zoom in={visible}>

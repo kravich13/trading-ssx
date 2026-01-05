@@ -37,6 +37,10 @@ export const Client = memo(({ stats }: ClientProps) => {
     []
   );
 
+  const handleTabChange = useCallback((_: React.SyntheticEvent, newValue: number) => {
+    setSelectedYearIdx(newValue);
+  }, []);
+
   if (stats.length === 0) return null;
 
   const currentYearData = stats[selectedYearIdx];
@@ -49,7 +53,7 @@ export const Client = memo(({ stats }: ClientProps) => {
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs
           value={selectedYearIdx}
-          onChange={(_, newValue) => setSelectedYearIdx(newValue)}
+          onChange={handleTabChange}
           variant="scrollable"
           scrollButtons="auto"
           sx={{

@@ -97,35 +97,36 @@ export const AddTradeModal = memo(({ open, onClose, onSuccess }: AddTradeModalPr
   );
 
   const renderProfitInput = useCallback(
-    (profit: string | number, index: number) => (
-      <Box key={index} sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-        <TextField
-          label={`Part ${index + 1}`}
-          type="number"
-          size="small"
-          fullWidth
-          value={profit}
-          onChange={(e) => handleProfitChange(index, e.target.value)}
-          onKeyDown={handleIntegerKeyDown}
-          disabled={loading}
-          slotProps={{
-            htmlInput: {
-              step: '1',
-            },
-          }}
-        />
-        {profits.length > 1 && (
-          <IconButton
+    (profit: string | number, index: number) => {
+      const handleRemoveClick = () => handleRemoveProfit(index);
+      const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+        handleProfitChange(index, e.target.value);
+
+      return (
+        <Box key={index} sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          <TextField
+            label={`Part ${index + 1}`}
+            type="number"
             size="small"
-            color="error"
-            onClick={() => handleRemoveProfit(index)}
+            fullWidth
+            value={profit}
+            onChange={handleChange}
+            onKeyDown={handleIntegerKeyDown}
             disabled={loading}
-          >
-            <DeleteIcon fontSize="small" />
-          </IconButton>
-        )}
-      </Box>
-    ),
+            slotProps={{
+              htmlInput: {
+                step: '1',
+              },
+            }}
+          />
+          {profits.length > 1 && (
+            <IconButton size="small" color="error" onClick={handleRemoveClick} disabled={loading}>
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          )}
+        </Box>
+      );
+    },
     [handleProfitChange, handleIntegerKeyDown, handleRemoveProfit, loading, profits.length]
   );
 
@@ -195,7 +196,16 @@ export const AddTradeModal = memo(({ open, onClose, onSuccess }: AddTradeModalPr
   );
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
+    <Dialog
+      open={open}
+      onClose={(event, reason) => {
+        if (reason !== 'backdropClick') {
+          onClose();
+        }
+      }}
+      fullWidth
+      maxWidth="xs"
+    >
       <DialogTitle sx={{ fontWeight: 'bold' }}>Add New Trade</DialogTitle>
       <DialogContent sx={{ minHeight: '300px', maxHeight: '70svh', overflowY: 'auto' }}>
         <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 3 }}>

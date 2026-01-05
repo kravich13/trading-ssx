@@ -17,6 +17,14 @@ export const ToggleInvestorStatusButton = memo(
   ({ investorId, investorName, isActive }: ToggleInvestorStatusButtonProps) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
+    const handleOpen = useCallback(() => {
+      setIsModalOpen(true);
+    }, []);
+
+    const handleClose = useCallback(() => {
+      setIsModalOpen(false);
+    }, []);
+
     const handleToggle = useCallback(() => {
       toggleInvestorStatusAction(investorId, !isActive);
     }, [investorId, isActive]);
@@ -32,7 +40,7 @@ export const ToggleInvestorStatusButton = memo(
           color={isActive ? 'warning' : 'success'}
           size="small"
           title={title}
-          onClick={() => setIsModalOpen(true)}
+          onClick={handleOpen}
         >
           {isActive ? <ArchiveIcon fontSize="small" /> : <UnarchiveIcon fontSize="small" />}
         </IconButton>
@@ -45,7 +53,7 @@ export const ToggleInvestorStatusButton = memo(
           cancelText="Cancel"
           color={isActive ? 'warning' : 'success'}
           onConfirm={handleToggle}
-          onClose={() => setIsModalOpen(false)}
+          onClose={handleClose}
         />
       </>
     );

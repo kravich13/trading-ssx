@@ -6,7 +6,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import { Box, Chip, IconButton, TableCell, TableRow } from '@mui/material';
 import Link from 'next/link';
-import { memo } from 'react';
+import { memo, useCallback } from 'react';
 
 interface GlobalActionRowProps {
   row: LedgerEntryWithInvestor;
@@ -19,8 +19,12 @@ interface GlobalActionRowProps {
 
 export const GlobalActionRow = memo(
   ({ row, rowNumber, canDelete, formatCurrency, onEdit, onDelete }: GlobalActionRowProps) => {
-    const color = row.change_amount > 0 ? 'success.main' : 'error.main';
     const isInitial = row.capital_before === 0 && row.deposit_before === 0;
+    const color = isInitial
+      ? 'text.primary'
+      : row.change_amount > 0
+        ? 'success.main'
+        : 'error.main';
 
     let chipLabel = row.type.replace('_CHANGE', '');
     let chipColor: 'primary' | 'secondary' | 'warning' | 'info' | 'default' = 'secondary';
@@ -38,6 +42,14 @@ export const GlobalActionRow = memo(
       chipLabel = `BOTH ${row.change_amount > 0 ? 'ADD' : 'SUB'}`;
       chipColor = 'info';
     }
+
+    const handleEditClick = useCallback(() => {
+      onEdit(row, rowNumber);
+    }, [onEdit, row, rowNumber]);
+
+    const handleDeleteClick = useCallback(() => {
+      onDelete(row, rowNumber);
+    }, [onDelete, row, rowNumber]);
 
     return (
       <TableRow hover>
@@ -66,8 +78,14 @@ export const GlobalActionRow = memo(
           />
         </TableCell>
         <TableCell align="right" sx={{ color, fontWeight: 'medium' }}>
-          {row.change_amount > 0 ? '+' : ''}
-          {formatCurrency(row.change_amount)}
+          {isInitial ? (
+            formatCurrency(row.capital_after)
+          ) : (
+            <>
+              {row.change_amount > 0 ? '+' : ''}
+              {formatCurrency(row.change_amount)}
+            </>
+          )}
         </TableCell>
         <TableCell align="right" sx={{ fontWeight: 'bold' }}>
           {formatCurrency(row.capital_after)}
@@ -75,21 +93,11 @@ export const GlobalActionRow = memo(
         <TableCell align="right">{formatCurrency(row.deposit_after)}</TableCell>
         <TableCell align="left">
           <Box sx={{ display: 'flex', justifyContent: 'flex-start', gap: 0.5 }}>
-            <IconButton
-              size="small"
-              color="primary"
-              onClick={() => onEdit(row, rowNumber)}
-              title="Edit"
-            >
+            <IconButton size="small" color="primary" onClick={handleEditClick} title="Edit">
               <EditIcon fontSize="small" />
             </IconButton>
             {canDelete && (
-              <IconButton
-                size="small"
-                color="error"
-                onClick={() => onDelete(row, rowNumber)}
-                title="Delete"
-              >
+              <IconButton size="small" color="error" onClick={handleDeleteClick} title="Delete">
                 <DeleteIcon fontSize="small" />
               </IconButton>
             )}

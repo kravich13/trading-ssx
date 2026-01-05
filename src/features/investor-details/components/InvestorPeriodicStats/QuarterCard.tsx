@@ -17,6 +17,10 @@ export const QuarterCard = memo(({ quarter }: QuarterCardProps) => {
   const color =
     quarter.usd > 0 ? 'success.main' : quarter.usd < 0 ? 'error.main' : 'text.secondary';
 
+  const handleToggle = useCallback(() => {
+    setOpen((prev) => !prev);
+  }, []);
+
   const renderMonth = useCallback((month: MonthStat) => {
     const mColor = month.usd > 0 ? 'success.main' : month.usd < 0 ? 'error.main' : 'text.secondary';
     return (
@@ -50,7 +54,7 @@ export const QuarterCard = memo(({ quarter }: QuarterCardProps) => {
           borderColor: COLORS.whiteAlpha20,
         },
       }}
-      onClick={() => setOpen(!open)}
+      onClick={handleToggle}
     >
       <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
