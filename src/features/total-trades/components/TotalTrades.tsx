@@ -19,22 +19,68 @@ export async function TotalTrades() {
   const { tradeLikeData, initialTotalDeposit, initialTotalCapital } =
     processTotalTradesData(trades);
 
-  const globalTradeLedger = trades.map((t) => ({
-    id: t.id,
-    investor_id: 0,
-    trade_id: t.id,
-    type: LedgerType.TRADE,
-    change_amount: t.total_pl_usd,
-    capital_before: 0,
-    capital_after: 0,
-    deposit_before: 0,
-    deposit_after: 0,
-    ticker: t.ticker,
-    pl_percent: t.pl_percent,
-    default_risk_percent: t.default_risk_percent,
-    closed_date: t.closed_date,
-    created_at: t.created_at,
-  }));
+  const sortedTrades = [...trades].sort((a, b) => {
+    const dateA = a.closed_date ? new Date(a.closed_date).getTime() : 0;
+    const dateB = b.closed_date ? new Date(b.closed_date).getTime() : 0;
+    return dateA - dateB;
+  });
+
+  const globalTradeLedger = sortedTrades.reduce(
+    (acc, t) => {
+      let changeAmount = t.total_pl_usd;
+      if (t.profits && t.profits.length > 0) {
+        changeAmount = t.profits.reduce((sum, p) => sum + p, 0);
+      }
+
+      const depositBefore = acc.runningDeposit;
+      const capitalBefore = acc.runningCapital;
+
+      const newDeposit = acc.runningDeposit + changeAmount;
+      const newCapital = acc.runningCapital + changeAmount;
+
+      acc.ledger.push({
+        id: t.id,
+        investor_id: 0,
+        trade_id: t.id,
+        type: LedgerType.TRADE,
+        change_amount: changeAmount,
+        capital_before: capitalBefore,
+        capital_after: newCapital,
+        deposit_before: depositBefore,
+        deposit_after: newDeposit,
+        ticker: t.ticker,
+        pl_percent: t.pl_percent,
+        default_risk_percent: t.default_risk_percent,
+        closed_date: t.closed_date,
+        created_at: t.created_at,
+      });
+
+      acc.runningDeposit = newDeposit;
+      acc.runningCapital = newCapital;
+
+      return acc;
+    },
+    {
+      runningDeposit: initialTotalDeposit,
+      runningCapital: initialTotalCapital,
+      ledger: [] as Array<{
+        id: number;
+        investor_id: number;
+        trade_id: number;
+        type: LedgerType;
+        change_amount: number;
+        capital_before: number;
+        capital_after: number;
+        deposit_before: number;
+        deposit_after: number;
+        ticker: string;
+        pl_percent: number;
+        default_risk_percent: number | null;
+        closed_date: string | null;
+        created_at: string;
+      }>,
+    }
+  ).ledger;
 
   return (
     <Box sx={{ py: 4 }}>

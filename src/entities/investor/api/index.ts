@@ -2,6 +2,7 @@
 
 import { db } from '@/shared/api';
 import { LedgerType, TradeStatus, TradeType } from '@/shared/enum';
+import { TotalStats } from '@/shared/types';
 import { revalidatePath } from 'next/cache';
 import { FinanceStats } from '../lib';
 import { Investor, LedgerEntry } from '../types';
@@ -49,7 +50,7 @@ export async function getInvestorById(id: number): Promise<Investor | undefined>
   return investor;
 }
 
-export async function getTotalStats(): Promise<{ total_capital: number; total_deposit: number }> {
+export async function getTotalStats(): Promise<TotalStats> {
   const stats = db
     .prepare(
       `
@@ -60,7 +61,23 @@ export async function getTotalStats(): Promise<{ total_capital: number; total_de
     WHERE is_active = 1
   `
     )
-    .get() as { total_capital: number; total_deposit: number };
+    .get() as TotalStats;
+  return stats;
+}
+
+export async function getGlobalTotalStats(): Promise<TotalStats> {
+  const stats = db
+    .prepare(
+      `
+    SELECT 
+      SUM(ics.current_capital) as total_capital,
+      SUM(ics.current_deposit) as total_deposit
+    FROM investor_current_stats ics
+    JOIN investors i ON ics.id = i.id
+    WHERE ics.is_active = 1 AND i.type = 'GLOBAL'
+  `
+    )
+    .get() as TotalStats;
   return stats;
 }
 
@@ -293,7 +310,7 @@ export async function updateLedgerEntry({
 }
 
 export async function getGlobalFinanceStats(): Promise<FinanceStats> {
-  const current = await getTotalStats();
+  const current = await getGlobalTotalStats();
 
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
@@ -303,7 +320,7 @@ export async function getGlobalFinanceStats(): Promise<FinanceStats> {
     1
   ).toISOString();
 
-  const getBaseStats = (date: string) => {
+  const getBaseStats = (date: string): TotalStats | undefined => {
     return db
       .prepare(
         `
@@ -323,7 +340,7 @@ export async function getGlobalFinanceStats(): Promise<FinanceStats> {
       )
     `
       )
-      .get(date) as { total_capital: number; total_deposit: number } | undefined;
+      .get(date) as TotalStats | undefined;
   };
 
   const monthBase = getBaseStats(startOfMonth);
