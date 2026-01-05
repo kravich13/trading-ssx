@@ -15,6 +15,7 @@ Local project for trading statistics management.
     - [Dynamic Changes](#dynamic-changes)
   - [Development Progress (TODO)](#development-progress-todo)
   - [Technologies](#technologies)
+    - [Package Versioning](#package-versioning)
   - [Installation](#installation)
   - [Development](#development)
   - [Project Structure](#project-structure)
@@ -121,6 +122,10 @@ When taking a trade with **1% risk** on capital ($100), you use the **$3,500** a
 - **SQLite (better-sqlite3)** - local file-based database
 - **SCSS (Sass)** - CSS preprocessor
 - **Yarn 4.12.0** - package manager
+
+### Package Versioning
+
+This project uses **exact version pinning** (without `^` or `~` prefixes) for all dependencies to ensure reproducible builds and prevent unexpected breaking changes from automatic minor/patch updates. All package versions are locked to specific releases to maintain consistency across development and production environments.
 
 ## Installation
 
