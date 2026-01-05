@@ -1,13 +1,10 @@
 import { getInvestorById, getInvestorLedger } from '@/entities/investor';
-import { LedgerType } from '@/shared/enum';
-import { EquityChart } from '@/widgets/equity-chart';
-import { GaltonBoard } from '@/widgets/galton-board';
-import { FinanceStatsDashboard, TradeStatsDashboard } from '@/widgets/trade-stats';
+import { LedgerType, TradeType } from '@/shared/enum';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { Box, Button, Typography } from '@mui/material';
 import Link from 'next/link';
-import { InvestorPeriodicStats } from './InvestorPeriodicStats';
-import { InvestorTradingLogTable } from './InvestorTradingLogTable';
+import { AddPrivateTradeButton } from './AddPrivateTradeButton';
+import { InvestorDetailsTabs } from './InvestorDetailsTabs';
 
 interface InvestorDetailsProps {
   id: number;
@@ -55,44 +52,39 @@ export async function InvestorDetails({ id }: InvestorDetailsProps) {
           display: 'flex',
           flexDirection: { xs: 'column', sm: 'row' },
           alignItems: { xs: 'flex-start', sm: 'center' },
+          justifyContent: 'space-between',
           gap: 2,
         }}
       >
-        <Link href="/investors" passHref>
-          <Button
-            variant="text"
-            startIcon={<ArrowBackIcon />}
-            sx={{ color: 'text.secondary', minWidth: 'auto' }}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Link href="/investors" passHref>
+            <Button
+              variant="text"
+              startIcon={<ArrowBackIcon />}
+              sx={{ color: 'text.secondary', minWidth: 'auto' }}
+            >
+              Back
+            </Button>
+          </Link>
+          <Typography
+            variant="h4"
+            component="h1"
+            fontWeight="bold"
+            sx={{ fontSize: { xs: '1.5rem', sm: '2.125rem' } }}
           >
-            Back
-          </Button>
-        </Link>
-        <Typography
-          variant="h4"
-          component="h1"
-          fontWeight="bold"
-          sx={{ fontSize: { xs: '1.5rem', sm: '2.125rem' } }}
-        >
-          {investor.name}&apos;s Trading Log
-        </Typography>
+            {investor.name}&apos;s Trading Log
+          </Typography>
+        </Box>
+        {investor.type === TradeType.PRIVATE && <AddPrivateTradeButton investorId={investor.id} />}
       </Box>
 
-      <TradeStatsDashboard trades={tradesOnly} />
-
-      <FinanceStatsDashboard ledger={ledger} />
-
-      <EquityChart
-        trades={tradesOnly}
-        title={`${investor.name}'s Equity Curve`}
-        initialDeposit={initialInvestorDeposit}
-        initialCapital={initialInvestorCapital}
+      <InvestorDetailsTabs
+        investorName={investor.name}
+        ledger={ledger}
+        tradesOnly={tradesOnly}
+        initialInvestorDeposit={initialInvestorDeposit}
+        initialInvestorCapital={initialInvestorCapital}
       />
-
-      <GaltonBoard trades={tradesOnly} />
-
-      <InvestorPeriodicStats ledger={ledger} />
-
-      <InvestorTradingLogTable ledger={ledger} />
     </Box>
   );
 }

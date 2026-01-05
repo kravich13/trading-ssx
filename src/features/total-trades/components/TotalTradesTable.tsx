@@ -95,6 +95,18 @@ export const TotalTradesTable = memo(({ trades }: TotalTradesTableProps) => {
     [showNotification]
   );
 
+  const handleCloseDeleteModal = useCallback(() => {
+    setDeleteModalOpen(false);
+  }, []);
+
+  const handleCloseEditModal = useCallback(() => {
+    setEditModalOpen(false);
+  }, []);
+
+  const handleSuccess = useCallback(() => {
+    router.refresh();
+  }, [router]);
+
   const renderTradeRow = useCallback(
     (trade: Trade) => (
       <TradeRow
@@ -195,7 +207,7 @@ export const TotalTradesTable = memo(({ trades }: TotalTradesTableProps) => {
         title={`Delete Trade № ${selectedTrade?.id}`}
         description={`Are you sure you want to delete trade № ${selectedTrade?.id} (${selectedTrade?.ticker})? This will also remove all associated ledger entries. This action cannot be undone.`}
         onConfirm={handleConfirmDelete}
-        onClose={() => setDeleteModalOpen(false)}
+        onClose={handleCloseDeleteModal}
         color="error"
         confirmText="Delete"
       />
@@ -203,9 +215,9 @@ export const TotalTradesTable = memo(({ trades }: TotalTradesTableProps) => {
       <EditTradeModal
         key={selectedTrade ? `edit-${selectedTrade.id}-${editModalOpen}` : 'edit-none'}
         open={editModalOpen}
-        onClose={() => setEditModalOpen(false)}
+        onClose={handleCloseEditModal}
         trade={selectedTrade}
-        onSuccess={() => router.refresh()}
+        onSuccess={handleSuccess}
       />
     </>
   );

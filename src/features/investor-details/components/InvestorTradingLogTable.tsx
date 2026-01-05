@@ -127,8 +127,18 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
     [showNotification]
   );
 
+  const handleCloseDeleteModal = useCallback(() => {
+    setDeleteModalOpen(false);
+  }, []);
+
   const handleCloseEditModal = useCallback(() => {
     setEditModalOpen(false);
+  }, []);
+
+  const handleDialogClose = useCallback((_event: object, reason?: string) => {
+    if (reason !== 'backdropClick') {
+      setEditModalOpen(false);
+    }
   }, []);
 
   const renderRow = useCallback(
@@ -308,21 +318,12 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
         title={`Delete Trade № ${selectedTrade?.trade_id || selectedTrade?.id}`}
         description={`Are you sure you want to delete trade № ${selectedTrade?.trade_id || selectedTrade?.id} (${selectedTrade?.ticker})? This will also remove associated ledger entries. This action cannot be undone.`}
         onConfirm={handleConfirmDelete}
-        onClose={() => setDeleteModalOpen(false)}
+        onClose={handleCloseDeleteModal}
         color="error"
         confirmText="Delete"
       />
 
-      <Dialog
-        open={editModalOpen}
-        onClose={(event, reason) => {
-          if (reason !== 'backdropClick') {
-            setEditModalOpen(false);
-          }
-        }}
-        fullWidth
-        maxWidth="xs"
-      >
+      <Dialog open={editModalOpen} onClose={handleDialogClose} fullWidth maxWidth="xs">
         <DialogTitle sx={{ fontWeight: 'bold' }}>
           Edit Trade № {selectedTrade?.trade_id || selectedTrade?.id}
         </DialogTitle>

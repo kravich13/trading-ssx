@@ -126,7 +126,7 @@ export async function addTrade({
           }))
           .filter(
             (s): s is { id: number; last: { capital_after: number; deposit_after: number } } =>
-              !!s.last && s.last.capital_after > 0
+              s.last != null && s.last.capital_after > 0
           );
       }
 
@@ -278,7 +278,7 @@ export async function updateTrade({
           }))
           .filter(
             (s): s is { id: number; last: { capital_after: number; deposit_after: number } } =>
-              !!s.last && s.last.capital_after > 0
+              s.last != null && s.last.capital_after > 0
           );
 
         const totalCapitalBefore = activeStates.reduce((sum, s) => sum + s.last.capital_after, 0);

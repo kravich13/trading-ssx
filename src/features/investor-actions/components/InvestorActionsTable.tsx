@@ -127,8 +127,18 @@ export const InvestorActionsTable = memo(({ ledger, investorId }: InvestorAction
     router,
   ]);
 
+  const handleCloseDeleteModal = useCallback(() => {
+    setDeleteModalOpen(false);
+  }, []);
+
   const handleCloseEditModal = useCallback(() => {
     setEditModalOpen(false);
+  }, []);
+
+  const handleDialogClose = useCallback((_event: object, reason?: string) => {
+    if (reason !== 'backdropClick') {
+      setEditModalOpen(false);
+    }
   }, []);
 
   const renderActionRow = useCallback(
@@ -265,18 +275,14 @@ export const InvestorActionsTable = memo(({ ledger, investorId }: InvestorAction
         title={`Delete Entry № ${selectedRowNumber}`}
         description={`Are you sure you want to delete balance change entry № ${selectedRowNumber}? This action cannot be undone.`}
         onConfirm={handleConfirmDelete}
-        onClose={() => setDeleteModalOpen(false)}
+        onClose={handleCloseDeleteModal}
         color="error"
         confirmText="Delete"
       />
 
       <Dialog
         open={editModalOpen}
-        onClose={(event, reason) => {
-          if (reason !== 'backdropClick') {
-            setEditModalOpen(false);
-          }
-        }}
+        onClose={handleDialogClose}
         slotProps={{
           paper: {
             sx: {

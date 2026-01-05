@@ -137,19 +137,19 @@ export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTra
     [handleProfitChange, handleIntegerKeyDown, handleRemoveProfit, loading]
   );
 
+  const handleDialogClose = useCallback(
+    (_event: object, reason?: string) => {
+      if (reason !== 'backdropClick') {
+        onClose();
+      }
+    },
+    [onClose]
+  );
+
   if (!trade) return null;
 
   return (
-    <Dialog
-      open={open}
-      onClose={(event, reason) => {
-        if (reason !== 'backdropClick') {
-          onClose();
-        }
-      }}
-      fullWidth
-      maxWidth="xs"
-    >
+    <Dialog open={open} onClose={handleDialogClose} fullWidth maxWidth="xs">
       <DialogTitle sx={{ fontWeight: 'bold' }}>Edit Trade № {trade.id}</DialogTitle>
       <DialogContent sx={{ minHeight: '280px', maxHeight: '60svh', overflowY: 'auto' }}>
         <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 3 }}>

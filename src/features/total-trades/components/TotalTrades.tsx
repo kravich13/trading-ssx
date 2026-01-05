@@ -1,14 +1,10 @@
 import { getGlobalFinanceStats } from '@/entities/investor';
 import { getAllTrades } from '@/entities/trade';
-import { InvestorPeriodicStats } from '@/features/investor-details';
 import { LedgerType, TradeType } from '@/shared/enum';
-import { EquityChart } from '@/widgets/equity-chart';
-import { GaltonBoard } from '@/widgets/galton-board';
-import { FinanceStatsDashboard, TradeStatsDashboard } from '@/widgets/trade-stats';
 import { Box, Typography } from '@mui/material';
 import { processTotalTradesData } from '../utils';
 import { AddTradeButton } from './AddTradeButton';
-import { TotalTradesTable } from './TotalTradesTable';
+import { TotalTradesTabs } from './TotalTradesTabs';
 
 export async function TotalTrades() {
   const [allTrades, financeStats] = await Promise.all([getAllTrades(), getGlobalFinanceStats()]);
@@ -95,22 +91,14 @@ export async function TotalTrades() {
         <AddTradeButton />
       </Box>
 
-      <TradeStatsDashboard trades={tradeLikeData} />
-
-      <FinanceStatsDashboard stats={financeStats} />
-
-      <EquityChart
-        trades={tradeLikeData}
-        title="Global Equity Curve (Aggregated)"
-        initialDeposit={initialTotalDeposit}
-        initialCapital={initialTotalCapital}
+      <TotalTradesTabs
+        allTrades={allTrades}
+        tradeLikeData={tradeLikeData}
+        financeStats={financeStats}
+        initialTotalDeposit={initialTotalDeposit}
+        initialTotalCapital={initialTotalCapital}
+        globalTradeLedger={globalTradeLedger}
       />
-
-      <GaltonBoard trades={tradeLikeData} />
-
-      <InvestorPeriodicStats ledger={globalTradeLedger} />
-
-      <TotalTradesTable trades={allTrades} />
     </Box>
   );
 }
