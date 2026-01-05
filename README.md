@@ -102,6 +102,10 @@ When taking a trade with **1% risk** on capital ($100), you use the **$3,500** a
   - [x] **Enhanced Trade Entry**: Update `AddTradeModal` with a toggle to choose between Global (all participants) and Private (single account) trades
   - [x] **Filtered Analytics**: Update the Global Equity Chart to display only GLOBAL trades for a "clean" project-wide performance view
   - [x] **Investor Dashboards**: Show both Global and Personal trades in individual investor views, but only Global trades in the shared public logs
+- [ ] **8. Data Export to Excel**
+  - [ ] **Global Export**: Add functionality to export all project data (trades, investors, ledger entries) to Excel for backup purposes
+  - [ ] **Investor-Specific Export**: Add export button on each investor's trades page to download their trading log table as Excel file
+  - [ ] **Backup Feature**: Implement comprehensive data export that includes all trades, investor balances, and transaction history for data duplication and backup
 
 ## Technologies
 

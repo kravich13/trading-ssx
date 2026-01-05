@@ -107,10 +107,6 @@ export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTra
 
   const renderProfitInput = useCallback(
     (profit: string | number, index: number) => {
-      const handleRemoveClick = () => handleRemoveProfit(index);
-      const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
-        handleProfitChange(index, e.target.value);
-
       return (
         <Box key={index} sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
           <TextField
@@ -119,7 +115,7 @@ export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTra
             size="small"
             fullWidth
             value={profit}
-            onChange={handleChange}
+            onChange={(e) => handleProfitChange(index, e.target.value)}
             onKeyDown={handleIntegerKeyDown}
             disabled={loading}
             slotProps={{
@@ -128,7 +124,12 @@ export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTra
               },
             }}
           />
-          <IconButton size="small" color="error" onClick={handleRemoveClick} disabled={loading}>
+          <IconButton
+            size="small"
+            color="error"
+            onClick={() => handleRemoveProfit(index)}
+            disabled={loading}
+          >
             <DeleteIcon fontSize="small" />
           </IconButton>
         </Box>
