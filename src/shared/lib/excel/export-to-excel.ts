@@ -149,10 +149,11 @@ function renderTradingMetrics({
   row3.getCell(3).fill = greenFill;
   row3.getCell(3).border = borderStyle;
   row3.getCell(4).value = {
-    formula: 'N11/-(N12)',
+    formula: 'ROUND(N11/-(N12), 1)',
   };
   row3.getCell(4).fill = greenFill;
   row3.getCell(4).border = borderStyle;
+  row3.getCell(4).numFmt = '0.0';
 
   const row4 = worksheet.getRow(4);
   row4.getCell(3).value = '% of depo in posit';
@@ -175,6 +176,93 @@ function renderTradingMetrics({
     formula: 'ROUND(D5*E11/100, 2)',
   };
   row5.getCell(5).numFmt = '0.00';
+}
+
+function renderTradingStatistics({ worksheet }: { worksheet: ExcelJS.Worksheet }): void {
+  worksheet.getColumn(13).width = 25;
+  worksheet.getColumn(14).width = 18;
+
+  const greenFill = {
+    type: 'pattern' as const,
+    pattern: 'solid' as const,
+    fgColor: { argb: 'FF90EE90' },
+  };
+
+  const blueFill = {
+    type: 'pattern' as const,
+    pattern: 'solid' as const,
+    fgColor: { argb: 'FFADD8E6' },
+  };
+
+  const borderStyle = {
+    top: { style: 'thin' as const },
+    left: { style: 'thin' as const },
+    bottom: { style: 'thin' as const },
+    right: { style: 'thin' as const },
+  };
+
+  const labels = [
+    'Total trades',
+    'Number of P trades',
+    'Number of N trades',
+    'Total profit',
+    'Total loss',
+    'Accuracy of 1k trades',
+    'Correlation P/L',
+    'P avg (USD)',
+    'L avg (USD)',
+    'P avg (% of depo)',
+    'L avg (% of depo)',
+    'Max Profit',
+    'Max Loss',
+    'Max P series',
+    'Max L series',
+  ];
+
+  const formulas = [
+    'N3+N4',
+    'COUNTIF(G11:G1010,">0")',
+    'COUNTIF(G11:G1010,"<0")',
+    'SUMIF(G11:G1010,">0",G11:G1010)',
+    'SUMIF(G11:G1010,"<0",G11:G1010)',
+    'N3/N2',
+    'N9/ABS(N10)',
+    'SUMIF($G$11:$G$1010,">0",$G$11:$G$1010)/COUNTIF($G$11:$G$1010,">0")',
+    'SUMIF($G$11:$G$1010,"<0",$G$11:$G$1010)/COUNTIF($G$11:$G$1010,"<0")',
+    'SUMIF($F$11:$F$1010,">0",$F$11:$F$1010)/COUNTIF($F$11:$F$1010,">0")',
+    'SUMIF($F$11:$F$1010,"<0",$F$11:$F$1010)/COUNTIF($F$11:$F$1010,"<0")',
+    'MAX(F11:F2500)',
+    'MIN(F11:F2500)',
+    'MAX(FREQUENCY(IF(F11:F1000>0,ROW(F11:F1000)),IF(F11:F1000<=0,ROW(F11:F1000))))',
+    'MAX(FREQUENCY(IF(F11:F1000<0,ROW(F11:F1000)),IF(F11:F1000>=0,ROW(F11:F1000))))',
+  ];
+
+  for (let i = 0; i < labels.length; i++) {
+    const rowNumber = 2 + i;
+    const row = worksheet.getRow(rowNumber);
+
+    row.getCell(13).value = labels[i];
+    row.getCell(13).fill = greenFill;
+    row.getCell(13).font = { bold: true };
+    row.getCell(13).border = borderStyle;
+
+    row.getCell(14).value = {
+      formula: formulas[i],
+    };
+    row.getCell(14).fill = blueFill;
+    row.getCell(14).font = { bold: true };
+    row.getCell(14).border = borderStyle;
+
+    if (i === 5) {
+      row.getCell(14).numFmt = '0.0%';
+    } else if (i === 3 || i === 4 || i === 7 || i === 8) {
+      row.getCell(14).numFmt = '#,##0.00';
+    } else if (i === 6) {
+      row.getCell(14).numFmt = '0.00';
+    } else if (i === 9 || i === 10 || i === 11 || i === 12) {
+      row.getCell(14).numFmt = '0.0%';
+    }
+  }
 }
 
 export async function exportGlobalTradesToExcel({ trades }: ExportData): Promise<void> {
@@ -288,6 +376,7 @@ export async function exportGlobalTradesToExcel({ trades }: ExportData): Promise
 
   renderTradesTable({ worksheet, dataRows, startRow, borderStyle });
   renderTradingMetrics({ worksheet, borderStyle });
+  renderTradingStatistics({ worksheet });
 
   // Chart data export - commented out for now
   // const chartDataCol = 13;
