@@ -7,7 +7,7 @@ import { FinanceStats } from '@/entities/investor/lib/stats';
 import { EquityChart } from '@/widgets/equity-chart';
 import { GaltonBoard } from '@/widgets/galton-board';
 import { FinanceStatsDashboard, TradeStatsDashboard } from '@/widgets/trade-stats';
-import { Box, Tab, Tabs } from '@mui/material';
+import { Box, Tab, Tabs, Typography } from '@mui/material';
 import { useState, useCallback } from 'react';
 import { TotalTradesTable } from './TotalTradesTable';
 
@@ -61,6 +61,14 @@ export function TotalTradesTabs({
 
       {selectedTab === 1 && (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <Typography
+            variant="h5"
+            component="h2"
+            fontWeight="bold"
+            sx={{ fontSize: { xs: '1.5rem', sm: '1.75rem' }, mb: 2 }}
+          >
+            Total Trades Log (Global only)
+          </Typography>
           <TradeStatsDashboard trades={tradeLikeData} />
 
           <FinanceStatsDashboard stats={financeStats} />
