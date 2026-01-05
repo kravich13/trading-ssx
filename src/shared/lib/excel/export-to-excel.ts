@@ -22,10 +22,17 @@ function renderTradesTable({
   worksheet,
   dataRows,
   startRow,
+  borderStyle,
 }: {
   worksheet: ExcelJS.Worksheet;
   dataRows: TradeDataRow[];
   startRow: number;
+  borderStyle: {
+    top: { style: 'thin' };
+    left: { style: 'thin' };
+    bottom: { style: 'thin' };
+    right: { style: 'thin' };
+  };
 }): void {
   for (let i = 1; i < startRow; i++) {
     worksheet.addRow([]);
@@ -56,13 +63,6 @@ function renderTradesTable({
   headerRow.getCell(9).value = 'PL$';
   headerRow.getCell(10).value = 'CLOSED DATE';
   headerRow.getCell(11).value = 'DEFAULT RISK%';
-
-  const borderStyle = {
-    top: { style: 'thin' as const },
-    left: { style: 'thin' as const },
-    bottom: { style: 'thin' as const },
-    right: { style: 'thin' as const },
-  };
 
   for (let col = 2; col <= 11; col++) {
     const cell = headerRow.getCell(col);
@@ -124,6 +124,57 @@ function renderTradesTable({
       excelRow.getCell(col).border = borderStyle;
     }
   });
+}
+
+function renderTradingMetrics({
+  worksheet,
+  borderStyle,
+}: {
+  worksheet: ExcelJS.Worksheet;
+  borderStyle: {
+    top: { style: 'thin' };
+    left: { style: 'thin' };
+    bottom: { style: 'thin' };
+    right: { style: 'thin' };
+  };
+}): void {
+  const greenFill = {
+    type: 'pattern' as const,
+    pattern: 'solid' as const,
+    fgColor: { argb: 'FF90EE90' },
+  };
+
+  const row3 = worksheet.getRow(3);
+  row3.getCell(3).value = 'Reward ratio';
+  row3.getCell(3).fill = greenFill;
+  row3.getCell(3).border = borderStyle;
+  row3.getCell(4).value = {
+    formula: 'N11/-(N12)',
+  };
+  row3.getCell(4).fill = greenFill;
+  row3.getCell(4).border = borderStyle;
+
+  const row4 = worksheet.getRow(4);
+  row4.getCell(3).value = '% of depo in posit';
+  row4.getCell(3).fill = greenFill;
+  row4.getCell(3).border = borderStyle;
+  row4.getCell(4).value = 5;
+  row4.getCell(4).border = borderStyle;
+  row4.getCell(5).value = {
+    formula: 'ROUND(E11*D4/100, 2)',
+  };
+  row4.getCell(5).numFmt = '0.00';
+
+  const row5 = worksheet.getRow(5);
+  row5.getCell(3).value = '% of depo in nega';
+  row5.getCell(3).fill = greenFill;
+  row5.getCell(3).border = borderStyle;
+  row5.getCell(4).value = -2;
+  row5.getCell(4).border = borderStyle;
+  row5.getCell(5).value = {
+    formula: 'ROUND(D5*E11/100, 2)',
+  };
+  row5.getCell(5).numFmt = '0.00';
 }
 
 export async function exportGlobalTradesToExcel({ trades }: ExportData): Promise<void> {
@@ -228,7 +279,15 @@ export async function exportGlobalTradesToExcel({ trades }: ExportData): Promise
   });
 
   const startRow = 10;
-  renderTradesTable({ worksheet, dataRows, startRow });
+  const borderStyle = {
+    top: { style: 'thin' as const },
+    left: { style: 'thin' as const },
+    bottom: { style: 'thin' as const },
+    right: { style: 'thin' as const },
+  };
+
+  renderTradesTable({ worksheet, dataRows, startRow, borderStyle });
+  renderTradingMetrics({ worksheet, borderStyle });
 
   // Chart data export - commented out for now
   // const chartDataCol = 13;
