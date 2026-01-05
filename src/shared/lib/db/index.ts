@@ -9,6 +9,8 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS investors (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE,
+    is_active INTEGER DEFAULT 1,
+    archived_at DATETIME,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
@@ -18,7 +20,9 @@ db.exec(`
     pl_percent REAL NOT NULL,
     default_risk_percent REAL,
     closed_date DATETIME,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    status TEXT DEFAULT 'CLOSED',
+    profits_json TEXT DEFAULT '[]'
   );
 
   CREATE TABLE IF NOT EXISTS ledger (
@@ -44,6 +48,7 @@ db.exec(`
   SELECT 
     i.id,
     i.name,
+    i.is_active,
     COALESCE(l.capital_after, 0) as current_capital,
     COALESCE(l.deposit_after, 0) as current_deposit
   FROM investors i
@@ -51,3 +56,15 @@ db.exec(`
   WHERE l.id = (SELECT MAX(id) FROM ledger WHERE investor_id = i.id)
   OR l.id IS NULL;
 `);
+
+try {
+  db.exec('ALTER TABLE trades ADD COLUMN status TEXT DEFAULT "CLOSED"');
+} catch (_e) {
+  // ignore if column exists
+}
+
+try {
+  db.exec('ALTER TABLE trades ADD COLUMN profits_json TEXT DEFAULT "[]"');
+} catch (_e) {
+  // ignore if column exists
+}

@@ -103,6 +103,7 @@ async function seed() {
       const share = s.state!.capital_after / totalCapitalBefore;
       const investorPlUsd = totalPlUsd * share;
       const newCapital = s.state!.capital_after + investorPlUsd;
+      const newDeposit = s.state!.deposit_after + investorPlUsd;
 
       db.prepare(
         `
@@ -120,7 +121,7 @@ async function seed() {
         s.state!.capital_after,
         newCapital,
         s.state!.deposit_after,
-        s.state!.deposit_after,
+        newDeposit,
         date || null,
         risk || null
       );

@@ -3,14 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 7777",
+    "dev": "next dev -p 7778",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 7777",
     "lint": "eslint",
     "tsc": "tsc",
     "prettier": "prettier --config ./.prettierrc --check \"app/**/*.{ts,tsx,scss}\" ",
     "prettier:fix": "yarn prettier --write",
-    "prepare": "husky"
+    "prepare": "husky",
+    "db:migrate": "tsx src/shared/lib/db/migration-runner.ts"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",
@@ -20,13 +21,17 @@
     "@mui/material": "^7.3.6",
     "@mui/material-nextjs": "^7.3.6",
     "better-sqlite3": "^12.5.0",
+    "luxon": "^3.7.2",
     "next": "16.1.1",
+    "nextjs-toploader": "^3.9.17",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "recharts": "^3.6.0",
     "sass": "^1.97.1"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
+    "@types/luxon": "^3.7.1",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
@@ -36,6 +41,7 @@
     "lint-staged": "^16.2.7",
     "prettier": "^3.7.4",
     "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   },
   "packageManager": "yarn@4.12.0"

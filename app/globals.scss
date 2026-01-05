@@ -1,11 +1,49 @@
+@import '../src/shared/styles/variables';
+
+html {
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+}
+
+/* Custom Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: $bg-dark-secondary;
+}
+
+::-webkit-scrollbar-thumb {
+  background: $border-primary;
+  border-radius: 10px;
+  border: 2px solid $bg-dark-secondary;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: $primary-main;
+}
+
+// Firefox support
+* {
+  scrollbar-width: thin;
+  scrollbar-color: $border-primary $bg-dark-secondary;
+}
+
 .container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 24px;
+}
+
+main.container {
+  padding-bottom: 60px;
 }
 
 body {
   margin: 0;
+  padding-right: 0 !important;
   font-family:
     var(--font-roboto),
     Roboto,
@@ -15,15 +53,25 @@ body {
     Helvetica,
     Arial,
     sans-serif;
-  background-color: #0a1929;
-  color: #fff;
+  background-color: $bg-default;
+  background-image: linear-gradient($bg-overlay, $bg-overlay), url('/images/bg.jpg');
+  background-attachment: fixed;
+  background-size: cover;
+  background-position: center 25%;
+  color: $white;
 }
 
 .navbar {
-  background: #132f4c;
-  border-bottom: 1px solid #1e4976;
+  background: $black-alpha-60;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid $white-alpha-10;
+  box-shadow: 0 4px 10px $black-alpha-30;
   padding: 15px 0;
   margin-bottom: 30px;
+  position: sticky;
+  top: 0;
+  z-index: 1100;
 
   .container {
     display: flex;
@@ -35,7 +83,7 @@ body {
     font-weight: bold;
     font-size: 1.2rem;
     text-decoration: none;
-    color: #fff;
+    color: $white;
   }
 
   .links {
@@ -44,20 +92,59 @@ body {
 
     a {
       text-decoration: none;
-      color: #b2bac2;
+      color: $text-disabled;
       font-weight: 500;
+      transition: color 0.2s ease;
 
       &:hover {
-        color: #fff;
+        color: $white;
       }
     }
   }
 }
 
+// Table Container horizontal scroll support
+.MuiTableContainer-root {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+}
+
+// Sticky table headers support
+// Note: overflow: visible is usually required for position: sticky to work relative to the window.
+// We apply it only on larger screens where horizontal scroll is less likely to be needed
+// OR we rely on MUI's default behavior.
+@media (min-width: 1024px) {
+  .MuiTableContainer-root {
+    overflow: visible !important;
+  }
+
+  .MuiTableCell-head {
+    position: sticky !important;
+    top: 61px !important; // Stick exactly under the navbar
+    z-index: 100 !important;
+    background-color: $bg-paper !important;
+    border-bottom: 2px solid $border-primary !important;
+  }
+}
+
+@media (max-width: 599px) {
+  .container {
+    padding: 0 16px;
+  }
+
+  .navbar {
+    .links {
+      gap: 12px;
+      font-size: 0.9rem;
+    }
+  }
+}
+
 .card {
-  background: #132f4c;
+  background: $bg-paper;
   border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 20px $black-alpha-50;
   padding: 20px;
   margin-bottom: 20px;
 }
@@ -70,13 +157,13 @@ table {
   td {
     text-align: left;
     padding: 12px;
-    border-bottom: 1px solid #1e4976;
+    border-bottom: 1px solid $border-primary;
   }
 
   th {
     font-weight: 600;
-    color: #b2bac2;
-    background: #173a5e;
+    color: $text-secondary;
+    background: $bg-dark-active;
   }
 }
 
@@ -93,13 +180,13 @@ table {
   }
 
   &.btn-primary {
-    background: #2196f3;
-    color: #fff;
+    background: $primary-main;
+    color: $white;
   }
 
   &.btn-danger {
-    background: #f44336;
-    color: #fff;
+    background: $error-main;
+    color: $white;
   }
 }
 
@@ -115,15 +202,15 @@ table {
   input {
     width: 100%;
     padding: 8px;
-    border: 1px solid #1e4976;
-    background: #0a1929;
-    color: #fff;
+    border: 1px solid $border-primary;
+    background: $bg-default;
+    color: $white;
     border-radius: 4px;
     box-sizing: border-box;
 
     &:focus {
       outline: none;
-      border-color: #2196f3;
+      border-color: $primary-main;
     }
   }
 }

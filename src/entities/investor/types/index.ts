@@ -1,8 +1,10 @@
-import { LedgerType } from '@/shared/enum';
+import { LedgerType, TradeType } from '@/shared/enum';
 
 export type Investor = {
   id: number;
   name: string;
+  is_active: boolean;
+  type: TradeType;
   current_capital: number;
   current_deposit: number;
 };
@@ -23,3 +25,7 @@ export type LedgerEntry = {
   closed_date: string | null;
   created_at: string;
 };
+
+export interface LedgerEntryWithInvestor extends LedgerEntry {
+  investor_name: string;
+}

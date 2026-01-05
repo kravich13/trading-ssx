@@ -77,25 +77,31 @@ When taking a trade with **1% risk** on capital ($100), you use the **$3,500** a
 - [x] **3. Main Dashboard**
   - [x] Header with Total Capital and Total Deposit (sum of all investors)
   - [x] Table of all investors with their current Capital and Deposit
-- [ ] **4. Trading Logs**
-  - [ ] Investor Detail View: List of all trades + capital changes (as shown in Excel)
-  - [ ] Total Trades View: Global log of all trading activity across the project
-  - [ ] Statistics Dashboard (above Total Trades):
+- [x] **4. Trading Logs**
+  - [x] Investor Detail View: List of all trades + capital changes (as shown in Excel)
+  - [x] Total Trades View: Global log of all trading activity across the project
+  - [x] Statistics Dashboard (above Total Trades):
     - Trade counts (Total, Positive, Negative)
     - Profit/Loss metrics (Total Profit, Total Loss, P/L Correlation, Reward Ratio)
     - Averages (USD and % of depo for both P and L)
     - Streaks & Extremes (Max Profit/Loss, Max Win/Loss series)
     - Accuracy (Win Rate %)
-  - [ ] Visual Analytics (on Total Trades screen):
+  - [x] Visual Analytics (on Total Trades screen):
     - **Equity Curve Chart**: Capital growth based strictly on trade results (ignoring manual capital changes)
     - **Galton Board (Histogram)**: Dynamic distribution of trade returns (PL%)
-- [ ] **5. Core Logic Implementation**
-  - [ ] Calculation of position sizes based on total capital
-  - [ ] Row-by-row balance updates (changes only affect future rows)
-- [ ] **6. Trade Entry**
-  - [ ] Screen to add a new trade with all Excel parameters (Ticker, PL%, PL$, Closed Date, Default Risk%)
-  - [ ] Show total capital of all copy-traders when adding a trade
-  - [ ] Automated calculation of trade impact on each investor's balance
+- [x] **5. Core Logic Implementation**
+  - [x] Calculation of position sizes based on total capital
+  - [x] Row-by-row balance updates (changes only affect future rows)
+- [x] **6. Trade Entry**
+  - [x] Screen to add a new trade with all Excel parameters (Ticker, PL%, PL$, Closed Date, Default Risk%)
+  - [x] Show total capital of all copy-traders when adding a trade
+  - [x] Automated calculation of trade impact on each investor's balance
+|- [x] **7. Private & Personal Trades**
+  - [x] **Database Expansion**: Add `type` (GLOBAL/PRIVATE) and `investor_id` to `trades` table to support non-shared trading activity
+  - [x] **Smart Distribution Logic**: Update `addTrade` to skip proportional sharing for Private trades, applying results only to the specific account
+  - [x] **Enhanced Trade Entry**: Update `AddTradeModal` with a toggle to choose between Global (all participants) and Private (single account) trades
+  - [x] **Filtered Analytics**: Update the Global Equity Chart to display only GLOBAL trades for a "clean" project-wide performance view
+  - [x] **Investor Dashboards**: Show both Global and Personal trades in individual investor views, but only Global trades in the shared public logs
 
 ## Technologies
 

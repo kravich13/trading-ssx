@@ -1,7 +1,11 @@
+import { COLORS } from '@/shared/consts';
+import { ScrollToTop } from '@/shared/ui';
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { Roboto } from 'next/font/google';
+import Link from 'next/link';
+import NextTopLoader from 'nextjs-toploader';
 import { MUIProvider } from './_providers';
+import { NotificationProvider } from '@/shared/lib/notifications';
 
 import './globals.scss';
 
@@ -15,6 +19,14 @@ const roboto = Roboto({
 export const metadata: Metadata = {
   title: 'Trading SSX',
   description: 'Trading Statistics Management',
+  icons: {
+    icon: [
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+    ],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+  },
+  manifest: '/site.webmanifest',
 };
 
 export default function RootLayout({
@@ -25,20 +37,33 @@ export default function RootLayout({
   return (
     <html lang="en" className={roboto.variable}>
       <body>
+        <NextTopLoader
+          color={COLORS.primaryMain}
+          initialPosition={0.08}
+          crawlSpeed={200}
+          height={3}
+          crawl={true}
+          showSpinner={false}
+          easing="ease"
+          speed={200}
+          shadow={`0 0 10px ${COLORS.primaryMain}, 0 0 5px ${COLORS.primaryMain}`}
+        />
         <MUIProvider>
-          <nav className="navbar">
-            <div className="container">
-              <Link href="/" className="logo">
-                Trading SSX
-              </Link>
-              <div className="links">
-                <Link href="/">Overview</Link>
-                <Link href="/total">Total Trades</Link>
-                <Link href="/investors">Management</Link>
+          <NotificationProvider>
+            <nav className="navbar">
+              <div className="container">
+                <Link href="/" className="logo">
+                  Trading SSX
+                </Link>
+                <div className="links">
+                  <Link href="/total">Total Trades</Link>
+                  <Link href="/investors">Management</Link>
+                </div>
               </div>
-            </div>
-          </nav>
-          <main className="container">{children}</main>
+            </nav>
+            <main className="container">{children}</main>
+            <ScrollToTop />
+          </NotificationProvider>
         </MUIProvider>
       </body>
     </html>
