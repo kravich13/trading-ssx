@@ -3,11 +3,15 @@
 import { EditTradeModal } from '@/entities/trade';
 import { deleteTrade, updateTrade } from '@/entities/trade/api';
 import { Trade } from '@/entities/trade/types';
-import { TradeStatus } from '@/shared/enum';
+import { TradeStatus, TradeType } from '@/shared/enum';
 import { useNotification } from '@/shared/lib/hooks';
 import { ConfirmModal } from '@/shared/ui/modals';
 import {
+  FormControl,
+  MenuItem,
   Paper,
+  Select,
+  SelectChangeEvent,
   Table,
   TableBody,
   TableCell,
@@ -17,7 +21,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { TradeRow } from './TradeRow';
 
 interface TotalTradesTableProps {
@@ -26,10 +30,24 @@ interface TotalTradesTableProps {
 
 export const TotalTradesTable = memo(({ trades }: TotalTradesTableProps) => {
   const { showNotification } = useNotification();
+
   const router = useRouter();
+
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [filterType, setFilterType] = useState<TradeType | 'ALL'>(TradeType.GLOBAL);
+
+  const filteredTrades = useMemo(() => {
+    if (filterType === 'ALL') {
+      return trades;
+    }
+    return trades.filter((t) => t.type === filterType);
+  }, [trades, filterType]);
+
+  const handleFilterChange = useCallback((e: SelectChangeEvent<TradeType | 'ALL'>) => {
+    setFilterType(e.target.value as TradeType | 'ALL');
+  }, []);
 
   const formatCurrency = useCallback(
     (value: number) =>
@@ -101,7 +119,39 @@ export const TotalTradesTable = memo(({ trades }: TotalTradesTableProps) => {
               <TableCell align="right" sx={{ fontWeight: 'bold', width: '120px' }}>
                 Closed Date
               </TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Type</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>
+                <FormControl size="small" sx={{ minWidth: 'auto' }}>
+                  <Select
+                    value={filterType}
+                    onChange={handleFilterChange}
+                    sx={{
+                      fontSize: '0.875rem',
+                      fontWeight: 'bold',
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        border: 'none',
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        border: 'none',
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        border: 'none',
+                      },
+                      '& .MuiSelect-select': {
+                        paddingRight: '20px !important',
+                        paddingLeft: '0 !important',
+                      },
+                      '& .MuiSelect-icon': {
+                        right: '2px',
+                        fontSize: '1.2rem',
+                      },
+                    }}
+                  >
+                    <MenuItem value={TradeType.GLOBAL}>Global</MenuItem>
+                    <MenuItem value={TradeType.PRIVATE}>Private</MenuItem>
+                    <MenuItem value="ALL">All</MenuItem>
+                  </Select>
+                </FormControl>
+              </TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Ticker</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
               <TableCell align="right" sx={{ fontWeight: 'bold' }}>
@@ -125,16 +175,16 @@ export const TotalTradesTable = memo(({ trades }: TotalTradesTableProps) => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {trades.length === 0 ? (
+            {filteredTrades.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={10} align="center" sx={{ py: 3 }}>
+                <TableCell colSpan={11} align="center" sx={{ py: 3 }}>
                   <Typography variant="body2" color="text.secondary">
                     No trades found.
                   </Typography>
                 </TableCell>
               </TableRow>
             ) : (
-              trades.map(renderTradeRow)
+              filteredTrades.map(renderTradeRow)
             )}
           </TableBody>
         </Table>

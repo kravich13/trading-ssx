@@ -11,10 +11,9 @@ import { AddTradeButton } from './AddTradeButton';
 import { TotalTradesTable } from './TotalTradesTable';
 
 export async function TotalTrades() {
-  const [trades, financeStats] = await Promise.all([
-    getAllTrades(TradeType.GLOBAL),
-    getGlobalFinanceStats(),
-  ]);
+  const [allTrades, financeStats] = await Promise.all([getAllTrades(), getGlobalFinanceStats()]);
+
+  const trades = allTrades.filter((t) => t.type === TradeType.GLOBAL);
 
   const { tradeLikeData, initialTotalDeposit, initialTotalCapital } =
     processTotalTradesData(trades);
@@ -111,7 +110,7 @@ export async function TotalTrades() {
 
       <InvestorPeriodicStats ledger={globalTradeLedger} />
 
-      <TotalTradesTable trades={trades} />
+      <TotalTradesTable trades={allTrades} />
     </Box>
   );
 }
