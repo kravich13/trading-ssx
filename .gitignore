@@ -46,3 +46,8 @@ next-env.d.ts
 /database/*.db-wal
 /database/backups/
 /src/shared/lib/db/initial-data.json
+
+# local config files with personal paths
+com.trading-ssx.plist
+scripts/start-production.sh
+logs/
