@@ -3,7 +3,7 @@ import { TradeStatus, TradeType } from '@/shared/enum';
 export type Trade = {
   id: number;
   ticker: string;
-  pl_percent: number;
+  pl_percent?: number;
   default_risk_percent: number | null;
   closed_date: string | null;
   total_pl_usd: number;

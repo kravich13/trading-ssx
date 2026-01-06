@@ -2,7 +2,7 @@
 
 import { Trade } from '@/entities/trade/types';
 import { TradeStatus, TradeType } from '@/shared/enum';
-import { formatDate } from '@/shared/utils/date.util';
+import { calculatePlPercentFromAfter, formatDate } from '@/shared/utils';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import {
@@ -31,6 +31,8 @@ export const TradeRow: React.FC<TradeRowProps> = memo(
     if (trade.profits && trade.profits.length > 0) {
       totalPlUsd = trade.profits.reduce((sum, p) => sum + p, 0);
     }
+
+    const plPercent = calculatePlPercentFromAfter(trade.total_capital_after, totalPlUsd);
 
     let plColor = 'inherit';
     if (totalPlUsd > 0) {
@@ -101,7 +103,7 @@ export const TradeRow: React.FC<TradeRowProps> = memo(
           </Select>
         </TableCell>
         <TableCell align="right" sx={{ color: plColor }}>
-          {trade.pl_percent.toFixed(2)}%
+          {plPercent.toFixed(2)}%
         </TableCell>
         <TableCell align="right" sx={{ color: plColor, fontWeight: 'bold' }}>
           ${formatCurrency(totalPlUsd)}

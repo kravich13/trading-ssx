@@ -59,7 +59,6 @@ export async function getLatestCapital(): Promise<number> {
 
 export async function addTrade({
   ticker,
-  plPercent,
   status,
   risk,
   profits,
@@ -67,7 +66,6 @@ export async function addTrade({
   investorId = null,
 }: {
   ticker: string;
-  plPercent: number;
   status: TradeStatus;
   risk: number | null;
   profits: number[];
@@ -79,11 +77,10 @@ export async function addTrade({
 
     const info = db
       .prepare(
-        'INSERT INTO trades (ticker, pl_percent, status, default_risk_percent, profits_json, closed_date, type, investor_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+        'INSERT INTO trades (ticker, status, default_risk_percent, profits_json, closed_date, type, investor_id) VALUES (?, ?, ?, ?, ?, ?, ?)'
       )
       .run(
         ticker,
-        plPercent,
         status,
         risk,
         JSON.stringify(profits),
@@ -142,15 +139,14 @@ export async function addTrade({
           db.prepare(
             `
             INSERT INTO ledger (
-              investor_id, trade_id, type, ticker, pl_percent, change_amount, 
+              investor_id, trade_id, type, ticker, change_amount, 
               capital_before, capital_after, deposit_before, deposit_after, closed_date, default_risk_percent
-            ) VALUES (?, ?, 'TRADE', ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, 'TRADE', ?, ?, ?, ?, ?, ?, ?, ?)
           `
           ).run(
             s.id,
             tradeId,
             ticker,
-            plPercent,
             investorPlUsd,
             s.last.capital_after,
             s.last.capital_after + investorPlUsd,
@@ -295,8 +291,8 @@ export async function updateTrade({
 
         if (totalCapitalBefore > 0) {
           const tradeData = db
-            .prepare('SELECT ticker, pl_percent, default_risk_percent FROM trades WHERE id = ?')
-            .get(id) as { ticker: string; pl_percent: number; default_risk_percent: number | null };
+            .prepare('SELECT ticker, default_risk_percent FROM trades WHERE id = ?')
+            .get(id) as { ticker: string; default_risk_percent: number | null };
 
           for (const s of activeStates) {
             const share =
@@ -306,15 +302,14 @@ export async function updateTrade({
             db.prepare(
               `
               INSERT INTO ledger (
-                investor_id, trade_id, type, ticker, pl_percent, change_amount, 
+                investor_id, trade_id, type, ticker, change_amount, 
                 capital_before, capital_after, deposit_before, deposit_after, closed_date, default_risk_percent
-              ) VALUES (?, ?, 'TRADE', ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              ) VALUES (?, ?, 'TRADE', ?, ?, ?, ?, ?, ?, ?, ?)
             `
             ).run(
               s.id,
               id,
               tradeData.ticker,
-              tradeData.pl_percent,
               investorPlUsd,
               s.last.capital_after,
               s.last.capital_after + investorPlUsd,

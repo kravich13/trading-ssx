@@ -1,7 +1,7 @@
 import { LedgerEntryWithInvestor } from '@/entities/investor/types';
 import { COLORS } from '@/shared/consts';
 import { LedgerType } from '@/shared/enum';
-import { formatDate } from '@/shared/utils/date.util';
+import { formatDate } from '@/shared/utils';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import { Box, Chip, IconButton, TableCell, TableRow } from '@mui/material';

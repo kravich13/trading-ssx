@@ -1,5 +1,6 @@
 import ExcelJS from 'exceljs';
 import { Trade } from '@/entities/trade/types';
+import { calculatePlPercentFromAfter } from '@/shared/utils';
 
 interface ExportData {
   trades: Trade[];
@@ -326,6 +327,8 @@ export async function exportGlobalTradesToExcel({ trades }: ExportData): Promise
     const capitalInPercent =
       actualInitialCapital > 0 ? (capitalInUsd / actualInitialCapital) * 100 : 100;
 
+    const plPercent = calculatePlPercentFromAfter(capitalInUsd, changeAmount);
+
     const currentDate = trade.closed_date || 'no-date';
     const isFirstTradeOfDay = currentDate !== lastDate;
     const changesOfCapital = isFirstTradeOfDay ? dateTotals.get(currentDate) || null : null;
@@ -341,7 +344,7 @@ export async function exportGlobalTradesToExcel({ trades }: ExportData): Promise
         changesOfDepo: actualInitialCapital,
         capitalInUsd,
         capitalInPercent,
-        plPercent: trade.pl_percent,
+        plPercent,
         plUsd: Math.abs(changeAmount),
         ticker: trade.ticker,
         plUsdSigned: changeAmount,
@@ -354,7 +357,7 @@ export async function exportGlobalTradesToExcel({ trades }: ExportData): Promise
         changesOfDepo: changesOfCapital,
         capitalInUsd,
         capitalInPercent,
-        plPercent: trade.pl_percent,
+        plPercent,
         plUsd: Math.abs(changeAmount),
         ticker: trade.ticker,
         plUsdSigned: changeAmount,

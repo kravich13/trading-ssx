@@ -1,4 +1,5 @@
 import { Trade } from '@/entities/trade/types';
+import { calculatePlPercentFromAfter } from '@/shared/utils';
 
 export function processTotalTradesData(trades: Trade[]) {
   const tradeLikeData = trades.map((t) => {
@@ -7,10 +8,12 @@ export function processTotalTradesData(trades: Trade[]) {
       change_amount = t.profits.reduce((sum, p) => sum + p, 0);
     }
 
+    const pl_percent = calculatePlPercentFromAfter(t.total_capital_after, change_amount);
+
     return {
       id: t.id,
       ticker: t.ticker,
-      pl_percent: t.pl_percent,
+      pl_percent,
       change_amount,
       absolute_value: t.total_capital_after,
       deposit_value: t.total_deposit_after,

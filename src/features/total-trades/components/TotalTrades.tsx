@@ -1,6 +1,7 @@
 import { getGlobalFinanceStats } from '@/entities/investor';
 import { getAllTrades } from '@/entities/trade';
 import { LedgerType, TradeType } from '@/shared/enum';
+import { calculatePlPercent } from '@/shared/utils';
 import { Box, Typography } from '@mui/material';
 import { processTotalTradesData } from '../utils';
 import { AddTradeButton } from './AddTradeButton';
@@ -34,6 +35,8 @@ export async function TotalTrades() {
       const newDeposit = acc.runningDeposit + changeAmount;
       const newCapital = acc.runningCapital + changeAmount;
 
+      const plPercent = calculatePlPercent(capitalBefore, changeAmount);
+
       acc.ledger.push({
         id: t.id,
         investor_id: 0,
@@ -45,7 +48,7 @@ export async function TotalTrades() {
         deposit_before: depositBefore,
         deposit_after: newDeposit,
         ticker: t.ticker,
-        pl_percent: t.pl_percent,
+        pl_percent: plPercent,
         default_risk_percent: t.default_risk_percent,
         closed_date: t.closed_date,
         created_at: t.created_at,

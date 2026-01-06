@@ -1,5 +1,6 @@
 import { getInvestorById, getInvestorLedger } from '@/entities/investor';
 import { LedgerType, TradeType } from '@/shared/enum';
+import { calculatePlPercent } from '@/shared/utils';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { Box, Button, Typography } from '@mui/material';
 import Link from 'next/link';
@@ -30,15 +31,18 @@ export async function InvestorDetails({ id }: InvestorDetailsProps) {
 
   const tradesOnly = ledger
     .filter((row) => row.type === LedgerType.TRADE)
-    .map((row) => ({
-      id: row.trade_id || row.id,
-      ticker: row.ticker || '',
-      pl_percent: row.pl_percent,
-      change_amount: row.change_amount,
-      absolute_value: row.capital_after,
-      deposit_value: row.deposit_after,
-      default_risk_percent: row.default_risk_percent,
-    }));
+    .map((row) => {
+      const plPercent = calculatePlPercent(row.capital_before, row.change_amount);
+      return {
+        id: row.trade_id || row.id,
+        ticker: row.ticker || '',
+        pl_percent: plPercent,
+        change_amount: row.change_amount,
+        absolute_value: row.capital_after,
+        deposit_value: row.deposit_after,
+        default_risk_percent: row.default_risk_percent,
+      };
+    });
 
   const firstTrade = ledger.find((r) => r.type === LedgerType.TRADE);
   const initialInvestorDeposit = firstTrade ? firstTrade.deposit_before : 0;

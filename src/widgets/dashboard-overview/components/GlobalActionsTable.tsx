@@ -3,7 +3,7 @@
 import { deleteLedgerEntry, updateLedgerEntry } from '@/entities/investor/api';
 import { LedgerEntryWithInvestor } from '@/entities/investor/types';
 import { ConfirmModal } from '@/shared/ui/modals';
-import { normalizeDate } from '@/shared/utils/date.util';
+import { normalizeDate } from '@/shared/utils';
 import {
   Box,
   Button,

@@ -6,7 +6,7 @@ import { getInitialTradeProfits } from '@/entities/trade/utils';
 import { COLORS } from '@/shared/consts';
 import { TradeStatus } from '@/shared/enum';
 import { useNotification } from '@/shared/lib/hooks';
-import { normalizeDate } from '@/shared/utils/date.util';
+import { normalizeDate } from '@/shared/utils';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import {

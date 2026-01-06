@@ -1,8 +1,8 @@
 'use client';
 
-import { getInvestorById, getInvestors } from '@/entities/investor/api';
+import { getInvestors } from '@/entities/investor/api';
 import { Investor } from '@/entities/investor/types';
-import { addTrade, getLatestCapital } from '@/entities/trade/api';
+import { addTrade } from '@/entities/trade/api';
 import { TradeStatus, TradeType } from '@/shared/enum';
 import { useNotification } from '@/shared/lib/hooks';
 import {
@@ -87,29 +87,8 @@ export const AddTradeModal = memo(
             ? profits.map((p) => (typeof p === 'string' ? parseFloat(p) || 0 : p))
             : [];
 
-        let plPercent = 0;
-        if (status === TradeStatus.CLOSED) {
-          const totalPlUsd = profitsToSave.reduce((sum, p) => sum + p, 0);
-
-          if (totalPlUsd !== 0) {
-            let capital = 0;
-
-            if (tradeType === TradeType.PRIVATE && investorId) {
-              const investor = await getInvestorById(parseInt(investorId));
-              capital = investor?.current_capital || 0;
-            } else {
-              capital = await getLatestCapital();
-            }
-
-            if (capital > 0) {
-              plPercent = (totalPlUsd / capital) * 100;
-            }
-          }
-        }
-
         await addTrade({
           ticker: ticker.toUpperCase(),
-          plPercent,
           status,
           risk: parseFloat(risk) || null,
           profits: profitsToSave,

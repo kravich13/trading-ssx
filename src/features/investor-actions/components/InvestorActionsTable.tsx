@@ -5,7 +5,7 @@ import { LedgerEntry } from '@/entities/investor/types';
 import { LedgerType } from '@/shared/enum';
 import { useNotification } from '@/shared/lib/hooks';
 import { ConfirmModal } from '@/shared/ui/modals';
-import { normalizeDate } from '@/shared/utils/date.util';
+import { normalizeDate } from '@/shared/utils';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import {

@@ -6,7 +6,7 @@ import { COLORS } from '@/shared/consts';
 import { LedgerType, TradeStatus, TradeType } from '@/shared/enum';
 import { useNotification } from '@/shared/lib/hooks';
 import { ConfirmModal } from '@/shared/ui/modals';
-import { formatDate, normalizeDate } from '@/shared/utils/date.util';
+import { calculatePlPercent, formatDate, normalizeDate } from '@/shared/utils';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import {
@@ -215,7 +215,9 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
             </Select>
           </TableCell>
           <TableCell align="right" sx={{ color: plColor }}>
-            {row.pl_percent !== null ? `${row.pl_percent.toFixed(2)}%` : '-'}
+            {row.type === LedgerType.TRADE
+              ? `${calculatePlPercent(row.capital_before, row.change_amount).toFixed(2)}%`
+              : '-'}
           </TableCell>
           <TableCell align="right" sx={{ color: plColor }}>
             $

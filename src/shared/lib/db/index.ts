@@ -17,7 +17,6 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS trades (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     ticker TEXT NOT NULL,
-    pl_percent REAL NOT NULL,
     default_risk_percent REAL,
     closed_date DATETIME,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -36,7 +35,6 @@ db.exec(`
     deposit_before REAL NOT NULL,
     deposit_after REAL NOT NULL,
     ticker TEXT,
-    pl_percent REAL,
     default_risk_percent REAL,
     closed_date DATETIME,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

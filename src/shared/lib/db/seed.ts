@@ -15,7 +15,6 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS trades (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     ticker TEXT NOT NULL,
-    pl_percent REAL NOT NULL,
     default_risk_percent REAL,
     closed_date DATETIME,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -32,7 +31,6 @@ db.exec(`
     deposit_before REAL NOT NULL,
     deposit_after REAL NOT NULL,
     ticker TEXT,
-    pl_percent REAL,
     default_risk_percent REAL,
     closed_date DATETIME,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -79,18 +77,10 @@ async function seed() {
   `
   ).run(meId);
 
-  const addTrade = (
-    ticker: string,
-    plPercent: number,
-    totalPlUsd: number,
-    date?: string,
-    risk?: number
-  ) => {
+  const addTrade = (ticker: string, totalPlUsd: number, date?: string, risk?: number) => {
     const tradeId = db
-      .prepare(
-        'INSERT INTO trades (ticker, pl_percent, closed_date, default_risk_percent) VALUES (?, ?, ?, ?)'
-      )
-      .run(ticker, plPercent, date || null, risk || null).lastInsertRowid;
+      .prepare('INSERT INTO trades (ticker, closed_date, default_risk_percent) VALUES (?, ?, ?)')
+      .run(ticker, date || null, risk || null).lastInsertRowid;
 
     const investors = db.prepare('SELECT id FROM investors').all() as { id: number }[];
     const activeStates = investors
@@ -108,15 +98,14 @@ async function seed() {
       db.prepare(
         `
         INSERT INTO ledger (
-          investor_id, trade_id, type, ticker, pl_percent, change_amount, 
+          investor_id, trade_id, type, ticker, change_amount, 
           capital_before, capital_after, deposit_before, deposit_after, closed_date, default_risk_percent
-        ) VALUES (?, ?, 'TRADE', ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, 'TRADE', ?, ?, ?, ?, ?, ?, ?, ?)
       `
       ).run(
         s.id,
         tradeId,
         ticker,
-        plPercent,
         investorPlUsd,
         s.state!.capital_after,
         newCapital,
@@ -164,7 +153,7 @@ async function seed() {
 
   for (const event of events) {
     if (event.type === 'TRADE') {
-      addTrade(event.t!, event.p!, event.u!, event.d, event.r);
+      addTrade(event.t!, event.u!, event.d, event.r);
     } else if (event.type === 'CHANGE') {
       const invId = investorIds[event.invName!];
       if (invId) {
