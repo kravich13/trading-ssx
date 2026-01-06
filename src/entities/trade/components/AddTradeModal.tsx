@@ -1,13 +1,10 @@
 'use client';
 
-import { getInvestors } from '@/entities/investor/api';
+import { getInvestorById, getInvestors } from '@/entities/investor/api';
 import { Investor } from '@/entities/investor/types';
-import { addTrade } from '@/entities/trade/api';
-import { COLORS } from '@/shared/consts';
+import { addTrade, getLatestCapital } from '@/entities/trade/api';
 import { TradeStatus, TradeType } from '@/shared/enum';
 import { useNotification } from '@/shared/lib/hooks';
-import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
 import {
   Box,
   Button,
@@ -15,12 +12,11 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  IconButton,
   MenuItem,
   TextField,
-  Typography,
 } from '@mui/material';
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
+import { ProfitsLogInput } from './ProfitsLogInput';
 import { TradePositionCalculator } from './TradePositionCalculator';
 
 interface AddTradeModalProps {
@@ -39,7 +35,6 @@ export const AddTradeModal = memo(
     const [tradeType, setTradeType] = useState(defaultTradeType || TradeType.GLOBAL);
     const [investorId, setInvestorId] = useState('');
     const [investors, setInvestors] = useState<Investor[]>([]);
-    const [plPercent, setPlPercent] = useState('0');
     const [risk, setRisk] = useState('1');
     const [profits, setProfits] = useState<(number | string)[]>(['']);
     const [loading, setLoading] = useState(false);
@@ -72,28 +67,6 @@ export const AddTradeModal = memo(
       fetchInvestors();
     }, [open, defaultInvestorId]);
 
-    const handleProfitChange = useCallback((index: number, value: string) => {
-      setProfits((prev) => {
-        const newProfits = [...prev];
-        newProfits[index] = value;
-        return newProfits;
-      });
-    }, []);
-
-    const handleIntegerKeyDown = useCallback((e: React.KeyboardEvent) => {
-      if (e.key === '.' || e.key === ',') {
-        e.preventDefault();
-      }
-    }, []);
-
-    const handleAddProfit = useCallback(() => {
-      setProfits((prev) => [...prev, '']);
-    }, []);
-
-    const handleRemoveProfit = useCallback((index: number) => {
-      setProfits((prev) => prev.filter((_, i) => i !== index));
-    }, []);
-
     const renderInvestorOption = useCallback(
       (inv: Investor) => (
         <MenuItem key={inv.id} value={inv.id.toString()}>
@@ -102,48 +75,6 @@ export const AddTradeModal = memo(
       ),
       []
     );
-
-    const renderProfitInput = useCallback(
-      (profit: string | number, index: number) => {
-        return (
-          <Box key={index} sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-            <TextField
-              label={`Part ${index + 1}`}
-              type="number"
-              size="small"
-              fullWidth
-              value={profit}
-              onChange={(e) => handleProfitChange(index, e.target.value)}
-              onKeyDown={handleIntegerKeyDown}
-              disabled={loading}
-              slotProps={{
-                htmlInput: {
-                  step: '1',
-                },
-              }}
-            />
-            {profits.length > 1 && (
-              <IconButton
-                size="small"
-                color="error"
-                onClick={() => handleRemoveProfit(index)}
-                disabled={loading}
-              >
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            )}
-          </Box>
-        );
-      },
-      [handleProfitChange, handleIntegerKeyDown, handleRemoveProfit, loading, profits.length]
-    );
-
-    const totalProfit = useMemo(() => {
-      return profits.reduce<number>((sum, p) => {
-        const val = typeof p === 'string' ? parseFloat(p) || 0 : p;
-        return sum + val;
-      }, 0);
-    }, [profits]);
 
     const handleSave = useCallback(async () => {
       if (!ticker) return;
@@ -156,9 +87,29 @@ export const AddTradeModal = memo(
             ? profits.map((p) => (typeof p === 'string' ? parseFloat(p) || 0 : p))
             : [];
 
+        let plPercent = 0;
+        if (status === TradeStatus.CLOSED) {
+          const totalPlUsd = profitsToSave.reduce((sum, p) => sum + p, 0);
+
+          if (totalPlUsd !== 0) {
+            let capital = 0;
+
+            if (tradeType === TradeType.PRIVATE && investorId) {
+              const investor = await getInvestorById(parseInt(investorId));
+              capital = investor?.current_capital || 0;
+            } else {
+              capital = await getLatestCapital();
+            }
+
+            if (capital > 0) {
+              plPercent = (totalPlUsd / capital) * 100;
+            }
+          }
+        }
+
         await addTrade({
           ticker: ticker.toUpperCase(),
-          plPercent: status === TradeStatus.CLOSED ? parseFloat(plPercent) || 0 : 0,
+          plPercent,
           status,
           risk: parseFloat(risk) || null,
           profits: profitsToSave,
@@ -169,7 +120,6 @@ export const AddTradeModal = memo(
         setTicker('');
         setStatus(TradeStatus.IN_PROGRESS);
         setTradeType(defaultTradeType || TradeType.GLOBAL);
-        setPlPercent('0');
         setRisk('1');
         setProfits(['']);
         showNotification('Trade added successfully');
@@ -181,15 +131,14 @@ export const AddTradeModal = memo(
       } finally {
         setLoading(false);
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
       ticker,
       status,
       profits,
-      plPercent,
       risk,
       tradeType,
       investorId,
+      defaultTradeType,
       onSuccess,
       onClose,
       showNotification,
@@ -265,7 +214,7 @@ export const AddTradeModal = memo(
                 transition: 'grid-template-rows 0.3s ease-out',
               }}
             >
-              <Box sx={{ overflow: 'hidden', pt: 0.5 }}>
+              <Box sx={{ overflow: 'hidden', pt: tradeType === TradeType.PRIVATE ? 0.5 : 0 }}>
                 <TextField
                   select
                   label="Investor"
@@ -281,46 +230,16 @@ export const AddTradeModal = memo(
               </Box>
             </Box>
 
-            <Box
-              sx={{
-                display: 'flex',
-                gap: status === TradeStatus.CLOSED ? 2 : 0,
-                alignItems: 'flex-start',
-                transition: 'gap 0.3s ease-out',
-              }}
-            >
-              <Box
-                sx={{
-                  flex: status === TradeStatus.CLOSED ? 1 : 0,
-                  display: 'grid',
-                  gridTemplateColumns: status === TradeStatus.CLOSED ? '1fr' : '0fr',
-                  transition: 'all 0.3s ease-out',
-                  overflow: 'hidden',
-                }}
-              >
-                <Box sx={{ minWidth: 0, pt: 0.7, px: 0.1 }}>
-                  <TextField
-                    label="PL %"
-                    type="number"
-                    value={plPercent}
-                    onChange={(e) => setPlPercent(e.target.value)}
-                    fullWidth
-                    size="small"
-                    disabled={loading}
-                  />
-                </Box>
-              </Box>
-              <Box sx={{ flex: 1, pt: 0.7 }}>
-                <TextField
-                  label="Risk % (on capital)"
-                  type="number"
-                  value={risk}
-                  onChange={(e) => setRisk(e.target.value)}
-                  fullWidth
-                  size="small"
-                  disabled={loading}
-                />
-              </Box>
+            <Box sx={{ pt: 0.7 }}>
+              <TextField
+                label="Risk % (on capital)"
+                type="number"
+                value={risk}
+                onChange={(e) => setRisk(e.target.value)}
+                fullWidth
+                size="small"
+                disabled={loading}
+              />
             </Box>
 
             <TradePositionCalculator riskPercent={risk} />
@@ -333,40 +252,12 @@ export const AddTradeModal = memo(
               }}
             >
               <Box sx={{ overflow: 'hidden' }}>
-                <Box sx={{ pt: 1 }}>
-                  <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>
-                    Profits Log (Excel-like)
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    {profits.map(renderProfitInput)}
-                    <Button
-                      startIcon={<AddIcon />}
-                      size="small"
-                      variant="outlined"
-                      onClick={handleAddProfit}
-                      disabled={loading}
-                      sx={{ alignSelf: 'flex-start', mt: 1 }}
-                    >
-                      Add Part
-                    </Button>
-                  </Box>
-                  {profits.length > 0 && (
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        mt: 2,
-                        fontWeight: 'bold',
-                        textAlign: 'right',
-                        color: totalProfit >= 0 ? 'success.main' : 'error.main',
-                        bgcolor: COLORS.whiteAlpha05,
-                        p: 1,
-                        borderRadius: 1,
-                      }}
-                    >
-                      Total Profit: ${formatCurrency(totalProfit)}
-                    </Typography>
-                  )}
-                </Box>
+                <ProfitsLogInput
+                  profits={profits}
+                  onProfitsChange={setProfits}
+                  disabled={loading}
+                  formatCurrency={formatCurrency}
+                />
               </Box>
             </Box>
           </Box>
