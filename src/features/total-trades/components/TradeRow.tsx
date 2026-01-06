@@ -27,10 +27,7 @@ interface TradeRowProps {
 
 export const TradeRow: React.FC<TradeRowProps> = memo(
   ({ trade, formatCurrency, onEdit, onDelete, onStatusChange }) => {
-    let totalPlUsd = trade.total_pl_usd;
-    if (trade.profits && trade.profits.length > 0) {
-      totalPlUsd = trade.profits.reduce((sum, p) => sum + p, 0);
-    }
+    const totalPlUsd = trade.total_pl_usd;
 
     const plPercent = calculatePlPercentFromAfter(trade.total_capital_after, totalPlUsd);
 

@@ -24,10 +24,7 @@ export async function TotalTrades() {
 
   const globalTradeLedger = sortedTrades.reduce(
     (acc, t) => {
-      let changeAmount = t.total_pl_usd;
-      if (t.profits && t.profits.length > 0) {
-        changeAmount = t.profits.reduce((sum, p) => sum + p, 0);
-      }
+      const changeAmount = t.total_pl_usd;
 
       const depositBefore = acc.runningDeposit;
       const capitalBefore = acc.runningCapital;
@@ -90,7 +87,7 @@ export async function TotalTrades() {
           fontWeight="bold"
           sx={{ fontSize: { xs: '1.8rem', sm: '2.125rem' } }}
         >
-          Total Trades Log
+          Total Trades Log (Global only)
         </Typography>
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <ExportToExcelButton trades={sortedTrades} />
@@ -99,7 +96,7 @@ export async function TotalTrades() {
       </Box>
 
       <TotalTradesTabs
-        allTrades={allTrades}
+        allTrades={trades}
         tradeLikeData={tradeLikeData}
         financeStats={financeStats}
         initialTotalDeposit={initialTotalDeposit}

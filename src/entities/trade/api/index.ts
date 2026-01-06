@@ -239,9 +239,31 @@ export async function updateTrade({
     if (profits !== undefined) {
       const newTotalPlUsd = profits.reduce((sum, p) => sum + p, 0);
 
-      const ledgerEntries = db
-        .prepare("SELECT * FROM ledger WHERE trade_id = ? AND type = 'TRADE'")
-        .all(id) as {
+      const trade = db.prepare('SELECT type, investor_id FROM trades WHERE id = ?').get(id) as
+        | { type: TradeType; investor_id: number | null }
+        | undefined;
+
+      // Filter ledger entries by trade type and investor type
+      const ledgerEntriesQuery =
+        trade?.type === TradeType.PRIVATE && trade.investor_id
+          ? `
+          SELECT l.*
+          FROM ledger l
+          JOIN investors i ON l.investor_id = i.id
+          WHERE l.trade_id = ? AND l.type = 'TRADE' AND l.investor_id = ?
+        `
+          : `
+          SELECT l.*
+          FROM ledger l
+          JOIN investors i ON l.investor_id = i.id
+          WHERE l.trade_id = ? AND l.type = 'TRADE' AND i.type = ?
+        `;
+
+      const ledgerEntries = (
+        trade?.type === TradeType.PRIVATE && trade.investor_id
+          ? db.prepare(ledgerEntriesQuery).all(id, trade.investor_id)
+          : db.prepare(ledgerEntriesQuery).all(id, TradeType.GLOBAL)
+      ) as {
         id: number;
         investor_id: number;
         change_amount: number;
@@ -400,6 +422,17 @@ function recalculateInvestorBalances(investorId: number) {
       depositAfter += entry.change_amount;
     } else if (entry.type === 'CAPITAL_CHANGE') {
       capitalAfter += entry.change_amount;
+      // For initial CAPITAL_CHANGE (when capital_before = 0), preserve the original capital_after and deposit_after
+      // This handles the case when investor is created with initialCapital and initialDeposit
+      if (capitalBefore === 0) {
+        const originalEntry = db
+          .prepare('SELECT capital_after, deposit_after FROM ledger WHERE id = ?')
+          .get(entry.id) as { capital_after: number; deposit_after: number } | undefined;
+        if (originalEntry) {
+          capitalAfter = originalEntry.capital_after;
+          depositAfter = originalEntry.deposit_after;
+        }
+      }
     } else if (entry.type === 'DEPOSIT_CHANGE') {
       depositAfter += entry.change_amount;
     } else if (entry.type === 'BOTH_CHANGE') {

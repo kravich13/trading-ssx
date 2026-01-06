@@ -357,22 +357,26 @@ export async function getGlobalFinanceStats(): Promise<FinanceStats> {
       .prepare(
         `
       SELECT 
-        SUM(capital_after) as total_capital,
-        SUM(deposit_after) as total_deposit
-      FROM (
-        SELECT capital_after, deposit_after
-        FROM ledger
-        WHERE id IN (
-        SELECT MAX(l2.id)
+        SUM(l.capital_after) as total_capital,
+        SUM(l.deposit_after) as total_deposit
+      FROM investors i
+      LEFT JOIN ledger l ON l.investor_id = i.id 
+      AND l.id = (
+        SELECT MAX(l2.id) 
         FROM ledger l2
-        JOIN investors i ON l2.investor_id = i.id
-        WHERE i.is_active = 1 AND i.type = ? AND COALESCE(l2.closed_date, l2.created_at) < ?
-        GROUP BY l2.investor_id
+        LEFT JOIN trades t ON l2.trade_id = t.id
+        WHERE l2.investor_id = i.id
+        AND COALESCE(l2.closed_date, l2.created_at) < ?
+        AND (
+          l2.type != 'TRADE'
+          OR t.type IS NULL
+          OR t.type = i.type
         )
       )
+      WHERE i.is_active = 1 AND i.type = ?
     `
       )
-      .get(TradeType.GLOBAL, date) as TotalStats | undefined;
+      .get(date, TradeType.GLOBAL) as TotalStats | undefined;
   };
 
   const monthBase = getBaseStats(startOfMonth);

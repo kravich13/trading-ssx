@@ -3,10 +3,7 @@ import { calculatePlPercentFromAfter } from '@/shared/utils';
 
 export function processTotalTradesData(trades: Trade[]) {
   const tradeLikeData = trades.map((t) => {
-    let change_amount = t.total_pl_usd;
-    if (t.profits && t.profits.length > 0) {
-      change_amount = t.profits.reduce((sum, p) => sum + p, 0);
-    }
+    const change_amount = t.total_pl_usd;
 
     const pl_percent = calculatePlPercentFromAfter(t.total_capital_after, change_amount);
 
@@ -26,11 +23,7 @@ export function processTotalTradesData(trades: Trade[]) {
 
   if (trades.length > 0) {
     const totalProjectPl = trades.reduce((sum, t) => {
-      let pl = t.total_pl_usd;
-      if (t.profits && t.profits.length > 0) {
-        pl = t.profits.reduce((s, p) => s + p, 0);
-      }
-      return sum + pl;
+      return sum + t.total_pl_usd;
     }, 0);
 
     const latestTrade = trades[0];
