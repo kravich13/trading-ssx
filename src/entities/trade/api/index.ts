@@ -13,15 +13,35 @@ export async function getAllTrades(type?: TradeType): Promise<Trade[]> {
   const query = `
     SELECT 
       t.*,
-      COALESCE(SUM(l.change_amount), 0) as total_pl_usd,
+      COALESCE(SUM(l_filtered.change_amount), 0) as total_pl_usd,
       COALESCE(MAX(l_all.total_cap), 0) as total_capital_after,
       COALESCE(MAX(l_all.total_dep), 0) as total_deposit_after
     FROM trades t
-    LEFT JOIN ledger l ON l.trade_id = t.id AND l.type = 'TRADE'
     LEFT JOIN (
-      SELECT trade_id, SUM(capital_after) as total_cap, SUM(deposit_after) as total_dep
-      FROM ledger
-      GROUP BY trade_id
+      SELECT l.*
+      FROM ledger l
+      JOIN investors i ON l.investor_id = i.id
+      JOIN trades t2 ON l.trade_id = t2.id
+      WHERE l.type = 'TRADE'
+        AND (
+          (t2.type = 'GLOBAL' AND i.type = 'GLOBAL')
+          OR (t2.type = 'PRIVATE' AND i.type = 'PRIVATE')
+        )
+    ) l_filtered ON l_filtered.trade_id = t.id
+    LEFT JOIN (
+      SELECT 
+        l.trade_id, 
+        SUM(l.capital_after) as total_cap, 
+        SUM(l.deposit_after) as total_dep
+      FROM ledger l
+      JOIN trades t2 ON l.trade_id = t2.id
+      JOIN investors i ON l.investor_id = i.id
+      WHERE l.type = 'TRADE'
+        AND (
+          (t2.type = 'GLOBAL' AND i.type = 'GLOBAL')
+          OR (t2.type = 'PRIVATE' AND i.type = 'PRIVATE')
+        )
+      GROUP BY l.trade_id
     ) l_all ON l_all.trade_id = t.id
     ${type ? 'WHERE t.type = ?' : ''}
     GROUP BY t.id
