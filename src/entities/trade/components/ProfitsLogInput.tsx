@@ -4,6 +4,7 @@ import { COLORS } from '@/shared/consts';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { Box, Button, IconButton, TextField, Typography } from '@mui/material';
+import { AnimatePresence, motion } from 'framer-motion';
 import { memo, useCallback, useMemo } from 'react';
 
 interface ProfitsLogInputProps {
@@ -52,33 +53,41 @@ export const ProfitsLogInput = memo(
     const renderProfitInput = useCallback(
       (profit: string | number, index: number) => {
         return (
-          <Box key={index} sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-            <TextField
-              label={`Part ${index + 1}`}
-              type="number"
-              size="small"
-              fullWidth
-              value={profit}
-              onChange={(e) => handleProfitChange(index, e.target.value)}
-              onKeyDown={handleIntegerKeyDown}
-              disabled={disabled}
-              slotProps={{
-                htmlInput: {
-                  step: '1',
-                },
-              }}
-            />
-            {profits.length > 1 && (
-              <IconButton
+          <motion.div
+            key={index}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+          >
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <TextField
+                label={`Part ${index + 1}`}
+                type="number"
                 size="small"
-                color="error"
-                onClick={() => handleRemoveProfit(index)}
+                fullWidth
+                value={profit}
+                onChange={(e) => handleProfitChange(index, e.target.value)}
+                onKeyDown={handleIntegerKeyDown}
                 disabled={disabled}
-              >
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            )}
-          </Box>
+                slotProps={{
+                  htmlInput: {
+                    step: '1',
+                  },
+                }}
+              />
+              {profits.length > 1 && (
+                <IconButton
+                  size="small"
+                  color="error"
+                  onClick={() => handleRemoveProfit(index)}
+                  disabled={disabled}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              )}
+            </Box>
+          </motion.div>
         );
       },
       [handleProfitChange, handleIntegerKeyDown, handleRemoveProfit, disabled, profits.length]
@@ -90,7 +99,7 @@ export const ProfitsLogInput = memo(
           Profits Log (Excel-like)
         </Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          {profits.map(renderProfitInput)}
+          <AnimatePresence>{profits.map(renderProfitInput)}</AnimatePresence>
           <Button
             startIcon={<AddIcon />}
             size="small"
