@@ -60,16 +60,21 @@ export async function getLatestCapital(): Promise<number> {
   const result = db
     .prepare(
       `
-    SELECT COALESCE(SUM(capital_after), 0) as total_capital
-    FROM (
-      SELECT capital_after
-      FROM ledger
-      WHERE id IN (
-        SELECT MAX(id)
-        FROM ledger
-        GROUP BY investor_id
+    SELECT COALESCE(SUM(l.capital_after), 0) as total_capital
+    FROM investors i
+    LEFT JOIN ledger l ON l.investor_id = i.id 
+    AND l.id = (
+      SELECT MAX(l2.id) 
+      FROM ledger l2
+      LEFT JOIN trades t ON l2.trade_id = t.id
+      WHERE l2.investor_id = i.id
+      AND (
+        l2.type != 'TRADE'
+        OR t.type IS NULL
+        OR t.type = i.type
       )
     )
+    WHERE i.type = 'GLOBAL' AND i.is_active = 1
   `
     )
     .get() as { total_capital: number };

@@ -1,8 +1,9 @@
 'use client';
 
-import { getInvestors } from '@/entities/investor/api';
 import { Investor } from '@/entities/investor/types';
 import { addTrade } from '@/entities/trade/api';
+import { useFilteredInvestors } from '@/entities/trade/hooks/use-filtered-investors.hook';
+import { useInvestors } from '@/entities/trade/hooks/use-investors.hook';
 import { TradeStatus, TradeType } from '@/shared/enum';
 import { useNotification } from '@/shared/lib/hooks';
 import {
@@ -15,7 +16,7 @@ import {
   MenuItem,
   TextField,
 } from '@mui/material';
-import { memo, useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 import { ProfitsLogInput } from './ProfitsLogInput';
 import { TradePositionCalculator } from './TradePositionCalculator';
 
@@ -30,42 +31,29 @@ interface AddTradeModalProps {
 export const AddTradeModal = memo(
   ({ open, defaultTradeType, defaultInvestorId, onClose, onSuccess }: AddTradeModalProps) => {
     const { showNotification } = useNotification();
+
     const [ticker, setTicker] = useState('');
     const [status, setStatus] = useState(TradeStatus.IN_PROGRESS);
     const [tradeType, setTradeType] = useState(defaultTradeType || TradeType.GLOBAL);
-    const [investorId, setInvestorId] = useState('');
-    const [investors, setInvestors] = useState<Investor[]>([]);
     const [risk, setRisk] = useState('1');
     const [profits, setProfits] = useState<(number | string)[]>(['']);
-    const [loading, setLoading] = useState(false);
+    const [saving, setSaving] = useState(false);
 
-    useEffect(() => {
-      const fetchInvestors = async () => {
-        if (open) {
-          try {
-            const data = await getInvestors();
+    const {
+      investors,
+      investorId,
+      loading: investorsLoading,
+      setInvestorId,
+    } = useInvestors({ open, defaultInvestorId });
 
-            setInvestors(data);
+    const loading = saving || investorsLoading;
 
-            if (defaultInvestorId) {
-              setInvestorId(defaultInvestorId.toString());
-            } else {
-              const me = data.find((inv) => inv.name === 'Me');
-
-              if (me) {
-                setInvestorId(me.id.toString());
-              } else if (data.length > 0) {
-                setInvestorId(data[0].id.toString());
-              }
-            }
-          } catch (error) {
-            console.error('Failed to fetch investors:', error);
-          }
-        }
-      };
-
-      fetchInvestors();
-    }, [open, defaultInvestorId]);
+    const filteredInvestors = useFilteredInvestors({
+      investors,
+      tradeType,
+      investorId,
+      setInvestorId,
+    });
 
     const renderInvestorOption = useCallback(
       (inv: Investor) => (
@@ -79,7 +67,7 @@ export const AddTradeModal = memo(
     const handleSave = useCallback(async () => {
       if (!ticker) return;
 
-      setLoading(true);
+      setSaving(true);
 
       try {
         const profitsToSave =
@@ -108,7 +96,7 @@ export const AddTradeModal = memo(
         console.error('Failed to add trade:', error);
         showNotification('Failed to add trade', 'error');
       } finally {
-        setLoading(false);
+        setSaving(false);
       }
     }, [
       ticker,
@@ -204,7 +192,7 @@ export const AddTradeModal = memo(
                   disabled={loading || Boolean(defaultInvestorId)}
                   sx={{ mb: 0.5 }}
                 >
-                  {investors.map(renderInvestorOption)}
+                  {filteredInvestors.map(renderInvestorOption)}
                 </TextField>
               </Box>
             </Box>
@@ -221,7 +209,11 @@ export const AddTradeModal = memo(
               />
             </Box>
 
-            <TradePositionCalculator riskPercent={risk} />
+            <TradePositionCalculator
+              riskPercent={risk}
+              tradeType={tradeType}
+              investorId={investorId}
+            />
 
             <Box
               sx={{

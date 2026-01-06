@@ -1,6 +1,8 @@
 'use client';
 
+import { getInvestorById } from '@/entities/investor/api';
 import { COLORS } from '@/shared/consts';
+import { TradeType } from '@/shared/enum';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import {
   Box,
@@ -17,11 +19,18 @@ import { getLatestCapital } from '../api';
 
 interface TradePositionCalculatorProps {
   riskPercent: string;
+  tradeType?: TradeType;
+  investorId?: string;
   initialOpen?: boolean;
 }
 
 export const TradePositionCalculator = memo(
-  ({ riskPercent, initialOpen = false }: TradePositionCalculatorProps) => {
+  ({
+    riskPercent,
+    tradeType = TradeType.GLOBAL,
+    investorId,
+    initialOpen = false,
+  }: TradePositionCalculatorProps) => {
     const [showCalculator, setShowCalculator] = useState(initialOpen);
     const [capital, setCapital] = useState('0');
     const [defaultCapital, setDefaultCapital] = useState('0');
@@ -31,7 +40,14 @@ export const TradePositionCalculator = memo(
       let mounted = true;
 
       const load = async () => {
-        const val = await getLatestCapital();
+        let val = 0;
+
+        if (tradeType === TradeType.PRIVATE && investorId) {
+          const investor = await getInvestorById(parseInt(investorId));
+          val = investor?.current_capital || 0;
+        } else {
+          val = await getLatestCapital();
+        }
 
         if (mounted) {
           const rounded = Math.round(val).toString();
@@ -45,7 +61,7 @@ export const TradePositionCalculator = memo(
       return () => {
         mounted = false;
       };
-    }, []);
+    }, [tradeType, investorId]);
 
     const isCapitalChanged = useMemo(() => capital !== defaultCapital, [capital, defaultCapital]);
 
