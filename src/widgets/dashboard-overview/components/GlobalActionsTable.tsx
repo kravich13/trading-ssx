@@ -1,7 +1,9 @@
 'use client';
 
 import { deleteLedgerEntry, updateLedgerEntry } from '@/entities/investor/api';
+import { useActionChanges } from '@/entities/investor/hooks';
 import { LedgerEntryWithInvestor } from '@/entities/investor/types';
+import { useNotification } from '@/shared/lib/hooks';
 import { ConfirmModal } from '@/shared/ui/modals';
 import { normalizeDate } from '@/shared/utils';
 import {
@@ -29,6 +31,7 @@ interface GlobalActionsTableProps {
 }
 
 export const GlobalActionsTable = memo(({ actions }: GlobalActionsTableProps) => {
+  const { showNotification } = useNotification();
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<LedgerEntryWithInvestor | null>(null);
   const [selectedRowNumber, setSelectedRowNumber] = useState<number | null>(null);
@@ -80,6 +83,13 @@ export const GlobalActionsTable = memo(({ actions }: GlobalActionsTableProps) =>
     setEditModalOpen(false);
   }, []);
 
+  const hasChanges = useActionChanges({
+    entry: selectedEntry,
+    editAmount,
+    editDepositAmount,
+    editDate,
+  });
+
   const handleDialogClose = useCallback((_event: object, reason?: string) => {
     if (reason !== 'backdropClick') {
       setEditModalOpen(false);
@@ -88,18 +98,24 @@ export const GlobalActionsTable = memo(({ actions }: GlobalActionsTableProps) =>
 
   const handleConfirmEdit = useCallback(async () => {
     if (selectedEntry && editAmount !== '') {
-      const isInitial = selectedEntry.capital_before === 0 && selectedEntry.deposit_before === 0;
-      await updateLedgerEntry({
-        id: selectedEntry.id,
-        investorId: selectedEntry.investor_id,
-        amount: parseFloat(editAmount),
-        depositAmount: isInitial ? parseFloat(editDepositAmount) : undefined,
-        createdAt: editDate + ' 00:00:00',
-      });
-      setEditModalOpen(false);
-      setSelectedEntry(null);
+      try {
+        const isInitial = selectedEntry.capital_before === 0 && selectedEntry.deposit_before === 0;
+        await updateLedgerEntry({
+          id: selectedEntry.id,
+          investorId: selectedEntry.investor_id,
+          amount: parseFloat(editAmount),
+          depositAmount: isInitial ? parseFloat(editDepositAmount) : undefined,
+          createdAt: editDate + ' 00:00:00',
+        });
+        showNotification('Action updated successfully');
+        setEditModalOpen(false);
+        setSelectedEntry(null);
+      } catch (error) {
+        console.error('Failed to update entry:', error);
+        showNotification('Failed to update entry', 'error');
+      }
     }
-  }, [selectedEntry, editAmount, editDepositAmount, editDate]);
+  }, [selectedEntry, editAmount, editDepositAmount, editDate, showNotification]);
 
   const renderActionRow = useCallback(
     (row: LedgerEntryWithInvestor, index: number) => {
@@ -240,7 +256,12 @@ export const GlobalActionsTable = memo(({ actions }: GlobalActionsTableProps) =>
           <Button onClick={handleCloseEditModal} color="inherit">
             Cancel
           </Button>
-          <Button onClick={handleConfirmEdit} variant="contained" color="primary">
+          <Button
+            onClick={handleConfirmEdit}
+            variant="contained"
+            color="primary"
+            disabled={!hasChanges}
+          >
             Save
           </Button>
         </DialogActions>

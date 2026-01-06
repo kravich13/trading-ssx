@@ -2,8 +2,7 @@
 
 import { Investor } from '@/entities/investor/types';
 import { addTrade } from '@/entities/trade/api';
-import { useFilteredInvestors } from '@/entities/trade/hooks/use-filtered-investors.hook';
-import { useInvestors } from '@/entities/trade/hooks/use-investors.hook';
+import { useFilteredInvestors, useInvestors } from '@/entities/trade/hooks';
 import { TradeStatus, TradeType } from '@/shared/enum';
 import { useNotification } from '@/shared/lib/hooks';
 import {

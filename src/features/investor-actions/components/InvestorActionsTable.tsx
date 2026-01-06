@@ -2,6 +2,7 @@
 
 import { deleteLedgerEntry, updateLedgerEntry } from '@/entities/investor/api';
 import { LedgerEntry } from '@/entities/investor/types';
+import { useActionChanges } from '@/entities/investor/hooks';
 import { LedgerType } from '@/shared/enum';
 import { useNotification } from '@/shared/lib/hooks';
 import { ConfirmModal } from '@/shared/ui/modals';
@@ -134,6 +135,13 @@ export const InvestorActionsTable = memo(({ ledger, investorId }: InvestorAction
   const handleCloseEditModal = useCallback(() => {
     setEditModalOpen(false);
   }, []);
+
+  const hasChanges = useActionChanges({
+    entry: selectedEntry,
+    editAmount,
+    editDepositAmount,
+    editDate,
+  });
 
   const handleDialogClose = useCallback((_event: object, reason?: string) => {
     if (reason !== 'backdropClick') {
@@ -344,7 +352,12 @@ export const InvestorActionsTable = memo(({ ledger, investorId }: InvestorAction
           <Button onClick={handleCloseEditModal} color="inherit">
             Cancel
           </Button>
-          <Button onClick={handleConfirmEdit} variant="contained" color="primary">
+          <Button
+            onClick={handleConfirmEdit}
+            variant="contained"
+            color="primary"
+            disabled={!hasChanges}
+          >
             Save
           </Button>
         </DialogActions>

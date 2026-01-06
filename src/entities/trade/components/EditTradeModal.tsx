@@ -3,7 +3,7 @@
 import { updateTrade } from '@/entities/trade/api';
 import { Trade } from '@/entities/trade/types';
 import { getInitialTradeProfits } from '@/entities/trade/utils';
-import { useTradeChanges } from '@/entities/trade/hooks/use-trade-changes.hook';
+import { useTradeChanges } from '@/entities/trade/hooks';
 import { COLORS } from '@/shared/consts';
 import { TradeStatus } from '@/shared/enum';
 import { useNotification } from '@/shared/lib/hooks';
