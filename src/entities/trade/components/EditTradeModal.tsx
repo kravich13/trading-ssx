@@ -3,6 +3,7 @@
 import { updateTrade } from '@/entities/trade/api';
 import { Trade } from '@/entities/trade/types';
 import { getInitialTradeProfits } from '@/entities/trade/utils';
+import { useTradeChanges } from '@/entities/trade/hooks/use-trade-changes.hook';
 import { COLORS } from '@/shared/consts';
 import { TradeStatus } from '@/shared/enum';
 import { useNotification } from '@/shared/lib/hooks';
@@ -38,6 +39,16 @@ export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTra
   );
 
   const [editProfits, setEditProfits] = useState(() => getInitialTradeProfits(trade));
+
+  const hasChanges = useTradeChanges({
+    trade,
+    editDate,
+    editRisk,
+    editProfits,
+    setEditDate,
+    setEditRisk,
+    setEditProfits,
+  });
 
   const handleProfitChange = useCallback((index: number, value: string) => {
     setEditProfits((prev) => {
@@ -221,7 +232,12 @@ export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTra
         <Button onClick={onClose} color="inherit" disabled={loading}>
           Cancel
         </Button>
-        <Button onClick={handleConfirmEdit} variant="contained" color="primary" disabled={loading}>
+        <Button
+          onClick={handleConfirmEdit}
+          variant="contained"
+          color="primary"
+          disabled={loading || !hasChanges}
+        >
           {loading ? 'Saving...' : 'Save'}
         </Button>
       </DialogActions>
