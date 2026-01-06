@@ -1,4 +1,5 @@
 import { getGlobalActionsLog, getInvestors, getTotalStats } from '@/entities/investor';
+import { TradeType } from '@/shared/enum';
 import { COLORS } from '@/shared/consts';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import HistoryIcon from '@mui/icons-material/History';
@@ -122,6 +123,7 @@ export async function DashboardOverview() {
           <TableHead>
             <TableRow sx={{ backgroundColor: 'action.hover' }}>
               <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Type</TableCell>
               <TableCell align="right" sx={{ fontWeight: 'bold' }}>
                 Current Capital
               </TableCell>
@@ -175,6 +177,15 @@ export async function DashboardOverview() {
                       )}
                     </Box>
                   </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={investor.type === TradeType.GLOBAL ? 'Global' : 'Private'}
+                      size="small"
+                      variant="outlined"
+                      color={investor.type === TradeType.GLOBAL ? 'primary' : 'secondary'}
+                      sx={{ fontSize: '0.65rem', height: 20, fontWeight: 'bold' }}
+                    />
+                  </TableCell>
                   <TableCell align="right">{formatCurrency(investor.current_capital)}</TableCell>
                   <TableCell align="right">{formatCurrency(investor.current_deposit)}</TableCell>
                   <TableCell align="right">{capitalShare.toFixed(2)}%</TableCell>
@@ -191,6 +202,7 @@ export async function DashboardOverview() {
             })}
             <TableRow sx={{ bgcolor: 'action.selected' }}>
               <TableCell sx={{ fontWeight: 'bold' }}>TOTAL</TableCell>
+              <TableCell />
               <TableCell align="right" sx={{ fontWeight: 'bold' }}>
                 {formatCurrency(stats.total_capital)}
               </TableCell>

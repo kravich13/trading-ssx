@@ -111,7 +111,9 @@ export async function addTrade({
           activeStates = [{ id: investorId, last }];
         }
       } else {
-        const investors = db.prepare('SELECT id FROM investors WHERE is_active = 1').all() as {
+        const investors = db
+          .prepare('SELECT id FROM investors WHERE is_active = 1 AND type = ?')
+          .all(TradeType.GLOBAL) as {
           id: number;
         }[];
 
@@ -262,10 +264,18 @@ export async function updateTrade({
           recalculateInvestorBalances(investorId);
         }
       } else if (newTotalPlUsd !== 0) {
-        // Create new ledger entries if none exist and we have a profit
-        const investors = db.prepare('SELECT id FROM investors WHERE is_active = 1').all() as {
-          id: number;
-        }[];
+        const trade = db.prepare('SELECT type, investor_id FROM trades WHERE id = ?').get(id) as
+          | { type: TradeType; investor_id: number | null }
+          | undefined;
+
+        let investors: { id: number }[];
+        if (trade?.type === TradeType.PRIVATE && trade.investor_id) {
+          investors = [{ id: trade.investor_id }];
+        } else {
+          investors = db
+            .prepare('SELECT id FROM investors WHERE is_active = 1 AND type = ?')
+            .all(TradeType.GLOBAL) as { id: number }[];
+        }
 
         const activeStates = investors
           .map((inv) => ({
@@ -284,12 +294,13 @@ export async function updateTrade({
         const totalCapitalBefore = activeStates.reduce((sum, s) => sum + s.last.capital_after, 0);
 
         if (totalCapitalBefore > 0) {
-          const trade = db
+          const tradeData = db
             .prepare('SELECT ticker, pl_percent, default_risk_percent FROM trades WHERE id = ?')
             .get(id) as { ticker: string; pl_percent: number; default_risk_percent: number | null };
 
           for (const s of activeStates) {
-            const share = s.last.capital_after / totalCapitalBefore;
+            const share =
+              trade?.type === TradeType.PRIVATE ? 1 : s.last.capital_after / totalCapitalBefore;
             const investorPlUsd = newTotalPlUsd * share;
 
             db.prepare(
@@ -302,15 +313,15 @@ export async function updateTrade({
             ).run(
               s.id,
               id,
-              trade.ticker,
-              trade.pl_percent,
+              tradeData.ticker,
+              tradeData.pl_percent,
               investorPlUsd,
               s.last.capital_after,
               s.last.capital_after + investorPlUsd,
               s.last.deposit_after,
               s.last.deposit_after + investorPlUsd,
               closedDate,
-              trade.default_risk_percent
+              tradeData.default_risk_percent
             );
           }
         }
@@ -327,9 +338,28 @@ export async function updateTrade({
 }
 
 function recalculateInvestorBalances(investorId: number) {
+  const investor = db.prepare('SELECT type FROM investors WHERE id = ?').get(investorId) as
+    | { type: TradeType }
+    | undefined;
+
+  const investorType = investor?.type || TradeType.GLOBAL;
+
   const entries = db
-    .prepare('SELECT * FROM ledger WHERE investor_id = ? ORDER BY id ASC')
-    .all(investorId) as {
+    .prepare(
+      `
+      SELECT l.*
+      FROM ledger l
+      LEFT JOIN trades t ON l.trade_id = t.id
+      WHERE l.investor_id = ?
+      AND (
+        l.type != 'TRADE'
+        OR t.type IS NULL
+        OR t.type = ?
+      )
+      ORDER BY l.id ASC
+    `
+    )
+    .all(investorId, investorType) as {
     id: number;
     type: string;
     change_amount: number;

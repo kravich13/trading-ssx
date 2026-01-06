@@ -20,7 +20,17 @@ export async function getInvestors(): Promise<Investor[]> {
       COALESCE(l.deposit_after, 0) as current_deposit
     FROM investors i
     LEFT JOIN ledger l ON l.investor_id = i.id 
-    AND l.id = (SELECT MAX(id) FROM ledger WHERE investor_id = i.id)
+    AND l.id = (
+      SELECT MAX(l2.id) 
+      FROM ledger l2
+      LEFT JOIN trades t ON l2.trade_id = t.id
+      WHERE l2.investor_id = i.id
+      AND (
+        l2.type != 'TRADE'
+        OR t.type IS NULL
+        OR t.type = i.type
+      )
+    )
     ORDER BY i.is_active DESC, CASE WHEN i.name = 'Me' THEN 0 ELSE 1 END, i.name ASC
   `
     )
@@ -42,7 +52,17 @@ export async function getInvestorById(id: number): Promise<Investor | undefined>
       COALESCE(l.deposit_after, 0) as current_deposit
     FROM investors i
     LEFT JOIN ledger l ON l.investor_id = i.id 
-    AND l.id = (SELECT MAX(id) FROM ledger WHERE investor_id = i.id)
+    AND l.id = (
+      SELECT MAX(l2.id) 
+      FROM ledger l2
+      LEFT JOIN trades t ON l2.trade_id = t.id
+      WHERE l2.investor_id = i.id
+      AND (
+        l2.type != 'TRADE'
+        OR t.type IS NULL
+        OR t.type = i.type
+      )
+    )
     WHERE i.id = ?
   `
     )
@@ -74,16 +94,20 @@ export async function getGlobalTotalStats(): Promise<TotalStats> {
       SUM(ics.current_deposit) as total_deposit
     FROM investor_current_stats ics
     JOIN investors i ON ics.id = i.id
-    WHERE ics.is_active = 1 AND i.type = 'GLOBAL'
+    WHERE ics.is_active = 1 AND i.type = ?
   `
     )
-    .get() as TotalStats;
+    .get(TradeType.GLOBAL) as TotalStats;
   return stats;
 }
 
 export async function getInvestorLedger(
   id: number
 ): Promise<(LedgerEntry & { status?: TradeStatus; trade_type?: TradeType })[]> {
+  const investor = await getInvestorById(id);
+
+  const investorType = investor?.type || TradeType.GLOBAL;
+
   const ledger = db
     .prepare(
       `
@@ -91,10 +115,18 @@ export async function getInvestorLedger(
     FROM ledger l
     LEFT JOIN trades t ON l.trade_id = t.id
     WHERE l.investor_id = ? 
+    AND (
+      l.type != 'TRADE' 
+      OR t.type IS NULL 
+      OR t.type = ?
+    )
     ORDER BY l.id DESC
   `
     )
-    .all(id) as (LedgerEntry & { status?: TradeStatus; trade_type?: TradeType })[];
+    .all(id, investorType) as (LedgerEntry & {
+    status?: TradeStatus;
+    trade_type?: TradeType;
+  })[];
   return ledger;
 }
 
@@ -334,13 +366,13 @@ export async function getGlobalFinanceStats(): Promise<FinanceStats> {
         SELECT MAX(l2.id)
         FROM ledger l2
         JOIN investors i ON l2.investor_id = i.id
-        WHERE i.is_active = 1 AND i.type = 'GLOBAL' AND COALESCE(l2.closed_date, l2.created_at) < ?
+        WHERE i.is_active = 1 AND i.type = ? AND COALESCE(l2.closed_date, l2.created_at) < ?
         GROUP BY l2.investor_id
         )
       )
     `
       )
-      .get(date) as TotalStats | undefined;
+      .get(TradeType.GLOBAL, date) as TotalStats | undefined;
   };
 
   const monthBase = getBaseStats(startOfMonth);
@@ -389,10 +421,10 @@ export async function getGlobalLedger(): Promise<LedgerEntry[]> {
     SELECT l.*
     FROM ledger l
     JOIN investors i ON l.investor_id = i.id
-    WHERE i.type = 'GLOBAL'
+    WHERE i.type = ?
     ORDER BY l.id DESC
   `
     )
-    .all() as LedgerEntry[];
+    .all(TradeType.GLOBAL) as LedgerEntry[];
   return ledger;
 }
