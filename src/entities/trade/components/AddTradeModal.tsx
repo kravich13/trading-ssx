@@ -5,6 +5,7 @@ import { addTrade } from '@/entities/trade/api';
 import { useFilteredInvestors, useInvestors } from '@/entities/trade/hooks';
 import { TradeStatus, TradeType } from '@/shared/enum';
 import { useNotification } from '@/shared/lib/hooks';
+import { normalizeDate } from '@/shared/utils';
 import {
   Box,
   Button,
@@ -36,6 +37,7 @@ export const AddTradeModal = memo(
     const [tradeType, setTradeType] = useState(defaultTradeType || TradeType.GLOBAL);
     const [risk, setRisk] = useState('1');
     const [profits, setProfits] = useState<(number | string)[]>(['']);
+    const [closedDate, setClosedDate] = useState(() => normalizeDate(new Date().toISOString()));
     const [saving, setSaving] = useState(false);
 
     const {
@@ -66,6 +68,11 @@ export const AddTradeModal = memo(
     const handleSave = useCallback(async () => {
       if (!ticker) return;
 
+      if (tradeType === TradeType.PRIVATE && (!investorId || isNaN(parseInt(investorId)))) {
+        showNotification('Please select an investor', 'error');
+        return;
+      }
+
       setSaving(true);
 
       try {
@@ -79,6 +86,7 @@ export const AddTradeModal = memo(
           status,
           risk: parseFloat(risk) || null,
           profits: profitsToSave,
+          closedDate: status === TradeStatus.CLOSED ? closedDate : null,
           type: tradeType,
           investorId: tradeType === TradeType.PRIVATE ? parseInt(investorId) : null,
         });
@@ -88,12 +96,14 @@ export const AddTradeModal = memo(
         setTradeType(defaultTradeType || TradeType.GLOBAL);
         setRisk('1');
         setProfits(['']);
+        setClosedDate(normalizeDate(new Date().toISOString()));
         showNotification('Trade added successfully');
         onSuccess?.();
         onClose();
       } catch (error) {
         console.error('Failed to add trade:', error);
-        showNotification('Failed to add trade', 'error');
+        const errorMessage = error instanceof Error ? error.message : 'Failed to add trade';
+        showNotification(errorMessage, 'error');
       } finally {
         setSaving(false);
       }
@@ -102,6 +112,7 @@ export const AddTradeModal = memo(
       status,
       profits,
       risk,
+      closedDate,
       tradeType,
       investorId,
       defaultTradeType,
@@ -221,7 +232,30 @@ export const AddTradeModal = memo(
                 transition: 'grid-template-rows 0.3s ease-out',
               }}
             >
-              <Box sx={{ overflow: 'hidden' }}>
+              <Box
+                sx={{
+                  overflow: 'hidden',
+                  pt: status === TradeStatus.CLOSED ? 5 : 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 3,
+                }}
+              >
+                <TextField
+                  label="Closed Date"
+                  type="date"
+                  fullWidth
+                  value={closedDate}
+                  onChange={(e) => setClosedDate(e.target.value)}
+                  variant="outlined"
+                  size="small"
+                  disabled={loading}
+                  slotProps={{
+                    inputLabel: {
+                      shrink: true,
+                    },
+                  }}
+                />
                 <ProfitsLogInput
                   profits={profits}
                   onProfitsChange={setProfits}

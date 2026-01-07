@@ -87,6 +87,7 @@ export async function addTrade({
   status,
   risk,
   profits,
+  closedDate,
   type = TradeType.GLOBAL,
   investorId = null,
 }: {
@@ -94,98 +95,139 @@ export async function addTrade({
   status: TradeStatus;
   risk: number | null;
   profits: number[];
+  closedDate?: string | null;
   type?: TradeType;
   investorId?: number | null;
 }) {
-  const transaction = db.transaction(() => {
-    const totalPlUsd = profits.reduce((sum, p) => sum + p, 0);
+  if (type === TradeType.PRIVATE && (!investorId || isNaN(investorId))) {
+    throw new Error('Investor ID is required for private trades');
+  }
 
-    const info = db
-      .prepare(
-        'INSERT INTO trades (ticker, status, default_risk_percent, profits_json, closed_date, type, investor_id) VALUES (?, ?, ?, ?, ?, ?, ?)'
-      )
-      .run(
-        ticker,
-        status,
-        risk,
-        JSON.stringify(profits),
-        status === TradeStatus.CLOSED ? new Date().toISOString().split('T')[0] : null,
-        type,
-        investorId
-      );
+  try {
+    const transaction = db.transaction(() => {
+      const totalPlUsd = profits.reduce((sum, p) => sum + p, 0);
 
-    const tradeId = info.lastInsertRowid as number;
+      const info = db
+        .prepare(
+          'INSERT INTO trades (ticker, status, default_risk_percent, profits_json, closed_date, type, investor_id) VALUES (?, ?, ?, ?, ?, ?, ?)'
+        )
+        .run(
+          ticker,
+          status,
+          risk,
+          JSON.stringify(profits),
+          status === TradeStatus.CLOSED
+            ? closedDate || new Date().toISOString().split('T')[0]
+            : null,
+          type,
+          investorId
+        );
 
-    if (totalPlUsd !== 0) {
-      let activeStates: {
-        id: number;
-        last: { capital_after: number; deposit_after: number };
-      }[] = [];
+      const tradeId = info.lastInsertRowid as number;
 
-      if (type === TradeType.PRIVATE && investorId) {
-        const last = db
-          .prepare(
-            'SELECT capital_after, deposit_after FROM ledger WHERE investor_id = ? ORDER BY id DESC LIMIT 1'
-          )
-          .get(investorId) as { capital_after: number; deposit_after: number } | undefined;
-
-        if (last) {
-          activeStates = [{ id: investorId, last }];
-        }
-      } else {
-        const investors = db
-          .prepare('SELECT id FROM investors WHERE is_active = 1 AND type = ?')
-          .all(TradeType.GLOBAL) as {
+      if (totalPlUsd !== 0) {
+        let activeStates: {
           id: number;
-        }[];
+          last: { capital_after: number; deposit_after: number };
+        }[] = [];
 
-        activeStates = investors
-          .map((inv) => ({
-            id: inv.id,
-            last: db
-              .prepare(
-                'SELECT capital_after, deposit_after FROM ledger WHERE investor_id = ? ORDER BY id DESC LIMIT 1'
-              )
-              .get(inv.id) as { capital_after: number; deposit_after: number } | undefined,
-          }))
-          .filter(
-            (s): s is { id: number; last: { capital_after: number; deposit_after: number } } =>
-              s.last != null && s.last.capital_after > 0
-          );
-      }
+        if (type === TradeType.PRIVATE && investorId) {
+          const investor = db.prepare('SELECT type FROM investors WHERE id = ?').get(investorId) as
+            | { type: TradeType }
+            | undefined;
 
-      const totalCapitalBefore = activeStates.reduce((sum, s) => sum + s.last.capital_after, 0);
+          if (!investor) {
+            throw new Error(`Investor with ID ${investorId} not found`);
+          }
 
-      if (totalCapitalBefore > 0) {
-        for (const s of activeStates) {
-          const share = type === TradeType.PRIVATE ? 1 : s.last.capital_after / totalCapitalBefore;
-          const investorPlUsd = totalPlUsd * share;
+          const investorType = investor.type;
 
-          db.prepare(
-            `
+          const last = db
+            .prepare(
+              `
+            SELECT l.capital_after, l.deposit_after
+            FROM ledger l
+            LEFT JOIN trades t ON l.trade_id = t.id
+            WHERE l.investor_id = ?
+            AND (
+              l.type != 'TRADE'
+              OR t.type IS NULL
+              OR t.type = ?
+            )
+            ORDER BY l.id DESC LIMIT 1
+          `
+            )
+            .get(investorId, investorType) as
+            | { capital_after: number; deposit_after: number }
+            | undefined;
+
+          activeStates = [
+            {
+              id: investorId,
+              last: last || { capital_after: 0, deposit_after: 0 },
+            },
+          ];
+        } else {
+          const investors = db
+            .prepare('SELECT id FROM investors WHERE is_active = 1 AND type = ?')
+            .all(TradeType.GLOBAL) as {
+            id: number;
+          }[];
+
+          activeStates = investors
+            .map((inv) => ({
+              id: inv.id,
+              last: db
+                .prepare(
+                  'SELECT capital_after, deposit_after FROM ledger WHERE investor_id = ? ORDER BY id DESC LIMIT 1'
+                )
+                .get(inv.id) as { capital_after: number; deposit_after: number } | undefined,
+            }))
+            .filter(
+              (s): s is { id: number; last: { capital_after: number; deposit_after: number } } =>
+                s.last != null && s.last.capital_after > 0
+            );
+        }
+
+        const totalCapitalBefore = activeStates.reduce((sum, s) => sum + s.last.capital_after, 0);
+
+        if (type === TradeType.PRIVATE || totalCapitalBefore > 0) {
+          for (const s of activeStates) {
+            const share =
+              type === TradeType.PRIVATE ? 1 : s.last.capital_after / totalCapitalBefore;
+            const investorPlUsd = totalPlUsd * share;
+
+            db.prepare(
+              `
             INSERT INTO ledger (
               investor_id, trade_id, type, ticker, change_amount, 
               capital_before, capital_after, deposit_before, deposit_after, closed_date, default_risk_percent
             ) VALUES (?, ?, 'TRADE', ?, ?, ?, ?, ?, ?, ?, ?)
           `
-          ).run(
-            s.id,
-            tradeId,
-            ticker,
-            investorPlUsd,
-            s.last.capital_after,
-            s.last.capital_after + investorPlUsd,
-            s.last.deposit_after,
-            s.last.deposit_after + investorPlUsd,
-            status === TradeStatus.CLOSED ? new Date().toISOString().split('T')[0] : null,
-            risk
-          );
+            ).run(
+              s.id,
+              tradeId,
+              ticker,
+              investorPlUsd,
+              s.last.capital_after,
+              s.last.capital_after + investorPlUsd,
+              s.last.deposit_after,
+              s.last.deposit_after + investorPlUsd,
+              status === TradeStatus.CLOSED
+                ? closedDate || new Date().toISOString().split('T')[0]
+                : null,
+              risk
+            );
+          }
         }
       }
-    }
-  });
+    });
 
-  transaction();
+    transaction();
+  } catch (error) {
+    console.error('Error in addTrade transaction:', error);
+    throw error;
+  }
 
   revalidatePath('/');
   revalidatePath('/trades');
