@@ -2,6 +2,7 @@
 
 import { db } from '@/shared/api';
 import { TradeStatus, TradeType } from '@/shared/enum';
+import { Balance } from '@/shared/types';
 import { revalidatePath } from 'next/cache';
 import { Trade } from '../types';
 
@@ -128,7 +129,7 @@ export async function addTrade({
       if (totalPlUsd !== 0) {
         let activeStates: {
           id: number;
-          last: { capital_after: number; deposit_after: number };
+          last: Balance;
         }[] = [];
 
         if (type === TradeType.PRIVATE && investorId) {
@@ -157,9 +158,7 @@ export async function addTrade({
             ORDER BY l.id DESC LIMIT 1
           `
             )
-            .get(investorId, investorType) as
-            | { capital_after: number; deposit_after: number }
-            | undefined;
+            .get(investorId, investorType) as Balance | undefined;
 
           activeStates = [
             {
@@ -181,11 +180,10 @@ export async function addTrade({
                 .prepare(
                   'SELECT capital_after, deposit_after FROM ledger WHERE investor_id = ? ORDER BY id DESC LIMIT 1'
                 )
-                .get(inv.id) as { capital_after: number; deposit_after: number } | undefined,
+                .get(inv.id) as Balance | undefined,
             }))
             .filter(
-              (s): s is { id: number; last: { capital_after: number; deposit_after: number } } =>
-                s.last != null && s.last.capital_after > 0
+              (s): s is { id: number; last: Balance } => s.last != null && s.last.capital_after > 0
             );
         }
 
@@ -369,11 +367,10 @@ export async function updateTrade({
               .prepare(
                 'SELECT capital_after, deposit_after FROM ledger WHERE investor_id = ? ORDER BY id DESC LIMIT 1'
               )
-              .get(inv.id) as { capital_after: number; deposit_after: number } | undefined,
+              .get(inv.id) as Balance | undefined,
           }))
           .filter(
-            (s): s is { id: number; last: { capital_after: number; deposit_after: number } } =>
-              s.last != null && s.last.capital_after > 0
+            (s): s is { id: number; last: Balance } => s.last != null && s.last.capital_after > 0
           );
 
         const totalCapitalBefore = activeStates.reduce((sum, s) => sum + s.last.capital_after, 0);
@@ -469,7 +466,7 @@ function recalculateInvestorBalances(investorId: number) {
       if (capitalBefore === 0) {
         const originalEntry = db
           .prepare('SELECT capital_after, deposit_after FROM ledger WHERE id = ?')
-          .get(entry.id) as { capital_after: number; deposit_after: number } | undefined;
+          .get(entry.id) as Balance | undefined;
         if (originalEntry) {
           capitalAfter = originalEntry.capital_after;
           depositAfter = originalEntry.deposit_after;

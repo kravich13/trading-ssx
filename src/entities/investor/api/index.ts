@@ -2,7 +2,7 @@
 
 import { db } from '@/shared/api';
 import { LedgerType, TradeStatus, TradeType } from '@/shared/enum';
-import { TotalStats } from '@/shared/types';
+import { Balance, TotalStats } from '@/shared/types';
 import { revalidatePath } from 'next/cache';
 import { FinanceStats } from '../lib';
 import { Investor, LedgerEntry } from '../types';
@@ -202,7 +202,7 @@ export async function updateInvestorBalance({
     .prepare(
       'SELECT capital_after, deposit_after FROM ledger WHERE investor_id = ? ORDER BY id DESC LIMIT 1'
     )
-    .get(id) as { capital_after: number; deposit_after: number };
+    .get(id) as Balance;
 
   let newCapital = lastLedger.capital_after;
   let newDeposit = lastLedger.deposit_after;

@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
+import { Balance } from '@/shared/types';
 
 const DB_PATH = path.join(process.cwd(), 'database', 'trading.db');
 const db = new Database(DB_PATH);
@@ -67,7 +68,7 @@ async function seed() {
       .prepare(
         'SELECT capital_after, deposit_after FROM ledger WHERE investor_id = ? ORDER BY id DESC LIMIT 1'
       )
-      .get(id) as { capital_after: number; deposit_after: number } | undefined;
+      .get(id) as Balance | undefined;
   };
 
   db.prepare(
