@@ -67,7 +67,7 @@ export const Row = memo(
 
     return (
       <TableRow hover>
-        <TableCell>{totalRows - index}</TableCell>
+        <TableCell>{row.trade_number || totalRows - index}</TableCell>
         <TableCell align="right" sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
           {formatDate(row.closed_date)}
         </TableCell>

@@ -1,6 +1,8 @@
 'use client';
 
 import { LedgerEntry, LedgerEntryWithInvestor } from '@/entities/investor/types';
+import { LedgerType } from '@/shared/enum';
+import { TRADE_ID_OPTION } from '@/shared/consts';
 import { normalizeDate } from '@/shared/utils';
 import { useMemo } from 'react';
 
@@ -8,6 +10,8 @@ interface InitialActionValues {
   amount: string;
   depositAmount: string;
   date: string;
+  type?: LedgerType.CAPITAL_CHANGE | LedgerType.DEPOSIT_CHANGE | LedgerType.BOTH_CHANGE;
+  tradeId: string;
 }
 
 interface UseActionChangesProps {
@@ -15,6 +19,8 @@ interface UseActionChangesProps {
   editAmount: string;
   editDepositAmount: string;
   editDate: string;
+  editType?: LedgerType.CAPITAL_CHANGE | LedgerType.DEPOSIT_CHANGE | LedgerType.BOTH_CHANGE;
+  editTradeId?: string;
 }
 
 export function useActionChanges({
@@ -22,6 +28,8 @@ export function useActionChanges({
   editAmount,
   editDepositAmount,
   editDate,
+  editType,
+  editTradeId,
 }: UseActionChangesProps) {
   const initialValues = useMemo<InitialActionValues | null>(() => {
     if (!entry) return null;
@@ -31,6 +39,21 @@ export function useActionChanges({
       amount: isInitial ? entry.capital_after.toString() : entry.change_amount.toString(),
       depositAmount: isInitial ? entry.deposit_after.toString() : '',
       date: normalizeDate(entry.created_at),
+      type:
+        entry.type === LedgerType.CAPITAL_CHANGE ||
+        entry.type === LedgerType.DEPOSIT_CHANGE ||
+        entry.type === LedgerType.BOTH_CHANGE
+          ? entry.type
+          : undefined,
+      tradeId: (() => {
+        if (entry.trade_id === null) {
+          return TRADE_ID_OPTION.NONE;
+        }
+        if (entry.trade_id === -1) {
+          return TRADE_ID_OPTION.AT_THE_BEGINNING;
+        }
+        return entry.trade_id.toString();
+      })(),
     };
   }, [entry]);
 
@@ -78,10 +101,24 @@ export function useActionChanges({
       }
     }
 
-    if (editDate.trim() !== initialValues.date.trim()) return true;
+    const normalizedEditDate = normalizeDate(editDate);
+    const normalizedInitialDate = normalizeDate(initialValues.date);
+    if (normalizedEditDate !== normalizedInitialDate) return true;
+
+    if (!isInitial && editType && initialValues.type && editType !== initialValues.type) {
+      return true;
+    }
+
+    if (editTradeId !== undefined) {
+      const editTradeIdNormalized = editTradeId || '';
+      const initialTradeIdNormalized = initialValues.tradeId || '';
+      if (editTradeIdNormalized !== initialTradeIdNormalized) {
+        return true;
+      }
+    }
 
     return false;
-  }, [editAmount, editDepositAmount, editDate, entry, initialValues]);
+  }, [editAmount, editDepositAmount, editDate, editType, editTradeId, entry, initialValues]);
 
   return hasChanges;
 }

@@ -4,8 +4,9 @@ import { db } from '@/shared/api';
 import { LedgerType, TradeStatus, TradeType } from '@/shared/enum';
 import { Balance, TotalStats } from '@/shared/types';
 import { revalidatePath } from 'next/cache';
+import { recalculateInvestorBalances } from '@/entities/trade/api';
 import { FinanceStats } from '../lib';
-import { Investor, LedgerEntry } from '../types';
+import { Investor, LedgerEntry, LedgerEntryWithInvestor } from '../types';
 
 export async function getInvestors(): Promise<Investor[]> {
   const investors = db
@@ -103,7 +104,9 @@ export async function getGlobalTotalStats(): Promise<TotalStats> {
 
 export async function getInvestorLedger(
   id: number
-): Promise<(LedgerEntry & { status?: TradeStatus; trade_type?: TradeType })[]> {
+): Promise<
+  (LedgerEntry & { status?: TradeStatus; trade_type?: TradeType; trade_number?: number })[]
+> {
   const investor = await getInvestorById(id);
 
   const investorType = investor?.type || TradeType.GLOBAL;
@@ -111,7 +114,7 @@ export async function getInvestorLedger(
   const ledger = db
     .prepare(
       `
-    SELECT l.*, t.status, t.type as trade_type, t.profits_json
+    SELECT l.*, t.status, t.type as trade_type, t.profits_json, t.number as trade_number
     FROM ledger l
     LEFT JOIN trades t ON l.trade_id = t.id
     WHERE l.investor_id = ? 
@@ -127,22 +130,26 @@ export async function getInvestorLedger(
     status?: TradeStatus;
     trade_type?: TradeType;
     profits_json?: string | null;
+    trade_number?: number;
   })[];
   return ledger;
 }
 
-export async function getGlobalActionsLog(): Promise<(LedgerEntry & { investor_name: string })[]> {
+export async function getGlobalActionsLog(): Promise<
+  (LedgerEntryWithInvestor & { trade_number?: number })[]
+> {
   const ledger = db
     .prepare(
       `
-    SELECT l.*, i.name as investor_name
+    SELECT l.*, i.name as investor_name, i.type as investor_type, t.number as trade_number
     FROM ledger l
     JOIN investors i ON l.investor_id = i.id
+    LEFT JOIN trades t ON l.trade_id = t.id
     WHERE l.type IN ('${LedgerType.CAPITAL_CHANGE}', '${LedgerType.DEPOSIT_CHANGE}', '${LedgerType.BOTH_CHANGE}')
     ORDER BY l.id DESC
   `
     )
-    .all() as (LedgerEntry & { investor_name: string })[];
+    .all() as (LedgerEntryWithInvestor & { trade_number?: number })[];
   return ledger;
 }
 
@@ -194,19 +201,56 @@ export async function updateInvestorBalance({
   id,
   amount,
   type,
+  tradeId,
 }: {
   id: number;
   amount: number;
   type: LedgerType.CAPITAL_CHANGE | LedgerType.DEPOSIT_CHANGE | LedgerType.BOTH_CHANGE;
+  tradeId?: number | null;
 }) {
-  const lastLedger = db
-    .prepare(
-      'SELECT capital_after, deposit_after FROM ledger WHERE investor_id = ? ORDER BY id DESC LIMIT 1'
-    )
-    .get(id) as Balance;
+  let capitalBefore = 0;
+  let depositBefore = 0;
 
-  let newCapital = lastLedger.capital_after;
-  let newDeposit = lastLedger.deposit_after;
+  if (tradeId !== null && tradeId !== undefined) {
+    const lastLedgerBeforeTrade = db
+      .prepare(
+        `
+        SELECT capital_after, deposit_after 
+        FROM ledger 
+        WHERE investor_id = ? 
+        AND (
+          (trade_id IS NOT NULL AND trade_id < ? AND trade_id > 0)
+          OR (trade_id IS NULL)
+          OR (trade_id = -1 AND ? > 0)
+        )
+        ORDER BY 
+          CASE WHEN capital_before = 0 AND deposit_before = 0 AND trade_id IS NULL THEN 0 ELSE 1 END ASC,
+          CASE WHEN trade_id = -1 THEN 0 ELSE COALESCE(trade_id, 999999) END DESC, 
+          id DESC 
+        LIMIT 1
+      `
+      )
+      .get(id, tradeId, tradeId) as Balance | undefined;
+
+    if (lastLedgerBeforeTrade) {
+      capitalBefore = lastLedgerBeforeTrade.capital_after;
+      depositBefore = lastLedgerBeforeTrade.deposit_after;
+    }
+  } else {
+    const lastLedger = db
+      .prepare(
+        'SELECT capital_after, deposit_after FROM ledger WHERE investor_id = ? ORDER BY id DESC LIMIT 1'
+      )
+      .get(id) as Balance | undefined;
+
+    if (lastLedger) {
+      capitalBefore = lastLedger.capital_after;
+      depositBefore = lastLedger.deposit_after;
+    }
+  }
+
+  let newCapital = capitalBefore;
+  let newDeposit = depositBefore;
 
   if (type === LedgerType.CAPITAL_CHANGE) {
     newCapital += amount;
@@ -219,19 +263,36 @@ export async function updateInvestorBalance({
 
   const insertLedger = db.prepare(`
     INSERT INTO ledger (
-      investor_id, type, change_amount, capital_before, capital_after, deposit_before, deposit_after
-    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      investor_id, trade_id, type, change_amount, capital_before, capital_after, deposit_before, deposit_after
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
-  insertLedger.run(
-    id,
-    type,
-    amount,
-    lastLedger.capital_after,
-    newCapital,
-    lastLedger.deposit_after,
-    newDeposit
-  );
+  const finalTradeId = tradeId !== undefined && tradeId !== null ? tradeId : null;
+  if (finalTradeId === -1) {
+    db.exec('PRAGMA foreign_keys = OFF');
+    insertLedger.run(
+      id,
+      finalTradeId,
+      type,
+      amount,
+      capitalBefore,
+      newCapital,
+      depositBefore,
+      newDeposit
+    );
+    db.exec('PRAGMA foreign_keys = ON');
+  } else {
+    insertLedger.run(
+      id,
+      finalTradeId,
+      type,
+      amount,
+      capitalBefore,
+      newCapital,
+      depositBefore,
+      newDeposit
+    );
+  }
 
   revalidatePath('/');
   revalidatePath('/investors');
@@ -266,76 +327,127 @@ export async function updateLedgerEntry({
   amount,
   depositAmount,
   createdAt,
+  type,
+  tradeId,
 }: {
   id: number;
   investorId: number;
   amount: number;
   depositAmount?: number;
   createdAt: string;
+  type?: LedgerType.CAPITAL_CHANGE | LedgerType.DEPOSIT_CHANGE | LedgerType.BOTH_CHANGE;
+  tradeId?: number | null;
 }) {
-  const transaction = db.transaction(() => {
-    const entry = db.prepare('SELECT * FROM ledger WHERE id = ?').get(id) as LedgerEntry;
-    if (!entry) return;
+  let needsRecalculation = false;
 
-    const isInitial = entry.capital_before === 0 && entry.deposit_before === 0;
-    const effectiveDepositAmount = depositAmount !== undefined ? depositAmount : amount;
+  const entry = db.prepare('SELECT * FROM ledger WHERE id = ?').get(id) as LedgerEntry;
+  if (!entry) return;
 
-    // Special case for BOTH_CHANGE or initial where we might want different diffs
-    // But for now let's stick to the simplest logic:
-    // If it's initial, we just set the new values and update all subsequent
-    if (isInitial) {
+  const isInitial = entry.capital_before === 0 && entry.deposit_before === 0;
+  const effectiveDepositAmount = depositAmount !== undefined ? depositAmount : amount;
+
+  if (isInitial) {
+    const newTradeId = tradeId !== undefined ? tradeId : entry.trade_id;
+    const tradeIdChanged =
+      tradeId !== undefined &&
+      (tradeId !== entry.trade_id || (tradeId === null && entry.trade_id !== null));
+
+    if (newTradeId === -1) {
+      db.exec('PRAGMA foreign_keys = OFF');
       db.prepare(
-        'UPDATE ledger SET capital_after = ?, deposit_after = ?, created_at = ? WHERE id = ?'
-      ).run(amount, effectiveDepositAmount, createdAt, id);
-
-      const diffCap = amount - entry.capital_after;
-      const diffDep = effectiveDepositAmount - entry.deposit_after;
-
-      if (diffCap !== 0 || diffDep !== 0) {
-        db.prepare(
-          `
-          UPDATE ledger 
-          SET 
-            capital_before = capital_before + ?, 
-            capital_after = capital_after + ?,
-            deposit_before = deposit_before + ?,
-            deposit_after = deposit_after + ?
-          WHERE investor_id = ? AND id > ?
-        `
-        ).run(diffCap, diffCap, diffDep, diffDep, investorId, id);
-      }
+        'UPDATE ledger SET capital_after = ?, deposit_after = ?, created_at = ?, trade_id = ? WHERE id = ?'
+      ).run(amount, effectiveDepositAmount, createdAt, newTradeId, id);
+      db.exec('PRAGMA foreign_keys = ON');
     } else {
-      const diff = amount - entry.change_amount;
-
-      if (entry.type === LedgerType.CAPITAL_CHANGE) {
-        db.prepare(
-          'UPDATE ledger SET change_amount = ?, capital_after = capital_after + ?, created_at = ? WHERE id = ?'
-        ).run(amount, diff, createdAt, id);
-
-        db.prepare(
-          'UPDATE ledger SET capital_before = capital_before + ?, capital_after = capital_after + ? WHERE investor_id = ? AND id > ?'
-        ).run(diff, diff, investorId, id);
-      } else if (entry.type === LedgerType.DEPOSIT_CHANGE) {
-        db.prepare(
-          'UPDATE ledger SET change_amount = ?, deposit_after = deposit_after + ?, created_at = ? WHERE id = ?'
-        ).run(amount, diff, createdAt, id);
-
-        db.prepare(
-          'UPDATE ledger SET deposit_before = deposit_before + ?, deposit_after = deposit_after + ? WHERE investor_id = ? AND id > ?'
-        ).run(diff, diff, investorId, id);
-      } else if (entry.type === LedgerType.BOTH_CHANGE) {
-        db.prepare(
-          'UPDATE ledger SET change_amount = ?, capital_after = capital_after + ?, deposit_after = deposit_after + ?, created_at = ? WHERE id = ?'
-        ).run(amount, diff, diff, createdAt, id);
-
-        db.prepare(
-          'UPDATE ledger SET capital_before = capital_before + ?, capital_after = capital_after + ?, deposit_before = deposit_before + ?, deposit_after = deposit_after + ? WHERE investor_id = ? AND id > ?'
-        ).run(diff, diff, diff, diff, investorId, id);
-      }
+      db.prepare(
+        'UPDATE ledger SET capital_after = ?, deposit_after = ?, created_at = ?, trade_id = ? WHERE id = ?'
+      ).run(amount, effectiveDepositAmount, createdAt, newTradeId, id);
     }
-  });
 
-  transaction();
+    const diffCap = amount - entry.capital_after;
+    const diffDep = effectiveDepositAmount - entry.deposit_after;
+
+    if (diffCap !== 0 || diffDep !== 0 || tradeIdChanged) {
+      needsRecalculation = true;
+    }
+
+    if (diffCap !== 0 || diffDep !== 0) {
+      db.prepare(
+        `
+        UPDATE ledger 
+        SET 
+          capital_before = capital_before + ?, 
+          capital_after = capital_after + ?,
+          deposit_before = deposit_before + ?,
+          deposit_after = deposit_after + ?
+        WHERE investor_id = ? AND id > ?
+      `
+      ).run(diffCap, diffCap, diffDep, diffDep, investorId, id);
+    }
+  } else {
+    const newType = type || entry.type;
+    const newTradeId = tradeId !== undefined ? tradeId : entry.trade_id;
+    const typeChanged = type !== undefined && type !== entry.type;
+
+    let tradeIdChanged = false;
+
+    if (tradeId !== undefined) {
+      tradeIdChanged = tradeId !== entry.trade_id;
+    }
+
+    if (typeChanged || tradeIdChanged) {
+      if (newTradeId === -1) {
+        db.exec('PRAGMA foreign_keys = OFF');
+        try {
+          db.prepare(
+            'UPDATE ledger SET type = ?, trade_id = ?, change_amount = ?, created_at = ? WHERE id = ?'
+          ).run(newType, newTradeId, amount, createdAt, id);
+        } finally {
+          db.exec('PRAGMA foreign_keys = ON');
+        }
+      } else {
+        db.prepare(
+          'UPDATE ledger SET type = ?, trade_id = ?, change_amount = ?, created_at = ? WHERE id = ?'
+        ).run(newType, newTradeId, amount, createdAt, id);
+      }
+      needsRecalculation = true;
+    } else {
+      const transaction = db.transaction(() => {
+        const diff = amount - entry.change_amount;
+
+        if (entry.type === LedgerType.CAPITAL_CHANGE) {
+          db.prepare(
+            'UPDATE ledger SET change_amount = ?, capital_after = capital_after + ?, created_at = ? WHERE id = ?'
+          ).run(amount, diff, createdAt, id);
+
+          db.prepare(
+            'UPDATE ledger SET capital_before = capital_before + ?, capital_after = capital_after + ? WHERE investor_id = ? AND id > ?'
+          ).run(diff, diff, investorId, id);
+        } else if (entry.type === LedgerType.DEPOSIT_CHANGE) {
+          db.prepare(
+            'UPDATE ledger SET change_amount = ?, deposit_after = deposit_after + ?, created_at = ? WHERE id = ?'
+          ).run(amount, diff, createdAt, id);
+
+          db.prepare(
+            'UPDATE ledger SET deposit_before = deposit_before + ?, deposit_after = deposit_after + ? WHERE investor_id = ? AND id > ?'
+          ).run(diff, diff, investorId, id);
+        } else if (entry.type === LedgerType.BOTH_CHANGE) {
+          db.prepare(
+            'UPDATE ledger SET change_amount = ?, capital_after = capital_after + ?, deposit_after = deposit_after + ?, created_at = ? WHERE id = ?'
+          ).run(amount, diff, diff, createdAt, id);
+
+          db.prepare(
+            'UPDATE ledger SET capital_before = capital_before + ?, capital_after = capital_after + ?, deposit_before = deposit_before + ?, deposit_after = deposit_after + ? WHERE investor_id = ? AND id > ?'
+          ).run(diff, diff, diff, diff, investorId, id);
+        }
+      });
+      transaction();
+    }
+  }
+
+  if (needsRecalculation) {
+    await recalculateInvestorBalances(investorId);
+  }
 
   revalidatePath('/');
   revalidatePath('/investors');
@@ -432,4 +544,33 @@ export async function getGlobalLedger(): Promise<LedgerEntry[]> {
     )
     .all(TradeType.GLOBAL) as LedgerEntry[];
   return ledger;
+}
+
+export async function getInvestorTradesForSelection(
+  investorId: number
+): Promise<{ id: number; number: number }[]> {
+  const investor = await getInvestorById(investorId);
+  if (!investor) return [];
+
+  const tradeType = investor.type === TradeType.PRIVATE ? TradeType.PRIVATE : TradeType.GLOBAL;
+
+  const trades = db
+    .prepare(
+      `
+    SELECT DISTINCT t.id, t.number
+    FROM trades t
+    LEFT JOIN ledger l ON l.trade_id = t.id AND l.investor_id = ?
+    WHERE t.type = ? AND (l.id IS NOT NULL OR ? = 1)
+    ORDER BY t.id ASC
+  `
+    )
+    .all(investorId, tradeType, investor.type === TradeType.GLOBAL ? 1 : 0) as {
+    id: number;
+    number: number;
+  }[];
+
+  return trades.map((t) => ({
+    id: t.id,
+    number: t.number,
+  }));
 }

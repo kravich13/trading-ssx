@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { memo, useCallback } from 'react';
 
 interface GlobalActionRowProps {
-  row: LedgerEntryWithInvestor;
+  row: LedgerEntryWithInvestor & { trade_number?: number };
   rowNumber: number;
   canDelete: boolean;
   formatCurrency: (value: number) => string;
@@ -70,12 +70,28 @@ export const GlobalActionRow = memo(
         </TableCell>
         <TableCell>
           <Chip
+            label={row.investor_type}
+            size="small"
+            variant="outlined"
+            color={row.investor_type === 'GLOBAL' ? 'primary' : 'secondary'}
+            sx={{ fontSize: '0.65rem', height: 20, fontWeight: 'bold' }}
+          />
+        </TableCell>
+        <TableCell>
+          <Chip
             label={chipLabel}
             size="small"
             color={chipColor}
             variant="outlined"
             sx={{ fontSize: '0.7rem', fontWeight: 'bold' }}
           />
+        </TableCell>
+        <TableCell align="center" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
+          {row.trade_id === -1
+            ? 'At the beginning'
+            : row.trade_id && row.trade_id > 0
+              ? `№ ${row.trade_number || row.trade_id}`
+              : '-'}
         </TableCell>
         <TableCell align="right" sx={{ color, fontWeight: 'medium' }}>
           {isInitial ? (

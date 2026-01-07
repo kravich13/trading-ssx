@@ -28,6 +28,7 @@ export type LedgerEntry = {
 
 export interface LedgerEntryWithInvestor extends LedgerEntry {
   investor_name: string;
+  investor_type: TradeType;
 }
 
 export interface MonthlyDepositStat {

@@ -1,22 +1,15 @@
 'use client';
 
-import { deleteLedgerEntry, updateLedgerEntry } from '@/entities/investor/api';
+import { deleteLedgerEntry } from '@/entities/investor/api';
 import { LedgerEntry } from '@/entities/investor/types';
-import { useActionChanges } from '@/entities/investor/hooks';
 import { LedgerType } from '@/shared/enum';
 import { useNotification } from '@/shared/lib/hooks';
 import { ConfirmModal } from '@/shared/ui/modals';
-import { normalizeDate } from '@/shared/utils';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import {
   Box,
-  Button,
   Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   IconButton,
   Paper,
   Table,
@@ -25,11 +18,11 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TextField,
   Typography,
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { memo, useCallback, useMemo, useState } from 'react';
+import { EditActionModal } from './EditActionModal';
 
 interface InvestorActionsTableProps {
   ledger: LedgerEntry[];
@@ -39,13 +32,11 @@ interface InvestorActionsTableProps {
 export const InvestorActionsTable = memo(({ ledger, investorId }: InvestorActionsTableProps) => {
   const { showNotification } = useNotification();
   const router = useRouter();
+
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<LedgerEntry | null>(null);
   const [selectedRowNumber, setSelectedRowNumber] = useState<number | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editAmount, setEditAmount] = useState('');
-  const [editDepositAmount, setEditDepositAmount] = useState('');
-  const [editDate, setEditDate] = useState('');
 
   const actionsOnly = useMemo(
     () =>
@@ -89,68 +80,22 @@ export const InvestorActionsTable = memo(({ ledger, investorId }: InvestorAction
   }, [selectedEntry, investorId, showNotification, router]);
 
   const handleEditClick = useCallback((entry: LedgerEntry, rowNumber: number) => {
-    const isInitial = entry.capital_before === 0 && entry.deposit_before === 0;
     setSelectedEntry(entry);
     setSelectedRowNumber(rowNumber);
-    setEditAmount(isInitial ? entry.capital_after.toString() : entry.change_amount.toString());
-    setEditDepositAmount(isInitial ? entry.deposit_after.toString() : '');
-    setEditDate(normalizeDate(entry.created_at));
     setEditModalOpen(true);
   }, []);
 
-  const handleConfirmEdit = useCallback(async () => {
-    if (selectedEntry && editAmount !== '') {
-      try {
-        const isInitial = selectedEntry.capital_before === 0 && selectedEntry.deposit_before === 0;
-        await updateLedgerEntry({
-          id: selectedEntry.id,
-          investorId,
-          amount: parseFloat(editAmount),
-          depositAmount: isInitial ? parseFloat(editDepositAmount) : undefined,
-          createdAt: editDate + ' 00:00:00',
-        });
-        router.refresh();
-        showNotification('Action updated successfully');
-        setEditModalOpen(false);
-        setSelectedEntry(null);
-      } catch (error) {
-        console.error('Failed to update entry:', error);
-        showNotification('Failed to update entry', 'error');
-      }
-    }
-  }, [
-    selectedEntry,
-    editAmount,
-    editDepositAmount,
-    editDate,
-    investorId,
-    showNotification,
-    router,
-  ]);
+  const handleCloseEditModal = useCallback(() => {
+    setEditModalOpen(false);
+    setSelectedEntry(null);
+  }, []);
 
   const handleCloseDeleteModal = useCallback(() => {
     setDeleteModalOpen(false);
   }, []);
 
-  const handleCloseEditModal = useCallback(() => {
-    setEditModalOpen(false);
-  }, []);
-
-  const hasChanges = useActionChanges({
-    entry: selectedEntry,
-    editAmount,
-    editDepositAmount,
-    editDate,
-  });
-
-  const handleDialogClose = useCallback((_event: object, reason?: string) => {
-    if (reason !== 'backdropClick') {
-      setEditModalOpen(false);
-    }
-  }, []);
-
   const renderActionRow = useCallback(
-    (row: LedgerEntry, index: number) => {
+    (row: LedgerEntry & { trade_number?: number }, index: number) => {
       const isInitial = row.capital_before === 0 && row.deposit_before === 0;
       const color = isInitial
         ? 'text.primary'
@@ -194,6 +139,13 @@ export const InvestorActionsTable = memo(({ ledger, investorId }: InvestorAction
               variant="outlined"
               sx={{ fontSize: '0.7rem', fontWeight: 'bold' }}
             />
+          </TableCell>
+          <TableCell align="center" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
+            {row.trade_id === -1
+              ? 'At the beginning'
+              : row.trade_id && row.trade_id > 0
+                ? `№ ${row.trade_number || row.trade_id}`
+                : '-'}
           </TableCell>
           <TableCell align="right" sx={{ color, fontWeight: 'medium' }}>
             {isInitial ? (
@@ -248,6 +200,12 @@ export const InvestorActionsTable = memo(({ ledger, investorId }: InvestorAction
                 Date
               </TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Type</TableCell>
+              <TableCell
+                align="center"
+                sx={{ fontWeight: 'bold', width: '120px', whiteSpace: 'nowrap' }}
+              >
+                After Trade
+              </TableCell>
               <TableCell align="right" sx={{ fontWeight: 'bold' }}>
                 Change Amount
               </TableCell>
@@ -265,7 +223,7 @@ export const InvestorActionsTable = memo(({ ledger, investorId }: InvestorAction
           <TableBody>
             {actionsOnly.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
+                <TableCell colSpan={8} align="center" sx={{ py: 3 }}>
                   <Typography variant="body2" color="text.secondary">
                     No balance actions found.
                   </Typography>
@@ -288,80 +246,13 @@ export const InvestorActionsTable = memo(({ ledger, investorId }: InvestorAction
         confirmText="Delete"
       />
 
-      <Dialog
+      <EditActionModal
         open={editModalOpen}
-        onClose={handleDialogClose}
-        slotProps={{
-          paper: {
-            sx: {
-              width: '100%',
-              maxWidth: '360px',
-            },
-          },
-        }}
-      >
-        <DialogTitle>Edit Action (№ {selectedRowNumber})</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField
-              label={
-                selectedEntry &&
-                selectedEntry.capital_before === 0 &&
-                selectedEntry.deposit_before === 0
-                  ? 'Initial Capital'
-                  : 'Change Amount'
-              }
-              type="number"
-              fullWidth
-              value={editAmount}
-              onChange={(e) => setEditAmount(e.target.value)}
-              variant="outlined"
-              size="small"
-              autoFocus
-            />
-            {selectedEntry &&
-              selectedEntry.capital_before === 0 &&
-              selectedEntry.deposit_before === 0 && (
-                <TextField
-                  label="Initial Deposit"
-                  type="number"
-                  fullWidth
-                  value={editDepositAmount}
-                  onChange={(e) => setEditDepositAmount(e.target.value)}
-                  variant="outlined"
-                  size="small"
-                />
-              )}
-            <TextField
-              label="Date"
-              type="date"
-              fullWidth
-              value={editDate}
-              onChange={(e) => setEditDate(e.target.value)}
-              variant="outlined"
-              size="small"
-              slotProps={{
-                inputLabel: {
-                  shrink: true,
-                },
-              }}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={handleCloseEditModal} color="inherit">
-            Cancel
-          </Button>
-          <Button
-            onClick={handleConfirmEdit}
-            variant="contained"
-            color="primary"
-            disabled={!hasChanges}
-          >
-            Save
-          </Button>
-        </DialogActions>
-      </Dialog>
+        entry={selectedEntry}
+        rowNumber={selectedRowNumber}
+        investorId={investorId}
+        onClose={handleCloseEditModal}
+      />
     </>
   );
 });

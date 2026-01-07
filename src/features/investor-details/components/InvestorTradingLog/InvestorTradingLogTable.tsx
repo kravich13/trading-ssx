@@ -200,8 +200,8 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
 
       <ConfirmModal
         open={deleteModalOpen}
-        title={`Delete Trade № ${selectedTrade?.trade_id || selectedTrade?.id}`}
-        description={`Are you sure you want to delete trade № ${selectedTrade?.trade_id || selectedTrade?.id} (${selectedTrade?.ticker})? This will also remove associated ledger entries. This action cannot be undone.`}
+        title={`Delete Trade № ${selectedTrade?.trade_number || selectedTrade?.trade_id || selectedTrade?.id}`}
+        description={`Are you sure you want to delete trade № ${selectedTrade?.trade_number || selectedTrade?.trade_id || selectedTrade?.id} (${selectedTrade?.ticker})? This will also remove associated ledger entries. This action cannot be undone.`}
         onConfirm={handleConfirmDelete}
         onClose={handleCloseDeleteModal}
         color="error"
@@ -210,7 +210,7 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
 
       <Dialog open={editModalOpen} onClose={handleDialogClose} fullWidth maxWidth="xs">
         <DialogTitle sx={{ fontWeight: 'bold' }}>
-          Edit Trade № {selectedTrade?.trade_id || selectedTrade?.id}
+          Edit Trade № {selectedTrade?.trade_number || selectedTrade?.trade_id || selectedTrade?.id}
         </DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 3 }}>

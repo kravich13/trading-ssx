@@ -19,6 +19,7 @@ import { memo, useCallback } from 'react';
 
 interface TradeRowProps {
   trade: Trade;
+  showInvestor?: boolean;
   formatCurrency: (value: number) => string;
   onEdit: (trade: Trade) => void;
   onDelete: (trade: Trade) => void;
@@ -26,7 +27,7 @@ interface TradeRowProps {
 }
 
 export const TradeRow: React.FC<TradeRowProps> = memo(
-  ({ trade, formatCurrency, onEdit, onDelete, onStatusChange }) => {
+  ({ trade, showInvestor, formatCurrency, onEdit, onDelete, onStatusChange }) => {
     const totalPlUsd = trade.total_pl_usd;
 
     const plPercent = calculatePlPercentFromAfter(trade.total_capital_after, totalPlUsd);
@@ -55,7 +56,7 @@ export const TradeRow: React.FC<TradeRowProps> = memo(
 
     return (
       <TableRow hover>
-        <TableCell>{trade.id}</TableCell>
+        <TableCell>{trade.number}</TableCell>
         <TableCell align="right" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
           {formatDate(trade.closed_date)}
         </TableCell>
@@ -68,6 +69,11 @@ export const TradeRow: React.FC<TradeRowProps> = memo(
             sx={{ fontSize: '0.65rem', height: 20, fontWeight: 'bold' }}
           />
         </TableCell>
+        {showInvestor && (
+          <TableCell sx={{ fontWeight: 'medium', color: 'text.secondary' }}>
+            {trade.investor_name || '-'}
+          </TableCell>
+        )}
         <TableCell sx={{ fontWeight: 'medium' }}>{trade.ticker}</TableCell>
         <TableCell>
           <Select

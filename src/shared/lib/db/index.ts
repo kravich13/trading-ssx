@@ -5,6 +5,8 @@ const DB_PATH = path.join(process.cwd(), 'database', 'trading.db');
 
 export const db = new Database(DB_PATH);
 
+db.pragma('foreign_keys = ON');
+
 db.exec(`
   CREATE TABLE IF NOT EXISTS investors (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

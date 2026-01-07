@@ -2,6 +2,7 @@
 
 import { Investor } from '@/entities/investor/types';
 import { LedgerType } from '@/shared/enum';
+import { TRADE_ID_OPTION } from '@/shared/consts';
 import { useNotification } from '@/shared/lib/hooks';
 import {
   Box,
@@ -18,8 +19,8 @@ import {
   Typography,
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
-import { memo, useCallback, useState } from 'react';
-import { updateBalanceAction } from '../api';
+import { memo, useCallback, useEffect, useState } from 'react';
+import { getTradesForSelection, updateBalanceAction } from '../api';
 
 interface UpdateInvestorBalanceModalProps {
   open: boolean;
@@ -36,8 +37,39 @@ export const UpdateInvestorBalanceModal = memo(
     const [type, setType] = useState<
       LedgerType.CAPITAL_CHANGE | LedgerType.DEPOSIT_CHANGE | LedgerType.BOTH_CHANGE
     >(LedgerType.CAPITAL_CHANGE);
+    const [tradeId, setTradeId] = useState<string>('');
+    const [trades, setTrades] = useState<{ id: number; number: number }[]>([]);
+    const [loadingTrades, setLoadingTrades] = useState(false);
 
     const isFormValid = amount !== '' && amount !== '0';
+
+    useEffect(() => {
+      if (!open) return;
+
+      let cancelled = false;
+
+      const loadTrades = async () => {
+        setLoadingTrades(true);
+        try {
+          const data = await getTradesForSelection(investor.id);
+          if (!cancelled) {
+            setTrades(data);
+            setLoadingTrades(false);
+          }
+        } catch (error) {
+          console.error('Failed to load trades:', error);
+          if (!cancelled) {
+            setLoadingTrades(false);
+          }
+        }
+      };
+
+      loadTrades();
+
+      return () => {
+        cancelled = true;
+      };
+    }, [open, investor.id]);
 
     const handleIntegerKeyDown = useCallback((e: React.KeyboardEvent) => {
       if (e.key === '.' || e.key === ',') {
@@ -107,6 +139,36 @@ export const UpdateInvestorBalanceModal = memo(
                   <MenuItem value={LedgerType.BOTH_CHANGE}>Both (Deposit & Capital)</MenuItem>
                   <MenuItem value={LedgerType.CAPITAL_CHANGE}>Capital Change</MenuItem>
                   <MenuItem value={LedgerType.DEPOSIT_CHANGE}>Deposit Change</MenuItem>
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth size="small">
+                <InputLabel id="trade-id-label">After Trade</InputLabel>
+                <Select
+                  name="tradeId"
+                  labelId="trade-id-label"
+                  label="After Trade"
+                  value={tradeId || ''}
+                  onChange={(e) => setTradeId(e.target.value)}
+                  disabled={loadingTrades}
+                  displayEmpty
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        maxHeight: 300,
+                      },
+                    },
+                  }}
+                >
+                  <MenuItem value={TRADE_ID_OPTION.NONE}>
+                    <em>None</em>
+                  </MenuItem>
+                  <MenuItem value={TRADE_ID_OPTION.AT_THE_BEGINNING}>At the beginning</MenuItem>
+                  {trades.map((trade) => (
+                    <MenuItem key={trade.id} value={trade.id.toString()}>
+                      Trade № {trade.number}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
 

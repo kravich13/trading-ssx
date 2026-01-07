@@ -14,19 +14,21 @@ export async function getAllTrades(type?: TradeType): Promise<Trade[]> {
   const query = `
     SELECT 
       t.*,
+      i.name as investor_name,
       COALESCE(SUM(l_filtered.change_amount), 0) as total_pl_usd,
       COALESCE(MAX(l_all.total_cap), 0) as total_capital_after,
       COALESCE(MAX(l_all.total_dep), 0) as total_deposit_after
     FROM trades t
+    LEFT JOIN investors i ON t.investor_id = i.id
     LEFT JOIN (
       SELECT l.*
       FROM ledger l
-      JOIN investors i ON l.investor_id = i.id
+      JOIN investors i2 ON l.investor_id = i2.id
       JOIN trades t2 ON l.trade_id = t2.id
       WHERE l.type = 'TRADE'
         AND (
-          (t2.type = 'GLOBAL' AND i.type = 'GLOBAL')
-          OR (t2.type = 'PRIVATE' AND i.type = 'PRIVATE')
+          (t2.type = 'GLOBAL' AND i2.type = 'GLOBAL')
+          OR (t2.type = 'PRIVATE' AND i2.type = 'PRIVATE')
         )
     ) l_filtered ON l_filtered.trade_id = t.id
     LEFT JOIN (
@@ -36,11 +38,11 @@ export async function getAllTrades(type?: TradeType): Promise<Trade[]> {
         SUM(l.deposit_after) as total_dep
       FROM ledger l
       JOIN trades t2 ON l.trade_id = t2.id
-      JOIN investors i ON l.investor_id = i.id
+      JOIN investors i2 ON l.investor_id = i2.id
       WHERE l.type = 'TRADE'
         AND (
-          (t2.type = 'GLOBAL' AND i.type = 'GLOBAL')
-          OR (t2.type = 'PRIVATE' AND i.type = 'PRIVATE')
+          (t2.type = 'GLOBAL' AND i2.type = 'GLOBAL')
+          OR (t2.type = 'PRIVATE' AND i2.type = 'PRIVATE')
         )
       GROUP BY l.trade_id
     ) l_all ON l_all.trade_id = t.id
@@ -108,9 +110,23 @@ export async function addTrade({
     const transaction = db.transaction(() => {
       const totalPlUsd = profits.reduce((sum, p) => sum + p, 0);
 
+      // Calculate the next number for this type/investor
+      const lastTrade =
+        type === TradeType.PRIVATE && investorId
+          ? (db
+              .prepare(
+                'SELECT MAX(number) as lastNum FROM trades WHERE type = ? AND investor_id = ?'
+              )
+              .get(type, investorId) as { lastNum: number | null })
+          : (db
+              .prepare('SELECT MAX(number) as lastNum FROM trades WHERE type = ?')
+              .get(TradeType.GLOBAL) as { lastNum: number | null });
+
+      const nextNumber = (lastTrade?.lastNum || 0) + 1;
+
       const info = db
         .prepare(
-          'INSERT INTO trades (ticker, status, default_risk_percent, profits_json, closed_date, type, investor_id) VALUES (?, ?, ?, ?, ?, ?, ?)'
+          'INSERT INTO trades (ticker, status, default_risk_percent, profits_json, closed_date, type, investor_id, number) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
         )
         .run(
           ticker,
@@ -121,7 +137,8 @@ export async function addTrade({
             ? closedDate || new Date().toISOString().split('T')[0]
             : null,
           type,
-          investorId
+          investorId,
+          nextNumber
         );
 
       const tradeId = info.lastInsertRowid as number;
@@ -248,6 +265,8 @@ export async function updateTrade({
   profits?: number[];
   risk?: number | null;
 }) {
+  const affectedInvestorIds = new Set<number>();
+
   const transaction = db.transaction(() => {
     const updates: string[] = ['closed_date = ?', 'status = ?'];
     const params: (string | number | null)[] = [closedDate, status];
@@ -325,8 +344,6 @@ export async function updateTrade({
       if (ledgerEntries.length > 0) {
         const currentTotalPlUsd = ledgerEntries.reduce((sum, l) => sum + l.change_amount, 0);
 
-        const affectedInvestorIds = new Set<number>();
-
         if (currentTotalPlUsd !== 0) {
           // Proportional update
           for (const entry of ledgerEntries) {
@@ -352,11 +369,6 @@ export async function updateTrade({
               affectedInvestorIds.add(entry.investor_id);
             }
           }
-        }
-
-        // Recalculate all affected investors
-        for (const investorId of affectedInvestorIds) {
-          recalculateInvestorBalances(investorId);
         }
       } else if (newTotalPlUsd !== 0) {
         const trade = db.prepare('SELECT type, investor_id FROM trades WHERE id = ?').get(id) as
@@ -424,13 +436,18 @@ export async function updateTrade({
 
   transaction();
 
+  // Recalculate all affected investors after transaction
+  for (const investorId of affectedInvestorIds) {
+    await recalculateInvestorBalances(investorId);
+  }
+
   revalidatePath('/');
   revalidatePath('/trades');
   revalidatePath('/investors');
   revalidatePath('/total');
 }
 
-function recalculateInvestorBalances(investorId: number) {
+export async function recalculateInvestorBalances(investorId: number) {
   const investor = db.prepare('SELECT type FROM investors WHERE id = ?').get(investorId) as
     | { type: TradeType }
     | undefined;
@@ -449,7 +466,23 @@ function recalculateInvestorBalances(investorId: number) {
         OR t.type IS NULL
         OR t.type = ?
       )
-      ORDER BY l.id ASC
+      ORDER BY 
+        CASE 
+          WHEN l.capital_before = 0 AND l.deposit_before = 0 AND l.trade_id IS NULL THEN 0
+          WHEN l.trade_id = -1 THEN 1
+          ELSE 2
+        END ASC,
+        CASE 
+          WHEN l.trade_id = -1 THEN 0
+          WHEN l.trade_id IS NULL THEN 0
+          ELSE l.trade_id
+        END ASC,
+        CASE 
+          WHEN l.type = 'TRADE' THEN 0
+          WHEN l.capital_before = 0 AND l.deposit_before = 0 AND l.trade_id IS NOT NULL AND l.trade_id != -1 AND l.trade_id != 0 THEN 1
+          ELSE 0
+        END ASC,
+        l.id ASC
     `
     )
     .all(investorId, investorType) as {

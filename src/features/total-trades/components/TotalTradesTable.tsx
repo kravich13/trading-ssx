@@ -107,18 +107,24 @@ export const TotalTradesTable = memo(({ trades }: TotalTradesTableProps) => {
     router.refresh();
   }, [router]);
 
+  const showInvestorColumn = useMemo(
+    () => filterType === 'ALL' || filterType === TradeType.PRIVATE,
+    [filterType]
+  );
+
   const renderTradeRow = useCallback(
     (trade: Trade) => (
       <TradeRow
         key={trade.id}
         trade={trade}
+        showInvestor={showInvestorColumn}
         formatCurrency={formatCurrency}
         onEdit={handleEditClick}
         onDelete={handleDeleteClick}
         onStatusChange={handleStatusChange}
       />
     ),
-    [formatCurrency, handleEditClick, handleDeleteClick, handleStatusChange]
+    [formatCurrency, handleEditClick, handleDeleteClick, handleStatusChange, showInvestorColumn]
   );
 
   return (
@@ -164,6 +170,7 @@ export const TotalTradesTable = memo(({ trades }: TotalTradesTableProps) => {
                   </Select>
                 </FormControl>
               </TableCell>
+              {showInvestorColumn && <TableCell sx={{ fontWeight: 'bold' }}>Investor</TableCell>}
               <TableCell sx={{ fontWeight: 'bold' }}>Ticker</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
               <TableCell align="right" sx={{ fontWeight: 'bold' }}>

@@ -2,6 +2,7 @@ import { TradeStatus, TradeType } from '@/shared/enum';
 
 export type Trade = {
   id: number;
+  number: number;
   ticker: string;
   pl_percent?: number;
   default_risk_percent: number | null;
@@ -12,6 +13,7 @@ export type Trade = {
   status: TradeStatus;
   type: TradeType;
   investor_id: number | null;
+  investor_name?: string;
   created_at: string;
   profits: number[];
 };
