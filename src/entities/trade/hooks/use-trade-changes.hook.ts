@@ -6,6 +6,7 @@ import { normalizeDate } from '@/shared/utils';
 import { useEffect, useMemo } from 'react';
 
 interface InitialValues {
+  ticker: string;
   date: string;
   risk: string;
   profits: (number | string)[];
@@ -13,9 +14,11 @@ interface InitialValues {
 
 interface UseTradeChangesProps {
   trade: Trade | null;
+  editTicker: string;
   editDate: string;
   editRisk: string;
   editProfits: (number | string)[];
+  setEditTicker: (ticker: string) => void;
   setEditDate: (date: string) => void;
   setEditRisk: (risk: string) => void;
   setEditProfits: (profits: (number | string)[]) => void;
@@ -23,9 +26,11 @@ interface UseTradeChangesProps {
 
 export function useTradeChanges({
   trade,
+  editTicker,
   editDate,
   editRisk,
   editProfits,
+  setEditTicker,
   setEditDate,
   setEditRisk,
   setEditProfits,
@@ -33,11 +38,13 @@ export function useTradeChanges({
   const initialValues = useMemo<InitialValues | null>(() => {
     if (!trade) return null;
 
+    const ticker = trade.ticker || '';
     const normalizedDate = normalizeDate(trade.closed_date);
     const riskStr = trade.default_risk_percent != null ? trade.default_risk_percent.toString() : '';
     const profits = getInitialTradeProfits(trade);
 
     return {
+      ticker,
       date: normalizedDate,
       risk: riskStr,
       profits,
@@ -46,16 +53,19 @@ export function useTradeChanges({
 
   useEffect(() => {
     if (initialValues) {
+      setEditTicker(initialValues.ticker);
       setEditDate(initialValues.date);
       setEditRisk(initialValues.risk);
       setEditProfits(initialValues.profits);
     }
-  }, [initialValues, setEditDate, setEditRisk, setEditProfits]);
+  }, [initialValues, setEditTicker, setEditDate, setEditRisk, setEditProfits]);
 
   const hasChanges = useMemo(() => {
     if (!trade || !initialValues) return false;
 
     const initial = initialValues;
+
+    if (editTicker.trim().toUpperCase() !== initial.ticker.trim().toUpperCase()) return true;
 
     if (editDate.trim() !== initial.date.trim()) return true;
 
@@ -93,7 +103,7 @@ export function useTradeChanges({
     }
 
     return false;
-  }, [editDate, editRisk, editProfits, trade, initialValues]);
+  }, [editTicker, editDate, editRisk, editProfits, trade, initialValues]);
 
   return hasChanges;
 }

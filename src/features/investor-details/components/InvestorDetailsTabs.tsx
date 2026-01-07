@@ -7,7 +7,7 @@ import { FinanceStatsDashboard, TradeStatsDashboard } from '@/widgets/trade-stat
 import { Box, Tab, Tabs } from '@mui/material';
 import { useCallback, useState } from 'react';
 import { InvestorPeriodicStats } from './InvestorPeriodicStats';
-import { InvestorTradingLogTable } from './InvestorTradingLogTable';
+import { InvestorTradingLogTable } from './InvestorTradingLog';
 
 interface InvestorDetailsTabsProps {
   investorName: string;

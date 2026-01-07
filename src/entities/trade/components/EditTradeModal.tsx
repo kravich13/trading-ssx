@@ -32,7 +32,9 @@ interface EditTradeModalProps {
 
 export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTradeModalProps) => {
   const { showNotification } = useNotification();
+
   const [loading, setLoading] = useState(false);
+  const [editTicker, setEditTicker] = useState(() => trade?.ticker || '');
   const [editDate, setEditDate] = useState(() => (trade ? normalizeDate(trade.closed_date) : ''));
   const [editRisk, setEditRisk] = useState(() =>
     trade?.default_risk_percent != null ? trade.default_risk_percent.toString() : ''
@@ -42,9 +44,11 @@ export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTra
 
   const hasChanges = useTradeChanges({
     trade,
+    editTicker,
     editDate,
     editRisk,
     editProfits,
+    setEditTicker,
     setEditDate,
     setEditRisk,
     setEditProfits,
@@ -89,6 +93,7 @@ export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTra
 
         await updateTrade({
           id: trade.id,
+          ticker: editTicker.toUpperCase().trim(),
           closedDate: editDate,
           status: trade.status || TradeStatus.CLOSED,
           profits: profitsToSave,
@@ -105,7 +110,7 @@ export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTra
         setLoading(false);
       }
     }
-  }, [trade, editProfits, editDate, editRisk, onSuccess, onClose, showNotification]);
+  }, [trade, editTicker, editProfits, editDate, editRisk, onSuccess, onClose, showNotification]);
 
   const formatCurrency = useCallback(
     (value: number) =>
@@ -165,6 +170,17 @@ export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTra
       <DialogTitle sx={{ fontWeight: 'bold' }}>Edit Trade № {trade.id}</DialogTitle>
       <DialogContent sx={{ minHeight: '280px', maxHeight: '60svh', overflowY: 'auto' }}>
         <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <TextField
+            label="Ticker"
+            fullWidth
+            value={editTicker}
+            onChange={(e) => setEditTicker(e.target.value)}
+            variant="outlined"
+            size="small"
+            disabled={loading}
+            placeholder="BTC/USDT"
+          />
+
           <TextField
             label="Closed Date"
             type="date"

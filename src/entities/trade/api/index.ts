@@ -235,12 +235,14 @@ export async function addTrade({
 
 export async function updateTrade({
   id,
+  ticker,
   closedDate,
   status,
   profits,
   risk,
 }: {
   id: number;
+  ticker?: string;
   closedDate: string;
   status: TradeStatus;
   profits?: number[];
@@ -249,6 +251,11 @@ export async function updateTrade({
   const transaction = db.transaction(() => {
     const updates: string[] = ['closed_date = ?', 'status = ?'];
     const params: (string | number | null)[] = [closedDate, status];
+
+    if (ticker !== undefined) {
+      updates.push('ticker = ?');
+      params.push(ticker);
+    }
 
     if (profits !== undefined) {
       updates.push('profits_json = ?');
@@ -265,6 +272,11 @@ export async function updateTrade({
 
     const ledgerUpdates: string[] = ['closed_date = ?'];
     const ledgerParams: (string | number | null)[] = [closedDate];
+
+    if (ticker !== undefined) {
+      ledgerUpdates.push('ticker = ?');
+      ledgerParams.push(ticker);
+    }
 
     if (risk !== undefined) {
       ledgerUpdates.push('default_risk_percent = ?');
