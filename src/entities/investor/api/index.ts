@@ -574,3 +574,10 @@ export async function getInvestorTradesForSelection(
     number: t.number,
   }));
 }
+
+export async function getInvestorLedgerCount(id: number): Promise<number> {
+  const result = db
+    .prepare('SELECT COUNT(*) as count FROM ledger WHERE investor_id = ?')
+    .get(id) as { count: number } | undefined;
+  return result?.count || 0;
+}

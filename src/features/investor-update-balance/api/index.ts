@@ -1,6 +1,10 @@
 'use server';
 
-import { getInvestorTradesForSelection, updateInvestorBalance } from '@/entities/investor';
+import {
+  getInvestorLedgerCount,
+  getInvestorTradesForSelection,
+  updateInvestorBalance,
+} from '@/entities/investor';
 import { redirect } from 'next/navigation';
 import { LedgerType } from '@/shared/enum';
 import { TRADE_ID_OPTION } from '@/shared/consts';
@@ -51,4 +55,8 @@ export async function updateBalanceAction({
 
 export async function getTradesForSelection(investorId: number) {
   return await getInvestorTradesForSelection(investorId);
+}
+
+export async function getLedgerCount(investorId: number) {
+  return await getInvestorLedgerCount(investorId);
 }

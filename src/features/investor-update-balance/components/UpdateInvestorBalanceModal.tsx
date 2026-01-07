@@ -20,7 +20,7 @@ import {
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { memo, useCallback, useEffect, useState } from 'react';
-import { getTradesForSelection, updateBalanceAction } from '../api';
+import { getLedgerCount, getTradesForSelection, updateBalanceAction } from '../api';
 
 interface UpdateInvestorBalanceModalProps {
   open: boolean;
@@ -36,10 +36,11 @@ export const UpdateInvestorBalanceModal = memo(
     const [amount, setAmount] = useState('');
     const [type, setType] = useState<
       LedgerType.CAPITAL_CHANGE | LedgerType.DEPOSIT_CHANGE | LedgerType.BOTH_CHANGE
-    >(LedgerType.CAPITAL_CHANGE);
+    >(LedgerType.BOTH_CHANGE);
     const [tradeId, setTradeId] = useState<string>('');
     const [trades, setTrades] = useState<{ id: number; number: number }[]>([]);
     const [loadingTrades, setLoadingTrades] = useState(false);
+    const [isLedgerEmpty, setIsLedgerEmpty] = useState(false);
 
     const isFormValid = amount !== '' && amount !== '0';
 
@@ -48,23 +49,35 @@ export const UpdateInvestorBalanceModal = memo(
 
       let cancelled = false;
 
-      const loadTrades = async () => {
+      const loadData = async () => {
         setLoadingTrades(true);
         try {
-          const data = await getTradesForSelection(investor.id);
+          const [tradesData, ledgerCount] = await Promise.all([
+            getTradesForSelection(investor.id),
+            getLedgerCount(investor.id),
+          ]);
           if (!cancelled) {
-            setTrades(data);
+            setTrades(tradesData);
+            const empty = ledgerCount === 0;
+            setIsLedgerEmpty(empty);
+            if (empty) {
+              setType(LedgerType.BOTH_CHANGE);
+              setTradeId(TRADE_ID_OPTION.AT_THE_BEGINNING);
+            } else {
+              setType(LedgerType.CAPITAL_CHANGE);
+              setTradeId(TRADE_ID_OPTION.NONE);
+            }
             setLoadingTrades(false);
           }
         } catch (error) {
-          console.error('Failed to load trades:', error);
+          console.error('Failed to load data:', error);
           if (!cancelled) {
             setLoadingTrades(false);
           }
         }
       };
 
-      loadTrades();
+      loadData();
 
       return () => {
         cancelled = true;
@@ -134,11 +147,24 @@ export const UpdateInvestorBalanceModal = memo(
                         | LedgerType.BOTH_CHANGE
                     )
                   }
+                  disabled={isLedgerEmpty}
                   required
                 >
-                  <MenuItem value={LedgerType.BOTH_CHANGE}>Both (Deposit & Capital)</MenuItem>
-                  <MenuItem value={LedgerType.CAPITAL_CHANGE}>Capital Change</MenuItem>
-                  <MenuItem value={LedgerType.DEPOSIT_CHANGE}>Deposit Change</MenuItem>
+                  {isLedgerEmpty ? (
+                    <MenuItem value={LedgerType.BOTH_CHANGE}>INITIAL (Deposit & Capital)</MenuItem>
+                  ) : (
+                    [
+                      <MenuItem key="both" value={LedgerType.BOTH_CHANGE}>
+                        Both (Deposit & Capital)
+                      </MenuItem>,
+                      <MenuItem key="capital" value={LedgerType.CAPITAL_CHANGE}>
+                        Capital Change
+                      </MenuItem>,
+                      <MenuItem key="deposit" value={LedgerType.DEPOSIT_CHANGE}>
+                        Deposit Change
+                      </MenuItem>,
+                    ]
+                  )}
                 </Select>
               </FormControl>
 
@@ -150,7 +176,7 @@ export const UpdateInvestorBalanceModal = memo(
                   label="After Trade"
                   value={tradeId || ''}
                   onChange={(e) => setTradeId(e.target.value)}
-                  disabled={loadingTrades}
+                  disabled={loadingTrades || isLedgerEmpty}
                   displayEmpty
                   MenuProps={{
                     PaperProps: {
@@ -160,9 +186,11 @@ export const UpdateInvestorBalanceModal = memo(
                     },
                   }}
                 >
-                  <MenuItem value={TRADE_ID_OPTION.NONE}>
-                    <em>None</em>
-                  </MenuItem>
+                  {!isLedgerEmpty && (
+                    <MenuItem value={TRADE_ID_OPTION.NONE}>
+                      <em>None</em>
+                    </MenuItem>
+                  )}
                   <MenuItem value={TRADE_ID_OPTION.AT_THE_BEGINNING}>At the beginning</MenuItem>
                   {trades.map((trade) => (
                     <MenuItem key={trade.id} value={trade.id.toString()}>
@@ -174,7 +202,7 @@ export const UpdateInvestorBalanceModal = memo(
 
               <TextField
                 name="amount"
-                label="Amount ($)"
+                label={isLedgerEmpty ? 'Initial Amount ($)' : 'Amount ($)'}
                 type="number"
                 variant="outlined"
                 fullWidth
@@ -183,7 +211,11 @@ export const UpdateInvestorBalanceModal = memo(
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 onKeyDown={handleIntegerKeyDown}
-                helperText="Use positive for Add/Deposit, negative for Sub/Withdraw"
+                helperText={
+                  isLedgerEmpty
+                    ? 'Starting balance for this investor'
+                    : 'Use positive for Add/Deposit, negative for Sub/Withdraw'
+                }
                 slotProps={{ htmlInput: { step: '1' } }}
               />
             </Box>
