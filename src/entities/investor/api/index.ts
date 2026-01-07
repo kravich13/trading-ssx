@@ -111,7 +111,7 @@ export async function getInvestorLedger(
   const ledger = db
     .prepare(
       `
-    SELECT l.*, t.status, t.type as trade_type
+    SELECT l.*, t.status, t.type as trade_type, t.profits_json
     FROM ledger l
     LEFT JOIN trades t ON l.trade_id = t.id
     WHERE l.investor_id = ? 
@@ -126,6 +126,7 @@ export async function getInvestorLedger(
     .all(id, investorType) as (LedgerEntry & {
     status?: TradeStatus;
     trade_type?: TradeType;
+    profits_json?: string | null;
   })[];
   return ledger;
 }

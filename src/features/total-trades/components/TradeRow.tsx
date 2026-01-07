@@ -104,10 +104,13 @@ export const TradeRow: React.FC<TradeRowProps> = memo(
         </TableCell>
         <TableCell align="right" sx={{ color: plColor, fontWeight: 'bold' }}>
           ${formatCurrency(totalPlUsd)}
-          {trade.total_deposit_after - totalPlUsd > 0 && (
-            <Box component="span" sx={{ fontSize: '0.7rem', ml: 0.5, opacity: 0.8 }}>
-              ({totalPlUsd >= 0 ? '+' : ''}
-              {((totalPlUsd / (trade.total_deposit_after - totalPlUsd)) * 100).toFixed(2)}% on dep.)
+          {trade.profits.length >= 2 && (
+            <Box
+              component="span"
+              sx={{ fontSize: '0.7rem', ml: 0.5, opacity: 0.8 }}
+              title={trade.profits.map((p) => p.toLocaleString()).join(', ')}
+            >
+              ({trade.profits.length} parts)
             </Box>
           )}
         </TableCell>

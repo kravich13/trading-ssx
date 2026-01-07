@@ -32,8 +32,13 @@ import {
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { memo, useCallback, useMemo, useState } from 'react';
+import { PlAmountCell } from './PlAmountCell';
 
-type LedgerWithStatus = LedgerEntry & { status?: TradeStatus; trade_type?: TradeType };
+interface LedgerWithStatus extends LedgerEntry {
+  status?: TradeStatus;
+  trade_type?: TradeType;
+  profits_json?: string | null;
+}
 
 interface InvestorTradingLogTableProps {
   ledger: LedgerWithStatus[];
@@ -219,19 +224,11 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
               ? `${calculatePlPercent(row.capital_before, row.change_amount).toFixed(2)}%`
               : '-'}
           </TableCell>
-          <TableCell align="right" sx={{ color: plColor }}>
-            $
-            {row.change_amount.toLocaleString(undefined, {
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 0,
-            })}
-            {row.deposit_before > 0 && (
-              <Box component="span" sx={{ fontSize: '0.7rem', ml: 0.5, opacity: 0.8 }}>
-                ({row.change_amount >= 0 ? '+' : ''}
-                {((row.change_amount / row.deposit_before) * 100).toFixed(2)}% on dep.)
-              </Box>
-            )}
-          </TableCell>
+          <PlAmountCell
+            changeAmount={row.change_amount}
+            profitsJson={row.profits_json}
+            color={plColor}
+          />
           <TableCell align="right" sx={{ fontWeight: 'bold' }}>
             ${formatCurrency(row.capital_after)}
           </TableCell>
