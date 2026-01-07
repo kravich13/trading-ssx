@@ -1,1 +1,2 @@
-export { exportGlobalTradesToExcel } from './export-to-excel';
+export * from './export-to-excel';
+export * from './export-investor-stats';

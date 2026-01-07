@@ -29,3 +29,36 @@ export type LedgerEntry = {
 export interface LedgerEntryWithInvestor extends LedgerEntry {
   investor_name: string;
 }
+
+export interface MonthlyDepositStat {
+  year: number;
+  quarter: number;
+  month: number;
+  monthName: string;
+  depositStart: number;
+  depositEnd: number;
+  growthUsd: number;
+  growthPercent: number;
+  tradesCount: number;
+}
+
+export interface QuarterlyDepositStat {
+  year: number;
+  quarter: number;
+  depositStart: number;
+  depositEnd: number;
+  growthUsd: number;
+  growthPercent: number;
+  tradesCount: number;
+  months: MonthlyDepositStat[];
+}
+
+export interface YearlyDepositStat {
+  year: number;
+  depositStart: number;
+  depositEnd: number;
+  growthUsd: number;
+  growthPercent: number;
+  tradesCount: number;
+  quarters: QuarterlyDepositStat[];
+}

@@ -5,6 +5,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { Box, Button, Typography } from '@mui/material';
 import Link from 'next/link';
 import { AddPrivateTradeButton } from './AddPrivateTradeButton';
+import { ExportInvestorStatsButton } from './ExportInvestorStatsButton';
 import { InvestorDetailsTabs } from './InvestorDetailsTabs';
 
 interface InvestorDetailsProps {
@@ -79,7 +80,12 @@ export async function InvestorDetails({ id }: InvestorDetailsProps) {
             {investor.name}&apos;s Trading Log
           </Typography>
         </Box>
-        {investor.type === TradeType.PRIVATE && <AddPrivateTradeButton investorId={investor.id} />}
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <ExportInvestorStatsButton investorName={investor.name} ledger={ledger} />
+          {investor.type === TradeType.PRIVATE && (
+            <AddPrivateTradeButton investorId={investor.id} />
+          )}
+        </Box>
       </Box>
 
       <InvestorDetailsTabs
