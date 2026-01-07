@@ -2,104 +2,132 @@
 
 import { db } from '@/shared/api';
 import { LedgerType, TradeStatus, TradeType } from '@/shared/enum';
-import { Balance, TotalStats } from '@/shared/types';
+import { TotalStats } from '@/shared/types';
 import { revalidatePath } from 'next/cache';
-import { recalculateInvestorBalances } from '@/entities/trade/api';
 import { FinanceStats } from '../lib';
 import { Investor, LedgerEntry, LedgerEntryWithInvestor } from '../types';
 
 export async function getInvestors(): Promise<Investor[]> {
-  const investors = db
+  const investorsRaw = db.prepare('SELECT id, name, is_active, type FROM investors').all() as {
+    id: number;
+    name: string;
+    is_active: number;
+    type: TradeType;
+  }[];
+
+  const allLedger = db
     .prepare(
       `
-    SELECT 
-      i.id,
-      i.name,
-      i.is_active,
-      i.type,
-      COALESCE(l.capital_after, 0) as current_capital,
-      COALESCE(l.deposit_after, 0) as current_deposit
-    FROM investors i
-    LEFT JOIN ledger l ON l.investor_id = i.id 
-    AND l.id = (
-      SELECT MAX(l2.id) 
-      FROM ledger l2
-      LEFT JOIN trades t ON l2.trade_id = t.id
-      WHERE l2.investor_id = i.id
-      AND (
-        l2.type != 'TRADE'
-        OR t.type IS NULL
-        OR t.type = i.type
-      )
-    )
-    ORDER BY i.is_active DESC, CASE WHEN i.name = 'Me' THEN 0 ELSE 1 END, i.name ASC
+    SELECT investor_id, type, change_amount, capital_after, deposit_after, capital_before, deposit_before
+    FROM ledger
   `
     )
-    .all() as Investor[];
+    .all() as LedgerEntry[];
 
-  return investors;
+  return investorsRaw
+    .map((inv) => {
+      const history = allLedger.filter((l) => l.investor_id === inv.id);
+      let cap = 0;
+      let dep = 0;
+
+      let isFirst = true;
+      for (const entry of history) {
+        if (entry.type === LedgerType.TRADE) {
+          cap += entry.change_amount;
+          dep += entry.change_amount;
+        } else if (entry.type === LedgerType.CAPITAL_CHANGE) {
+          if (isFirst) {
+            cap = entry.capital_after;
+            dep = entry.deposit_after;
+          } else {
+            cap += entry.change_amount;
+          }
+        } else if (entry.type === LedgerType.DEPOSIT_CHANGE) {
+          dep += entry.change_amount;
+        } else if (entry.type === LedgerType.BOTH_CHANGE) {
+          cap += entry.change_amount;
+          dep += entry.change_amount;
+        }
+        isFirst = false;
+      }
+
+      return {
+        ...inv,
+        is_active: Boolean(inv.is_active),
+        current_capital: cap,
+        current_deposit: dep,
+      };
+    })
+    .sort((a, b) => (b.is_active ? 0 : 1) - (a.is_active ? 0 : 1) || a.name.localeCompare(b.name));
 }
 
 export async function getInvestorById(id: number): Promise<Investor | undefined> {
-  const investor = db
+  const investorRaw = db
+    .prepare('SELECT id, name, is_active, type FROM investors WHERE id = ?')
+    .get(id) as { id: number; name: string; is_active: number; type: TradeType } | undefined;
+
+  if (!investorRaw) return undefined;
+
+  const history = db
     .prepare(
       `
-    SELECT 
-      i.id,
-      i.name,
-      i.is_active,
-      i.type,
-      COALESCE(l.capital_after, 0) as current_capital,
-      COALESCE(l.deposit_after, 0) as current_deposit
-    FROM investors i
-    LEFT JOIN ledger l ON l.investor_id = i.id 
-    AND l.id = (
-      SELECT MAX(l2.id) 
-      FROM ledger l2
-      LEFT JOIN trades t ON l2.trade_id = t.id
-      WHERE l2.investor_id = i.id
-      AND (
-        l2.type != 'TRADE'
-        OR t.type IS NULL
-        OR t.type = i.type
-      )
-    )
-    WHERE i.id = ?
+    SELECT type, change_amount, capital_after, deposit_after, capital_before, deposit_before
+    FROM ledger 
+    WHERE investor_id = ?
   `
     )
-    .get(id) as Investor | undefined;
-  return investor;
+    .all(id) as LedgerEntry[];
+
+  let cap = 0;
+  let dep = 0;
+  let isFirst = true;
+
+  for (const entry of history) {
+    if (entry.type === LedgerType.TRADE) {
+      cap += entry.change_amount;
+      dep += entry.change_amount;
+    } else if (entry.type === LedgerType.CAPITAL_CHANGE) {
+      if (isFirst) {
+        cap = entry.capital_after;
+        dep = entry.deposit_after;
+      } else {
+        cap += entry.change_amount;
+      }
+    } else if (entry.type === LedgerType.DEPOSIT_CHANGE) {
+      dep += entry.change_amount;
+    } else if (entry.type === LedgerType.BOTH_CHANGE) {
+      cap += entry.change_amount;
+      dep += entry.change_amount;
+    }
+    isFirst = false;
+  }
+
+  return {
+    ...investorRaw,
+    is_active: Boolean(investorRaw.is_active),
+    current_capital: cap,
+    current_deposit: dep,
+  };
 }
 
 export async function getTotalStats(): Promise<TotalStats> {
-  const stats = db
-    .prepare(
-      `
-    SELECT 
-      SUM(current_capital) as total_capital,
-      SUM(current_deposit) as total_deposit
-    FROM investor_current_stats
-    WHERE is_active = 1
-  `
-    )
-    .get() as TotalStats;
-  return stats;
+  const investors = await getInvestors();
+  const activeInvestors = investors.filter((i) => i.is_active);
+
+  return {
+    total_capital: activeInvestors.reduce((sum, i) => sum + i.current_capital, 0),
+    total_deposit: activeInvestors.reduce((sum, i) => sum + i.current_deposit, 0),
+  };
 }
 
 export async function getGlobalTotalStats(): Promise<TotalStats> {
-  const stats = db
-    .prepare(
-      `
-    SELECT 
-      SUM(ics.current_capital) as total_capital,
-      SUM(ics.current_deposit) as total_deposit
-    FROM investor_current_stats ics
-    JOIN investors i ON ics.id = i.id
-    WHERE ics.is_active = 1 AND i.type = ?
-  `
-    )
-    .get(TradeType.GLOBAL) as TotalStats;
-  return stats;
+  const investors = await getInvestors();
+  const activeGlobalInvestors = investors.filter((i) => i.is_active && i.type === TradeType.GLOBAL);
+
+  return {
+    total_capital: activeGlobalInvestors.reduce((sum, i) => sum + i.current_capital, 0),
+    total_deposit: activeGlobalInvestors.reduce((sum, i) => sum + i.current_deposit, 0),
+  };
 }
 
 export async function getInvestorLedger(
@@ -108,13 +136,13 @@ export async function getInvestorLedger(
   (LedgerEntry & { status?: TradeStatus; trade_type?: TradeType; trade_number?: number })[]
 > {
   const investor = await getInvestorById(id);
-
   const investorType = investor?.type || TradeType.GLOBAL;
 
-  const ledger = db
+  const ledgerRaw = db
     .prepare(
       `
-    SELECT l.*, t.status, t.type as trade_type, t.profits_json, t.number as trade_number
+    SELECT l.*, t.status, t.type as trade_type, t.profits_json, t.number as trade_number,
+           COALESCE(t.closed_date, l.created_at) as effective_date
     FROM ledger l
     LEFT JOIN trades t ON l.trade_id = t.id
     WHERE l.investor_id = ? 
@@ -123,7 +151,14 @@ export async function getInvestorLedger(
       OR t.type IS NULL 
       OR t.type = ?
     )
-    ORDER BY l.id DESC
+    ORDER BY 
+      effective_date ASC,
+      CASE 
+        WHEN l.trade_id IS NULL THEN 0
+        WHEN l.trade_id = -1 THEN 1
+        ELSE 2
+      END ASC,
+      l.id ASC
   `
     )
     .all(id, investorType) as (LedgerEntry & {
@@ -131,26 +166,121 @@ export async function getInvestorLedger(
     trade_type?: TradeType;
     profits_json?: string | null;
     trade_number?: number;
+    effective_date: string;
   })[];
-  return ledger;
+
+  let cap = 0;
+  let dep = 0;
+  let isFirst = true;
+
+  const calculatedLedger = ledgerRaw.map((entry) => {
+    const capBefore = cap;
+    const depBefore = dep;
+
+    if (entry.type === LedgerType.TRADE) {
+      cap += entry.change_amount;
+      dep += entry.change_amount;
+    } else if (entry.type === LedgerType.CAPITAL_CHANGE) {
+      if (isFirst) {
+        cap = entry.capital_after;
+        dep = entry.deposit_after;
+      } else {
+        cap += entry.change_amount;
+      }
+    } else if (entry.type === LedgerType.DEPOSIT_CHANGE) {
+      dep += entry.change_amount;
+    } else if (entry.type === LedgerType.BOTH_CHANGE) {
+      cap += entry.change_amount;
+      dep += entry.change_amount;
+    }
+
+    isFirst = false;
+
+    return {
+      ...entry,
+      capital_before: capBefore,
+      capital_after: cap,
+      deposit_before: depBefore,
+      deposit_after: dep,
+    };
+  });
+
+  return calculatedLedger.reverse();
 }
 
 export async function getGlobalActionsLog(): Promise<
   (LedgerEntryWithInvestor & { trade_number?: number })[]
 > {
-  const ledger = db
+  // 1. Fetch all ledger entries across all investors to track balances correctly
+  const allLedgerRaw = db
     .prepare(
       `
-    SELECT l.*, i.name as investor_name, i.type as investor_type, t.number as trade_number
+    SELECT l.*, i.name as investor_name, i.type as investor_type, t.number as trade_number,
+           COALESCE(t.closed_date, l.created_at) as effective_date
     FROM ledger l
     JOIN investors i ON l.investor_id = i.id
     LEFT JOIN trades t ON l.trade_id = t.id
-    WHERE l.type IN ('${LedgerType.CAPITAL_CHANGE}', '${LedgerType.DEPOSIT_CHANGE}', '${LedgerType.BOTH_CHANGE}')
-    ORDER BY l.id DESC
+    ORDER BY 
+      effective_date ASC,
+      CASE 
+        WHEN l.trade_id IS NULL THEN 0
+        WHEN l.trade_id = -1 THEN 1
+        ELSE 2
+      END ASC,
+      l.id ASC
   `
     )
-    .all() as (LedgerEntryWithInvestor & { trade_number?: number })[];
-  return ledger;
+    .all() as (LedgerEntryWithInvestor & { trade_number?: number; effective_date: string })[];
+
+  const balances: Record<number, { cap: number; dep: number; isFirst: boolean }> = {};
+  const processedEntries: (LedgerEntryWithInvestor & { trade_number?: number })[] = [];
+
+  // 2. Process all entries to calculate balances at each point in time
+  for (const entry of allLedgerRaw) {
+    if (!balances[entry.investor_id]) {
+      balances[entry.investor_id] = { cap: 0, dep: 0, isFirst: true };
+    }
+
+    const bal = balances[entry.investor_id];
+    const capBefore = bal.cap;
+    const depBefore = bal.dep;
+
+    if (entry.type === LedgerType.TRADE) {
+      bal.cap += entry.change_amount;
+      bal.dep += entry.change_amount;
+    } else if (entry.type === LedgerType.CAPITAL_CHANGE) {
+      if (bal.isFirst) {
+        bal.cap = entry.capital_after;
+        bal.dep = entry.deposit_after;
+      } else {
+        bal.cap += entry.change_amount;
+      }
+    } else if (entry.type === LedgerType.DEPOSIT_CHANGE) {
+      bal.dep += entry.change_amount;
+    } else if (entry.type === LedgerType.BOTH_CHANGE) {
+      bal.cap += entry.change_amount;
+      bal.dep += entry.change_amount;
+    }
+
+    bal.isFirst = false;
+
+    // 3. Filter only for action entries but store calculated balances
+    if (
+      entry.type === LedgerType.CAPITAL_CHANGE ||
+      entry.type === LedgerType.DEPOSIT_CHANGE ||
+      entry.type === LedgerType.BOTH_CHANGE
+    ) {
+      processedEntries.push({
+        ...entry,
+        capital_before: capBefore,
+        capital_after: bal.cap,
+        deposit_before: depBefore,
+        deposit_after: bal.dep,
+      });
+    }
+  }
+
+  return processedEntries.reverse();
 }
 
 export async function addInvestor({
@@ -208,90 +338,21 @@ export async function updateInvestorBalance({
   type: LedgerType.CAPITAL_CHANGE | LedgerType.DEPOSIT_CHANGE | LedgerType.BOTH_CHANGE;
   tradeId?: number | null;
 }) {
-  let capitalBefore = 0;
-  let depositBefore = 0;
-
-  if (tradeId !== null && tradeId !== undefined) {
-    const lastLedgerBeforeTrade = db
-      .prepare(
-        `
-        SELECT capital_after, deposit_after 
-        FROM ledger 
-        WHERE investor_id = ? 
-        AND (
-          (trade_id IS NOT NULL AND trade_id < ? AND trade_id > 0)
-          OR (trade_id IS NULL)
-          OR (trade_id = -1 AND ? > 0)
-        )
-        ORDER BY 
-          CASE WHEN capital_before = 0 AND deposit_before = 0 AND trade_id IS NULL THEN 0 ELSE 1 END ASC,
-          CASE WHEN trade_id = -1 THEN 0 ELSE COALESCE(trade_id, 999999) END DESC, 
-          id DESC 
-        LIMIT 1
-      `
-      )
-      .get(id, tradeId, tradeId) as Balance | undefined;
-
-    if (lastLedgerBeforeTrade) {
-      capitalBefore = lastLedgerBeforeTrade.capital_after;
-      depositBefore = lastLedgerBeforeTrade.deposit_after;
-    }
-  } else {
-    const lastLedger = db
-      .prepare(
-        'SELECT capital_after, deposit_after FROM ledger WHERE investor_id = ? ORDER BY id DESC LIMIT 1'
-      )
-      .get(id) as Balance | undefined;
-
-    if (lastLedger) {
-      capitalBefore = lastLedger.capital_after;
-      depositBefore = lastLedger.deposit_after;
-    }
-  }
-
-  let newCapital = capitalBefore;
-  let newDeposit = depositBefore;
-
-  if (type === LedgerType.CAPITAL_CHANGE) {
-    newCapital += amount;
-  } else if (type === LedgerType.DEPOSIT_CHANGE) {
-    newDeposit += amount;
-  } else if (type === LedgerType.BOTH_CHANGE) {
-    newCapital += amount;
-    newDeposit += amount;
-  }
-
+  // We no longer calculate complex "before/after" values here because they are calculated on-the-fly.
+  // We just insert the change and some basic values to satisfy DB constraints.
   const insertLedger = db.prepare(`
     INSERT INTO ledger (
       investor_id, trade_id, type, change_amount, capital_before, capital_after, deposit_before, deposit_after
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, 0, 0, 0, 0)
   `);
 
   const finalTradeId = tradeId !== undefined && tradeId !== null ? tradeId : null;
   if (finalTradeId === -1) {
     db.exec('PRAGMA foreign_keys = OFF');
-    insertLedger.run(
-      id,
-      finalTradeId,
-      type,
-      amount,
-      capitalBefore,
-      newCapital,
-      depositBefore,
-      newDeposit
-    );
+    insertLedger.run(id, finalTradeId, type, amount);
     db.exec('PRAGMA foreign_keys = ON');
   } else {
-    insertLedger.run(
-      id,
-      finalTradeId,
-      type,
-      amount,
-      capitalBefore,
-      newCapital,
-      depositBefore,
-      newDeposit
-    );
+    insertLedger.run(id, finalTradeId, type, amount);
   }
 
   revalidatePath('/');
@@ -338,8 +399,6 @@ export async function updateLedgerEntry({
   type?: LedgerType.CAPITAL_CHANGE | LedgerType.DEPOSIT_CHANGE | LedgerType.BOTH_CHANGE;
   tradeId?: number | null;
 }) {
-  let needsRecalculation = false;
-
   const entry = db.prepare('SELECT * FROM ledger WHERE id = ?').get(id) as LedgerEntry;
   if (!entry) return;
 
@@ -348,9 +407,6 @@ export async function updateLedgerEntry({
 
   if (isInitial) {
     const newTradeId = tradeId !== undefined ? tradeId : entry.trade_id;
-    const tradeIdChanged =
-      tradeId !== undefined &&
-      (tradeId !== entry.trade_id || (tradeId === null && entry.trade_id !== null));
 
     if (newTradeId === -1) {
       db.exec('PRAGMA foreign_keys = OFF');
@@ -363,90 +419,24 @@ export async function updateLedgerEntry({
         'UPDATE ledger SET capital_after = ?, deposit_after = ?, created_at = ?, trade_id = ? WHERE id = ?'
       ).run(amount, effectiveDepositAmount, createdAt, newTradeId, id);
     }
-
-    const diffCap = amount - entry.capital_after;
-    const diffDep = effectiveDepositAmount - entry.deposit_after;
-
-    if (diffCap !== 0 || diffDep !== 0 || tradeIdChanged) {
-      needsRecalculation = true;
-    }
-
-    if (diffCap !== 0 || diffDep !== 0) {
-      db.prepare(
-        `
-        UPDATE ledger 
-        SET 
-          capital_before = capital_before + ?, 
-          capital_after = capital_after + ?,
-          deposit_before = deposit_before + ?,
-          deposit_after = deposit_after + ?
-        WHERE investor_id = ? AND id > ?
-      `
-      ).run(diffCap, diffCap, diffDep, diffDep, investorId, id);
-    }
   } else {
     const newType = type || entry.type;
     const newTradeId = tradeId !== undefined ? tradeId : entry.trade_id;
-    const typeChanged = type !== undefined && type !== entry.type;
 
-    let tradeIdChanged = false;
-
-    if (tradeId !== undefined) {
-      tradeIdChanged = tradeId !== entry.trade_id;
-    }
-
-    if (typeChanged || tradeIdChanged) {
-      if (newTradeId === -1) {
-        db.exec('PRAGMA foreign_keys = OFF');
-        try {
-          db.prepare(
-            'UPDATE ledger SET type = ?, trade_id = ?, change_amount = ?, created_at = ? WHERE id = ?'
-          ).run(newType, newTradeId, amount, createdAt, id);
-        } finally {
-          db.exec('PRAGMA foreign_keys = ON');
-        }
-      } else {
+    if (newTradeId === -1) {
+      db.exec('PRAGMA foreign_keys = OFF');
+      try {
         db.prepare(
           'UPDATE ledger SET type = ?, trade_id = ?, change_amount = ?, created_at = ? WHERE id = ?'
         ).run(newType, newTradeId, amount, createdAt, id);
+      } finally {
+        db.exec('PRAGMA foreign_keys = ON');
       }
-      needsRecalculation = true;
     } else {
-      const transaction = db.transaction(() => {
-        const diff = amount - entry.change_amount;
-
-        if (entry.type === LedgerType.CAPITAL_CHANGE) {
-          db.prepare(
-            'UPDATE ledger SET change_amount = ?, capital_after = capital_after + ?, created_at = ? WHERE id = ?'
-          ).run(amount, diff, createdAt, id);
-
-          db.prepare(
-            'UPDATE ledger SET capital_before = capital_before + ?, capital_after = capital_after + ? WHERE investor_id = ? AND id > ?'
-          ).run(diff, diff, investorId, id);
-        } else if (entry.type === LedgerType.DEPOSIT_CHANGE) {
-          db.prepare(
-            'UPDATE ledger SET change_amount = ?, deposit_after = deposit_after + ?, created_at = ? WHERE id = ?'
-          ).run(amount, diff, createdAt, id);
-
-          db.prepare(
-            'UPDATE ledger SET deposit_before = deposit_before + ?, deposit_after = deposit_after + ? WHERE investor_id = ? AND id > ?'
-          ).run(diff, diff, investorId, id);
-        } else if (entry.type === LedgerType.BOTH_CHANGE) {
-          db.prepare(
-            'UPDATE ledger SET change_amount = ?, capital_after = capital_after + ?, deposit_after = deposit_after + ?, created_at = ? WHERE id = ?'
-          ).run(amount, diff, diff, createdAt, id);
-
-          db.prepare(
-            'UPDATE ledger SET capital_before = capital_before + ?, capital_after = capital_after + ?, deposit_before = deposit_before + ?, deposit_after = deposit_after + ? WHERE investor_id = ? AND id > ?'
-          ).run(diff, diff, diff, diff, investorId, id);
-        }
-      });
-      transaction();
+      db.prepare(
+        'UPDATE ledger SET type = ?, trade_id = ?, change_amount = ?, created_at = ? WHERE id = ?'
+      ).run(newType, newTradeId, amount, createdAt, id);
     }
-  }
-
-  if (needsRecalculation) {
-    await recalculateInvestorBalances(investorId);
   }
 
   revalidatePath('/');
@@ -465,31 +455,73 @@ export async function getGlobalFinanceStats(): Promise<FinanceStats> {
     1
   ).toISOString();
 
-  const getBaseStats = (date: string): TotalStats | undefined => {
-    return db
+  const getBaseStats = (date: string): TotalStats => {
+    const allLedger = db
       .prepare(
         `
-      SELECT 
-        SUM(l.capital_after) as total_capital,
-        SUM(l.deposit_after) as total_deposit
-      FROM investors i
-      LEFT JOIN ledger l ON l.investor_id = i.id 
-      AND l.id = (
-        SELECT MAX(l2.id) 
-        FROM ledger l2
-        LEFT JOIN trades t ON l2.trade_id = t.id
-        WHERE l2.investor_id = i.id
-        AND COALESCE(l2.closed_date, l2.created_at) < ?
-        AND (
-          l2.type != 'TRADE'
-          OR t.type IS NULL
-          OR t.type = i.type
-        )
-      )
-      WHERE i.is_active = 1 AND i.type = ?
+      SELECT l.*, i.type as investor_type, i.is_active
+      FROM ledger l
+      JOIN investors i ON l.investor_id = i.id
+      WHERE COALESCE(l.closed_date, l.created_at) < ?
+      ORDER BY 
+        CASE 
+          WHEN l.trade_id IS NULL THEN 0
+          WHEN l.trade_id = -1 THEN 1
+          ELSE 2
+        END ASC,
+        CASE 
+          WHEN l.trade_id = -1 THEN 0
+          WHEN l.trade_id IS NULL THEN 0
+          ELSE l.trade_id
+        END ASC,
+        l.id ASC
     `
       )
-      .get(date, TradeType.GLOBAL) as TotalStats | undefined;
+      .all(date) as (LedgerEntry & { investor_type: TradeType; is_active: number })[];
+
+    const balances: Record<number, { cap: number; dep: number }> = {};
+
+    for (const entry of allLedger) {
+      if (!balances[entry.investor_id]) {
+        balances[entry.investor_id] = { cap: 0, dep: 0 };
+      }
+
+      const bal = balances[entry.investor_id];
+
+      if (entry.type === LedgerType.TRADE) {
+        bal.cap += entry.change_amount;
+        bal.dep += entry.change_amount;
+      } else if (entry.type === LedgerType.CAPITAL_CHANGE) {
+        if (entry.capital_before === 0 && entry.deposit_before === 0) {
+          bal.cap = entry.capital_after;
+          bal.dep = entry.deposit_after;
+        } else {
+          bal.cap += entry.change_amount;
+        }
+      } else if (entry.type === LedgerType.DEPOSIT_CHANGE) {
+        bal.dep += entry.change_amount;
+      } else if (entry.type === LedgerType.BOTH_CHANGE) {
+        bal.cap += entry.change_amount;
+        bal.dep += entry.change_amount;
+      }
+    }
+
+    let totalCap = 0;
+    let totalDep = 0;
+
+    // Filter only active GLOBAL investors
+    const globalInvestors = db
+      .prepare('SELECT id FROM investors WHERE is_active = 1 AND type = ?')
+      .all(TradeType.GLOBAL) as { id: number }[];
+
+    for (const inv of globalInvestors) {
+      if (balances[inv.id]) {
+        totalCap += balances[inv.id].cap;
+        totalDep += balances[inv.id].dep;
+      }
+    }
+
+    return { total_capital: totalCap, total_deposit: totalDep };
   };
 
   const monthBase = getBaseStats(startOfMonth);
