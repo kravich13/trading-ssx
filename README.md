@@ -103,15 +103,29 @@ When taking a trade with **1% risk** on capital ($100), you use the **$3,500** a
   - [x] **Enhanced Trade Entry**: Update `AddTradeModal` with a toggle to choose between Global (all participants) and Private (single account) trades
   - [x] **Filtered Analytics**: Update the Global Equity Chart to display only GLOBAL trades for a "clean" project-wide performance view
   - [x] **Investor Dashboards**: Show both Global and Personal trades in individual investor views, but only Global trades in the shared public logs
-- [ ] **8. Data Export to Excel**
-  - [ ] **Global Export**: Add functionality to export all project data (trades, investors, ledger entries) to Excel for backup purposes
-  - [ ] **Investor-Specific Export**: Add export button on each investor's trades page to download their trading log table as Excel file
-  - [ ] **Backup Feature**: Implement comprehensive data export that includes all trades, investor balances, and transaction history for data duplication and backup
+- [x] **8. Data Export to Excel**
+  - [x] **Global Export**: Add functionality to export all project data (trades, investors, ledger entries) to Excel for backup purposes
+  - [x] **Investor-Specific Export**: Add export button on each investor's trades page to download their trading log table as Excel file
+  - [x] **Backup Feature**: Implement comprehensive data export that includes all trades, investor balances, and transaction history for data duplication and backup
 - [ ] **9. Trade-Based Capital/Deposit Changes**
   - [ ] **Refactor Change Logic**: Bind capital/deposit changes to trade number (trade_id) instead of date
   - [ ] **Change Ordering**: Ensure capital/deposit changes are applied between trades (e.g., change after trade 35 affects trade 36 calculations)
   - [ ] **Date as Display Only**: Keep date field for display purposes only, use trade sequence for actual calculation order
   - [ ] **Global Investor Changes**: Track when capital/deposit changes occur between trades for global investors
+- [ ] **10. Deposit Distribution by Exchange/Wallet**
+  - [ ] **New Page**: Create dedicated page for managing exchange/wallet distribution of deposits
+  - [ ] **Add Exchange Modal**: Implement "Add New Exchange" button with modal to:
+    - Enter exchange/wallet name (e.g., Binance, OKX, etc.)
+    - Link exchange to specific investor
+    - Set deposit amount for investor on this exchange
+  - [ ] **Distribution Table**: Display table showing:
+    - **Global View**: All deposits of all investors distributed across exchanges
+    - **Investor View**: Individual investor's deposits distributed across their exchanges
+  - [ ] **Example Use Case**: If total GLOBAL deposit is $5,000:
+    - Investor 1: Binance $2,000, OKX $1,000
+    - Investor 2: Binance $1,500, OKX $500
+    - Investor 3: OKX $1,000
+    - Table shows complete breakdown of where each investor's funds are located
 
 ## Technologies
 
