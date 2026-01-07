@@ -83,8 +83,10 @@ function renderTradesTable({
     excelRow.getCell(2).value = row.number;
     excelRow.getCell(3).value = row.changesOfDepo;
     excelRow.getCell(8).value = row.ticker;
+    excelRow.getCell(8).alignment = { horizontal: 'right' };
     excelRow.getCell(9).value = row.plUsdSigned;
     excelRow.getCell(10).value = row.closedDate;
+    excelRow.getCell(10).alignment = { horizontal: 'right' };
     excelRow.getCell(11).value = row.defaultRisk;
 
     if (index === 0) {
