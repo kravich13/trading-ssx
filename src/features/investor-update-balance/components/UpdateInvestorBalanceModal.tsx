@@ -187,9 +187,9 @@ export const UpdateInvestorBalanceModal = memo(
                   }}
                 >
                   {!isLedgerEmpty && (
-                    <MenuItem value={TRADE_ID_OPTION.NONE}>
-                      <em>None</em>
-                    </MenuItem>
+                  <MenuItem value={TRADE_ID_OPTION.NONE}>
+                    <em>None</em>
+                  </MenuItem>
                   )}
                   <MenuItem value={TRADE_ID_OPTION.AT_THE_BEGINNING}>At the beginning</MenuItem>
                   {trades.map((trade) => (

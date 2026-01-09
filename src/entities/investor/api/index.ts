@@ -20,6 +20,7 @@ export async function getInvestors(): Promise<Investor[]> {
       `
     SELECT investor_id, type, change_amount, capital_after, deposit_after, capital_before, deposit_before
     FROM ledger
+    ORDER BY id ASC
   `
     )
     .all() as LedgerEntry[];
@@ -74,6 +75,7 @@ export async function getInvestorById(id: number): Promise<Investor | undefined>
     SELECT type, change_amount, capital_after, deposit_after, capital_before, deposit_before
     FROM ledger 
     WHERE investor_id = ?
+    ORDER BY id ASC
   `
     )
     .all(id) as LedgerEntry[];
@@ -142,7 +144,10 @@ export async function getInvestorLedger(
     .prepare(
       `
     SELECT l.*, t.status, t.type as trade_type, t.profits_json, t.number as trade_number,
-           COALESCE(t.closed_date, l.created_at) as effective_date
+           CASE 
+             WHEN l.type = 'TRADE' AND t.status = 'IN_PROGRESS' THEN '9999-12-31'
+             ELSE COALESCE(t.closed_date, l.created_at) 
+           END as effective_date
     FROM ledger l
     LEFT JOIN trades t ON l.trade_id = t.id
     WHERE l.investor_id = ? 
@@ -153,6 +158,10 @@ export async function getInvestorLedger(
     )
     ORDER BY 
       effective_date ASC,
+      CASE 
+        WHEN l.type = 'TRADE' THEN t.number
+        ELSE 0
+      END ASC,
       CASE 
         WHEN l.trade_id IS NULL THEN 0
         WHEN l.trade_id = -1 THEN 1
@@ -216,12 +225,19 @@ export async function getGlobalActionsLog(): Promise<
     .prepare(
       `
     SELECT l.*, i.name as investor_name, i.type as investor_type, t.number as trade_number,
-           COALESCE(t.closed_date, l.created_at) as effective_date
+           CASE 
+             WHEN l.type = 'TRADE' AND t.status = 'IN_PROGRESS' THEN '9999-12-31'
+             ELSE COALESCE(t.closed_date, l.created_at) 
+           END as effective_date
     FROM ledger l
     JOIN investors i ON l.investor_id = i.id
     LEFT JOIN trades t ON l.trade_id = t.id
     ORDER BY 
       effective_date ASC,
+      CASE 
+        WHEN l.type = 'TRADE' THEN t.number
+        ELSE 0
+      END ASC,
       CASE 
         WHEN l.trade_id IS NULL THEN 0
         WHEN l.trade_id = -1 THEN 1
@@ -459,20 +475,27 @@ export async function getGlobalFinanceStats(): Promise<FinanceStats> {
     const allLedger = db
       .prepare(
         `
-      SELECT l.*, i.type as investor_type, i.is_active
+      SELECT l.*, i.type as investor_type, i.is_active, t.status, t.number as trade_number
       FROM ledger l
       JOIN investors i ON l.investor_id = i.id
-      WHERE COALESCE(l.closed_date, l.created_at) < ?
+      LEFT JOIN trades t ON l.trade_id = t.id
+      WHERE CASE 
+              WHEN l.type = 'TRADE' AND t.status = 'IN_PROGRESS' THEN '9999-12-31'
+              ELSE COALESCE(t.closed_date, l.created_at) 
+            END < ?
       ORDER BY 
+        CASE 
+          WHEN l.type = 'TRADE' AND t.status = 'IN_PROGRESS' THEN '9999-12-31'
+          ELSE COALESCE(t.closed_date, l.created_at) 
+        END ASC,
+        CASE 
+          WHEN l.type = 'TRADE' THEN t.number
+          ELSE 0
+        END ASC,
         CASE 
           WHEN l.trade_id IS NULL THEN 0
           WHEN l.trade_id = -1 THEN 1
           ELSE 2
-        END ASC,
-        CASE 
-          WHEN l.trade_id = -1 THEN 0
-          WHEN l.trade_id IS NULL THEN 0
-          ELSE l.trade_id
         END ASC,
         l.id ASC
     `

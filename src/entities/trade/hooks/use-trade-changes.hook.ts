@@ -2,25 +2,21 @@
 
 import { Trade } from '@/entities/trade/types';
 import { getInitialTradeProfits } from '@/entities/trade/utils';
+import { TradeStatus } from '@/shared/enum';
 import { normalizeDate } from '@/shared/utils';
 import { useEffect, useMemo } from 'react';
-
-interface InitialValues {
-  ticker: string;
-  date: string;
-  risk: string;
-  profits: (number | string)[];
-}
 
 interface UseTradeChangesProps {
   trade: Trade | null;
   editTicker: string;
   editDate: string;
   editRisk: string;
+  editStatus: TradeStatus;
   editProfits: (number | string)[];
   setEditTicker: (ticker: string) => void;
   setEditDate: (date: string) => void;
   setEditRisk: (risk: string) => void;
+  setEditStatus: (status: TradeStatus) => void;
   setEditProfits: (profits: (number | string)[]) => void;
 }
 
@@ -29,81 +25,72 @@ export function useTradeChanges({
   editTicker,
   editDate,
   editRisk,
+  editStatus,
   editProfits,
   setEditTicker,
   setEditDate,
   setEditRisk,
+  setEditStatus,
   setEditProfits,
 }: UseTradeChangesProps) {
-  const initialValues = useMemo<InitialValues | null>(() => {
+  // Use useMemo for stable initial values that trigger hasChanges when they finally load
+  const initial = useMemo(() => {
     if (!trade) return null;
 
-    const ticker = trade.ticker || '';
-    const normalizedDate = normalizeDate(trade.closed_date);
-    const riskStr = trade.default_risk_percent != null ? trade.default_risk_percent.toString() : '';
-    const profits = getInitialTradeProfits(trade);
-
     return {
-      ticker,
-      date: normalizedDate,
-      risk: riskStr,
-      profits,
+      ticker: trade.ticker || '',
+      date: normalizeDate(trade.closed_date),
+      risk: trade.default_risk_percent != null ? trade.default_risk_percent.toString() : '',
+      status: trade.status || TradeStatus.IN_PROGRESS,
+      profits: getInitialTradeProfits(trade),
     };
-  }, [trade]);
+  }, [trade?.id]);
 
+  // Sync initial values to state once
   useEffect(() => {
-    if (initialValues) {
-      setEditTicker(initialValues.ticker);
-      setEditDate(initialValues.date);
-      setEditRisk(initialValues.risk);
-      setEditProfits(initialValues.profits);
+    if (initial) {
+      setEditTicker(initial.ticker);
+      setEditDate(initial.date);
+      setEditRisk(initial.risk);
+      setEditStatus(initial.status);
+      setEditProfits(initial.profits);
     }
-  }, [initialValues, setEditTicker, setEditDate, setEditRisk, setEditProfits]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initial]);
 
   const hasChanges = useMemo(() => {
-    if (!trade || !initialValues) return false;
+    if (!initial) return false;
 
-    const initial = initialValues;
-
+    // 1. Check basic fields
     if (editTicker.trim().toUpperCase() !== initial.ticker.trim().toUpperCase()) return true;
+    if (editStatus !== initial.status) return true;
+    if (editRisk.trim() !== initial.risk.trim()) return true;
 
-    if (editDate.trim() !== initial.date.trim()) return true;
-
-    const editRiskTrimmed = editRisk.trim();
-    const initialRiskTrimmed = initial.risk.trim();
-    if (editRiskTrimmed !== initialRiskTrimmed) {
-      const editRiskNum = editRiskTrimmed === '' ? null : parseFloat(editRiskTrimmed);
-      const initialRiskNum = initialRiskTrimmed === '' ? null : parseFloat(initialRiskTrimmed);
-
-      if (editRiskNum === null && initialRiskNum === null) {
-      } else if (
-        (isNaN(editRiskNum!) && isNaN(initialRiskNum!)) ||
-        (editRiskNum !== null &&
-          initialRiskNum !== null &&
-          Math.abs(editRiskNum - initialRiskNum) < 0.0001)
-      ) {
-      } else {
-        return true;
-      }
+    // Date only matters if trade is closed
+    if (editStatus === TradeStatus.CLOSED) {
+      if (editDate.trim() !== initial.date.trim()) return true;
     }
 
-    const currentProfits = editProfits
-      .map((p) => (typeof p === 'string' ? (p.trim() === '' ? 0 : parseFloat(p) || 0) : p))
-      .filter((p) => p !== 0 || editProfits.length === 1);
-    const initialProfitsNumbers = initial.profits
-      .map((p: number | string) =>
-        typeof p === 'string' ? (p.trim() === '' ? 0 : parseFloat(p) || 0) : p
-      )
-      .filter((p) => p !== 0 || initial.profits.length === 1);
+    // 2. Check profits - convert everything to numbers for reliable comparison
+    const current = editProfits.map((p) => {
+      if (typeof p === 'string') return parseFloat(p.trim()) || 0;
+      if (typeof p === 'number') return p;
+      return 0;
+    });
+    const init = initial.profits.map((p) => {
+      if (typeof p === 'string') return parseFloat(p.trim()) || 0;
+      if (typeof p === 'number') return p;
+      return 0;
+    });
 
-    if (currentProfits.length !== initialProfitsNumbers.length) return true;
+    if (current.length !== init.length) return true;
 
-    for (let i = 0; i < currentProfits.length; i++) {
-      if (Math.abs(currentProfits[i] - initialProfitsNumbers[i]) > 0.0001) return true;
+    for (let i = 0; i < current.length; i++) {
+      if (Math.abs(current[i] - init[i]) > 0.0001) return true;
     }
 
     return false;
-  }, [editTicker, editDate, editRisk, editProfits, trade, initialValues]);
+  }, [initial, editTicker, editDate, editRisk, editStatus, editProfits]);
 
   return hasChanges;
 }

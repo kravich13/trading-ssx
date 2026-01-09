@@ -264,7 +264,7 @@ export async function addTrade({
 
       const tradeId = info.lastInsertRowid as number;
 
-      if (totalPlUsd !== 0) {
+      if (totalPlUsd !== 0 || type === TradeType.PRIVATE) {
         let activeStates: {
           id: number;
           last: Balance;
@@ -381,7 +381,7 @@ export async function updateTrade({
 }: {
   id: number;
   ticker?: string;
-  closedDate: string;
+  closedDate: string | null;
   status: TradeStatus;
   profits?: number[];
   risk?: number | null;
@@ -491,7 +491,7 @@ export async function updateTrade({
             }
           }
         }
-      } else if (newTotalPlUsd !== 0) {
+      } else if (newTotalPlUsd !== 0 || trade?.type === TradeType.PRIVATE) {
         const trade = db.prepare('SELECT type, investor_id FROM trades WHERE id = ?').get(id) as
           | { type: TradeType; investor_id: number | null }
           | undefined;
@@ -576,8 +576,28 @@ export async function recalculateInvestorBalances(_investorId: number) {
 
 export async function deleteTrade(id: number) {
   const transaction = db.transaction(() => {
+    // 1. Get info about the trade being deleted to know the scope
+    const trade = db
+      .prepare('SELECT type, investor_id, number FROM trades WHERE id = ?')
+      .get(id) as { type: TradeType; investor_id: number | null; number: number } | undefined;
+
+    if (!trade) return;
+
+    // 2. Delete the trade and its ledger entries
     db.prepare('DELETE FROM ledger WHERE trade_id = ?').run(id);
     db.prepare('DELETE FROM trades WHERE id = ?').run(id);
+
+    // 3. Renumber subsequent trades
+    if (trade.type === TradeType.PRIVATE && trade.investor_id) {
+      db.prepare(
+        'UPDATE trades SET number = number - 1 WHERE type = ? AND investor_id = ? AND number > ?'
+      ).run(TradeType.PRIVATE, trade.investor_id, trade.number);
+    } else {
+      db.prepare('UPDATE trades SET number = number - 1 WHERE type = ? AND number > ?').run(
+        TradeType.GLOBAL,
+        trade.number
+      );
+    }
   });
 
   transaction();

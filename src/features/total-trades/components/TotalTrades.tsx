@@ -11,18 +11,18 @@ import { TotalTradesTabs } from './TotalTradesTabs';
 export async function TotalTrades() {
   const [allTrades, financeStats] = await Promise.all([getAllTrades(), getGlobalFinanceStats()]);
 
-  const trades = allTrades.filter((t) => t.type === TradeType.GLOBAL);
+  const globalTrades = allTrades.filter((t) => t.type === TradeType.GLOBAL);
 
   const { tradeLikeData, initialTotalDeposit, initialTotalCapital } =
-    processTotalTradesData(trades);
+    processTotalTradesData(globalTrades);
 
-  const sortedTrades = [...trades].sort((a, b) => {
+  const sortedGlobalTrades = [...globalTrades].sort((a, b) => {
     const dateA = a.closed_date ? new Date(a.closed_date).getTime() : 0;
     const dateB = b.closed_date ? new Date(b.closed_date).getTime() : 0;
     return dateA - dateB;
   });
 
-  const globalTradeLedger = sortedTrades.reduce(
+  const globalTradeLedger = sortedGlobalTrades.reduce(
     (acc, t) => {
       const changeAmount = t.total_pl_usd;
 
@@ -90,13 +90,13 @@ export async function TotalTrades() {
           Total Trades Log (Global only)
         </Typography>
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-          <ExportToExcelButton trades={sortedTrades} />
+          <ExportToExcelButton trades={sortedGlobalTrades} />
           <AddTradeButton />
         </Box>
       </Box>
 
       <TotalTradesTabs
-        allTrades={trades}
+        allTrades={allTrades}
         tradeLikeData={tradeLikeData}
         financeStats={financeStats}
         initialTotalDeposit={initialTotalDeposit}

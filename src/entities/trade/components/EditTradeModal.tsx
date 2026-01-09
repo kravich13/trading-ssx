@@ -18,6 +18,7 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
+  MenuItem,
   TextField,
   Typography,
 } from '@mui/material';
@@ -39,6 +40,9 @@ export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTra
   const [editRisk, setEditRisk] = useState(() =>
     trade?.default_risk_percent != null ? trade.default_risk_percent.toString() : ''
   );
+  const [editStatus, setEditStatus] = useState<TradeStatus>(
+    () => trade?.status || TradeStatus.IN_PROGRESS
+  );
 
   const [editProfits, setEditProfits] = useState(() => getInitialTradeProfits(trade));
 
@@ -47,10 +51,12 @@ export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTra
     editTicker,
     editDate,
     editRisk,
+    editStatus,
     editProfits,
     setEditTicker,
     setEditDate,
     setEditRisk,
+    setEditStatus,
     setEditProfits,
   });
 
@@ -78,8 +84,9 @@ export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTra
 
   const totalEditProfit = useMemo(() => {
     return editProfits.reduce<number>((sum, p) => {
-      const val = typeof p === 'string' ? parseFloat(p) || 0 : p;
-      return sum + val;
+      const val = typeof p === 'string' ? parseFloat(p) : p;
+      const safeVal = val === null || isNaN(val as number) ? 0 : (val as number);
+      return sum + safeVal;
     }, 0);
   }, [editProfits]);
 
@@ -87,15 +94,15 @@ export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTra
     if (trade) {
       setLoading(true);
       try {
-        const profitsToSave = editProfits.map((p) =>
-          typeof p === 'string' ? parseFloat(p) || 0 : p
-        );
+        const profitsToSave = editProfits
+          .map((p) => (typeof p === 'string' ? parseFloat(p) : p))
+          .map((p) => (p === null || isNaN(p as number) ? 0 : (p as number)));
 
         await updateTrade({
           id: trade.id,
           ticker: editTicker.toUpperCase().trim(),
-          closedDate: editDate,
-          status: trade.status || TradeStatus.CLOSED,
+          closedDate: editStatus === TradeStatus.CLOSED ? editDate : null!,
+          status: editStatus,
           profits: profitsToSave,
           risk: editRisk !== '' ? parseFloat(editRisk) : null,
         });
@@ -110,16 +117,25 @@ export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTra
         setLoading(false);
       }
     }
-  }, [trade, editTicker, editProfits, editDate, editRisk, onSuccess, onClose, showNotification]);
+  }, [
+    trade,
+    editTicker,
+    editProfits,
+    editDate,
+    editRisk,
+    editStatus,
+    onSuccess,
+    onClose,
+    showNotification,
+  ]);
 
-  const formatCurrency = useCallback(
-    (value: number) =>
-      value.toLocaleString(undefined, {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      }),
-    []
-  );
+  const formatCurrency = useCallback((value: number) => {
+    const safeValue = isNaN(value) ? 0 : value;
+    return safeValue.toLocaleString(undefined, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    });
+  }, []);
 
   const renderProfitInput = useCallback(
     (profit: string | number, index: number) => {
@@ -144,14 +160,14 @@ export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTra
             size="small"
             color="error"
             onClick={() => handleRemoveProfit(index)}
-            disabled={loading}
+            disabled={loading || editProfits.length <= 1}
           >
             <DeleteIcon fontSize="small" />
           </IconButton>
         </Box>
       );
     },
-    [handleProfitChange, handleIntegerKeyDown, handleRemoveProfit, loading]
+    [handleProfitChange, handleIntegerKeyDown, handleRemoveProfit, loading, editProfits.length]
   );
 
   const handleDialogClose = useCallback(
@@ -167,8 +183,8 @@ export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTra
 
   return (
     <Dialog open={open} onClose={handleDialogClose} fullWidth maxWidth="xs">
-      <DialogTitle sx={{ fontWeight: 'bold' }}>Edit Trade № {trade.id}</DialogTitle>
-      <DialogContent sx={{ minHeight: '280px', maxHeight: '60svh', overflowY: 'auto' }}>
+      <DialogTitle sx={{ fontWeight: 'bold' }}>Edit Trade № {trade.number || trade.id}</DialogTitle>
+      <DialogContent sx={{ minHeight: '300px', maxHeight: '70svh', overflowY: 'auto' }}>
         <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 3 }}>
           <TextField
             label="Ticker"
@@ -181,32 +197,66 @@ export const EditTradeModal = memo(({ open, trade, onClose, onSuccess }: EditTra
             placeholder="BTC/USDT"
           />
 
-          <TextField
-            label="Closed Date"
-            type="date"
-            fullWidth
-            value={editDate}
-            onChange={(e) => setEditDate(e.target.value)}
-            variant="outlined"
-            size="small"
-            disabled={loading}
-            slotProps={{
-              inputLabel: {
-                shrink: true,
-              },
-            }}
-          />
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <TextField
+              select
+              label="Status"
+              value={editStatus}
+              onChange={(e) => setEditStatus(e.target.value as TradeStatus)}
+              fullWidth
+              size="small"
+              disabled={loading}
+            >
+              <MenuItem value={TradeStatus.IN_PROGRESS}>IN PROGRESS</MenuItem>
+              <MenuItem value={TradeStatus.CLOSED}>CLOSED</MenuItem>
+            </TextField>
 
-          <TextField
-            label="Risk % (on capital)"
-            type="number"
-            fullWidth
-            value={editRisk}
-            onChange={(e) => setEditRisk(e.target.value)}
-            variant="outlined"
-            size="small"
-            disabled={loading}
-          />
+            <TextField
+              label="Risk % (on capital)"
+              type="number"
+              fullWidth
+              value={editRisk}
+              onChange={(e) => setEditRisk(e.target.value)}
+              variant="outlined"
+              size="small"
+              disabled={loading}
+            />
+          </Box>
+
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateRows: editStatus === TradeStatus.CLOSED ? '1fr' : '0fr',
+              transition: 'grid-template-rows 0.3s ease-out',
+            }}
+          >
+            <Box
+              sx={{
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 3,
+                pt: editStatus === TradeStatus.CLOSED ? 0.5 : 0,
+                pb: editStatus === TradeStatus.CLOSED ? 3 : 0,
+              }}
+            >
+              <TextField
+                label="Closed Date"
+                type="date"
+                fullWidth
+                value={editDate}
+                onChange={(e) => setEditDate(e.target.value)}
+                variant="outlined"
+                size="small"
+                disabled={loading}
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+              />
+            </Box>
+          </Box>
 
           <Box>
             <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>

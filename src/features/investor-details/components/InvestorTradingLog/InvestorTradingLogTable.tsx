@@ -1,17 +1,12 @@
 'use client';
 
+import { EditTradeModal } from '@/entities/trade';
 import { deleteTrade, updateTrade } from '@/entities/trade/api';
+import { Trade } from '@/entities/trade/types';
 import { LedgerType, TradeStatus, TradeType } from '@/shared/enum';
 import { useNotification } from '@/shared/lib/hooks';
 import { ConfirmModal } from '@/shared/ui/modals';
-import { normalizeDate } from '@/shared/utils';
 import {
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Paper,
   Table,
   TableBody,
@@ -19,7 +14,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TextField,
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { memo, useCallback, useMemo, useState } from 'react';
@@ -37,14 +31,33 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedTrade, setSelectedTrade] = useState<LedgerWithStatus | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editTicker, setEditTicker] = useState('');
-  const [editDate, setEditDate] = useState('');
-  const [editRisk, setEditRisk] = useState('');
 
   const tradesOnlyLedger = useMemo(
     () => ledger.filter((row) => row.type === LedgerType.TRADE),
     [ledger]
   );
+
+  const tradeForModal = useMemo(() => {
+    if (!selectedTrade) return null;
+
+    const result: Trade = {
+      id: selectedTrade.trade_id || selectedTrade.id,
+      number: selectedTrade.trade_number || 0,
+      ticker: selectedTrade.ticker || '',
+      default_risk_percent: selectedTrade.default_risk_percent ?? null,
+      closed_date: selectedTrade.closed_date || null,
+      status: selectedTrade.status || TradeStatus.CLOSED,
+      total_pl_usd: selectedTrade.change_amount || 0,
+      total_capital_after: selectedTrade.capital_after || 0,
+      total_deposit_after: selectedTrade.deposit_after || 0,
+      type: selectedTrade.trade_type || TradeType.PRIVATE,
+      investor_id: selectedTrade.investor_id,
+      created_at: selectedTrade.created_at,
+      profits: JSON.parse(selectedTrade.profits_json || '[]'),
+    };
+
+    return result;
+  }, [selectedTrade]);
 
   const hasPrivateTrades = useMemo(
     () => tradesOnlyLedger.some((t) => t.trade_type === TradeType.PRIVATE),
@@ -81,32 +94,8 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
 
   const handleEditClick = useCallback((trade: LedgerWithStatus) => {
     setSelectedTrade(trade);
-    setEditTicker(trade.ticker || '');
-    setEditDate(normalizeDate(trade.closed_date));
-    setEditRisk(trade.default_risk_percent != null ? trade.default_risk_percent.toString() : '');
     setEditModalOpen(true);
   }, []);
-
-  const handleConfirmEdit = useCallback(async () => {
-    if (selectedTrade) {
-      try {
-        await updateTrade({
-          id: selectedTrade.trade_id || selectedTrade.id,
-          ticker: editTicker.toUpperCase().trim(),
-          closedDate: editDate,
-          status: selectedTrade.status || TradeStatus.CLOSED,
-          risk: editRisk !== '' ? parseFloat(editRisk) : null,
-        });
-        router.refresh();
-        showNotification('Trade updated successfully');
-        setEditModalOpen(false);
-        setSelectedTrade(null);
-      } catch (error) {
-        console.error('Failed to update trade:', error);
-        showNotification('Failed to update trade', 'error');
-      }
-    }
-  }, [selectedTrade, editTicker, editDate, editRisk, router, showNotification]);
 
   const handleStatusChange = useCallback(
     async ({ tradeId, closedDate, status }: StatusChangeParams) => {
@@ -129,11 +118,9 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
     setEditModalOpen(false);
   }, []);
 
-  const handleDialogClose = useCallback((_event: object, reason?: string) => {
-    if (reason !== 'backdropClick') {
-      setEditModalOpen(false);
-    }
-  }, []);
+  const handleSuccess = useCallback(() => {
+    router.refresh();
+  }, [router]);
 
   const renderRow = useCallback(
     (row: LedgerWithStatus, index: number) => (
@@ -208,57 +195,17 @@ export const InvestorTradingLogTable = memo(({ ledger }: InvestorTradingLogTable
         confirmText="Delete"
       />
 
-      <Dialog open={editModalOpen} onClose={handleDialogClose} fullWidth maxWidth="xs">
-        <DialogTitle sx={{ fontWeight: 'bold' }}>
-          Edit Trade № {selectedTrade?.trade_number || selectedTrade?.trade_id || selectedTrade?.id}
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <TextField
-              label="Ticker"
-              fullWidth
-              value={editTicker}
-              onChange={(e) => setEditTicker(e.target.value)}
-              variant="outlined"
-              size="small"
-              placeholder="BTC/USDT"
-            />
-
-            <TextField
-              label="Closed Date"
-              type="date"
-              fullWidth
-              value={editDate}
-              onChange={(e) => setEditDate(e.target.value)}
-              variant="outlined"
-              size="small"
-              slotProps={{
-                inputLabel: {
-                  shrink: true,
-                },
-              }}
-            />
-
-            <TextField
-              label="Risk % (on capital)"
-              type="number"
-              fullWidth
-              value={editRisk}
-              onChange={(e) => setEditRisk(e.target.value)}
-              variant="outlined"
-              size="small"
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={handleCloseEditModal} color="inherit">
-            Cancel
-          </Button>
-          <Button onClick={handleConfirmEdit} variant="contained" color="primary">
-            Save
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <EditTradeModal
+        key={
+          selectedTrade
+            ? `edit-${selectedTrade.trade_id || selectedTrade.id}-${editModalOpen}`
+            : 'edit-none'
+        }
+        open={editModalOpen}
+        onClose={handleCloseEditModal}
+        trade={tradeForModal}
+        onSuccess={handleSuccess}
+      />
     </>
   );
 });
